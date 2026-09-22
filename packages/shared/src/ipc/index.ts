@@ -1,0 +1,45 @@
+/**
+ * @purpose Define ledger-refresh IPC contracts shared by bubo desktop and CLI.
+ * @role    Browser-safe refresh events and socket-path helpers for app/CLI writes.
+ * @deps    TypeScript runtime only.
+ * @gotcha  Keep this module free of Node/Tauri imports so shared stays platform-light.
+ */
+
+export type LedgerChangeSource = "bubo-cli" | "bubo-desktop"
+
+export interface LedgerChangeEvent {
+  type: "ledger.changed"
+  dbPath: string
+  ledgerId?: string
+  source: LedgerChangeSource
+  command: string
+  pid: number
+  changedAt: string
+}
+
+function trimTrailingSeparators(path: string): string {
+  return path.replace(/[\\/]+$/, "")
+}
+
+function hashText(input: string): string {
+  let hash = 5381
+  for (let index = 0; index < input.length; index += 1) {
+    hash = (hash * 33) ^ input.charCodeAt(index)
+  }
+  return (hash >>> 0).toString(36)
+}
+
+export function getBuboLedgerChangeSocketPath({
+  platform,
+  userDataDir,
+}: {
+  platform: string
+  userDataDir: string
+}): string {
+  const normalizedUserDataDir = trimTrailingSeparators(userDataDir)
+  if (platform === "win32") {
+    return `\\\\.\\pipe\\bubo-ledger-${hashText(normalizedUserDataDir)}`
+  }
+
+  return `${normalizedUserDataDir}/bubo-ledger.sock`
+}

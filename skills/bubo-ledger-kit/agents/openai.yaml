@@ -1,0 +1,4 @@
+interface:
+  display_name: "bubo Ledger Kit"
+  short_description: "Safely write bubo ledger data from arbitrary materials"
+  default_prompt: "Use $bubo-ledger-kit to analyze source material and update a bubo ledger safely."

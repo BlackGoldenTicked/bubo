@@ -1,0 +1,336 @@
+/**
+ * @purpose Implement loans persistence operations for the layered API facade.
+ * @role    Infrastructure repository layer module used by use-case wrappers.
+ * @deps    /db schema, Drizzle query builder, SQLite base capabilities, and shared API helpers.
+ * @gotcha  Loan occurrences remain forecasts; date-derived progress must never create cashflow.
+ */
+
+import { and, asc, eq, gte, inArray, lte, type SQL } from "drizzle-orm"
+import {
+  loanPaymentOccurrences,
+  loans,
+  subscriptions,
+  type LoanInsert,
+  type LoanRow,
+} from "@bubo/db"
+import { projectSubscriptionPlans, type Result } from "@bubo/shared"
+import type {
+  CreateLoanInput,
+  BuboId,
+  FuturePressureInput,
+  FuturePressureSummary,
+  GenerateOccurrenceInput,
+  ListLoanPaymentOccurrencesInput,
+  ListLoansInput,
+  LoanPaymentOccurrenceSummary,
+  LoanSummary,
+  UpdateLoanInput,
+} from "../../../index"
+import { SubscriptionsApiRepository } from "./subscriptions-api.repository"
+import {
+  DEFAULT_CURRENCY,
+  addInterval,
+  fail,
+  newId,
+  normalizeCurrency,
+  nowIso,
+  ok,
+  sumReal,
+  toSqlId,
+  todayKey,
+} from "../../../shared/api-helpers"
+
+export abstract class LoansApiRepository extends SubscriptionsApiRepository {
+  async listLoans(input: ListLoansInput = {}): Promise<Result<LoanSummary[]>> {
+    try {
+      const rows = this.db
+        .select()
+        .from(loans)
+        .where(input.status ? eq(loans.status, input.status as LoanRow["status"]) : undefined)
+        .orderBy(asc(loans.startDate))
+        .all()
+      return ok(rows.map((row) => this.mapLoan(row)))
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async getLoan(input: { id: BuboId }): Promise<Result<LoanSummary | null>> {
+    try {
+      const row = this.db
+        .select()
+        .from(loans)
+        .where(eq(loans.id, toSqlId(input.id)))
+        .get()
+      return ok(row ? this.mapLoan(row) : null)
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async createLoan(input: CreateLoanInput): Promise<Result<LoanSummary>> {
+    try {
+      const id = newId("loan")
+      const timestamp = nowIso()
+      this.db
+        .insert(loans)
+        .values({
+          id,
+          name: input.name,
+          lender: input.lender ?? null,
+          currency: normalizeCurrency(input.currency),
+          principalAmount: input.principalAmount ?? null,
+          currentPrincipalEstimate: input.currentPrincipalEstimate ?? null,
+          annualRateBps: input.annualRateBps ?? null,
+          repaymentMethod: input.repaymentMethod ?? null,
+          paymentAmount: input.paymentAmount,
+          paymentDay: input.paymentDay ?? null,
+          startDate: input.startDate,
+          termMonths: input.termMonths ?? null,
+          note: input.note ?? null,
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .run()
+      return ok(this.mapLoan(this.db.select().from(loans).where(eq(loans.id, id)).get()!))
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async updateLoan(input: UpdateLoanInput): Promise<Result<LoanSummary>> {
+    try {
+      const set: Partial<LoanInsert> = { updatedAt: nowIso() }
+      if (input.name !== undefined) set.name = input.name
+      if (input.lender !== undefined) set.lender = input.lender
+      if (input.currency !== undefined) set.currency = normalizeCurrency(input.currency)
+      if (input.principalAmount !== undefined) set.principalAmount = input.principalAmount
+      if (input.currentPrincipalEstimate !== undefined)
+        set.currentPrincipalEstimate = input.currentPrincipalEstimate
+      if (input.annualRateBps !== undefined) set.annualRateBps = input.annualRateBps
+      if (input.repaymentMethod !== undefined) set.repaymentMethod = input.repaymentMethod
+      if (input.paymentAmount !== undefined) set.paymentAmount = input.paymentAmount
+      if (input.paymentDay !== undefined) set.paymentDay = input.paymentDay
+      if (input.startDate !== undefined) set.startDate = input.startDate
+      if (input.termMonths !== undefined) set.termMonths = input.termMonths
+      if (input.status !== undefined) set.status = input.status as LoanRow["status"]
+      if (input.note !== undefined) set.note = input.note
+      this.db
+        .update(loans)
+        .set(set)
+        .where(eq(loans.id, toSqlId(input.id)))
+        .run()
+      return ok(
+        this.mapLoan(
+          this.db
+            .select()
+            .from(loans)
+            .where(eq(loans.id, toSqlId(input.id)))
+            .get()!,
+        ),
+      )
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async archiveLoan(input: { id: BuboId }): Promise<Result<void>> {
+    try {
+      this.db
+        .update(loans)
+        .set({ status: "closed", updatedAt: nowIso() })
+        .where(eq(loans.id, toSqlId(input.id)))
+        .run()
+      // Drop unrealized future payments so a closed loan stops surfacing in
+      // upcoming/pressure views. Paid occurrences stay as real history.
+      this.db
+        .delete(loanPaymentOccurrences)
+        .where(
+          and(
+            eq(loanPaymentOccurrences.loanId, toSqlId(input.id)),
+            eq(loanPaymentOccurrences.status, "forecast"),
+          ),
+        )
+        .run()
+      return ok(undefined)
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async generateLoanPaymentOccurrences(
+    input: GenerateOccurrenceInput,
+  ): Promise<Result<{ generated: number }>> {
+    try {
+      const conds: SQL[] = [eq(loans.status, "active")]
+      if (input.id) conds.push(eq(loans.id, toSqlId(input.id)))
+      const activeLoans = this.db
+        .select()
+        .from(loans)
+        .where(and(...conds))
+        .all()
+      let generated = 0
+      for (const loan of activeLoans) {
+        let due = loan.startDate
+        let remaining = Number(loan.currentPrincipalEstimate ?? loan.principalAmount ?? 0)
+        let safety = 0
+        while (due <= input.throughDate && safety++ < 500) {
+          const exists = this.db
+            .select({
+              id: loanPaymentOccurrences.id,
+              remainingPrincipalEstimate: loanPaymentOccurrences.remainingPrincipalEstimate,
+            })
+            .from(loanPaymentOccurrences)
+            .where(
+              and(
+                eq(loanPaymentOccurrences.loanId, loan.id),
+                eq(loanPaymentOccurrences.dueDate, due),
+              ),
+            )
+            .get()
+          if (exists) {
+            if (exists.remainingPrincipalEstimate != null) {
+              remaining = Number(exists.remainingPrincipalEstimate)
+            }
+          } else {
+            const payment = Number(loan.paymentAmount ?? 0)
+            const interest =
+              loan.annualRateBps == null
+                ? 0
+                : (remaining * (Number(loan.annualRateBps) / 10000)) / 12
+            const principal = Math.max(payment - interest, 0)
+            remaining = Math.max(remaining - principal, 0)
+            this.db
+              .insert(loanPaymentOccurrences)
+              .values({
+                id: newId("loanocc"),
+                loanId: loan.id,
+                dueDate: due,
+                paymentAmount: loan.paymentAmount,
+                principalAmount: principal.toFixed(2),
+                interestAmount: interest.toFixed(2),
+                feeAmount: "0.00",
+                remainingPrincipalEstimate: remaining.toFixed(2),
+                createdAt: nowIso(),
+              })
+              .run()
+            generated++
+          }
+          due = addInterval(due, "monthly", 1)
+        }
+      }
+      return ok({ generated })
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async listLoanPaymentOccurrences(
+    input: ListLoanPaymentOccurrencesInput = {},
+  ): Promise<Result<LoanPaymentOccurrenceSummary[]>> {
+    try {
+      const conds: SQL[] = []
+      if (input.loanId) conds.push(eq(loanPaymentOccurrences.loanId, toSqlId(input.loanId)))
+      // When listing across loans, exclude occurrences whose parent is no longer
+      // active so closed loans never leak ghost payments.
+      else
+        conds.push(
+          inArray(
+            loanPaymentOccurrences.loanId,
+            this.db.select({ id: loans.id }).from(loans).where(eq(loans.status, "active")),
+          ),
+        )
+      if (input.dateFrom) conds.push(gte(loanPaymentOccurrences.dueDate, input.dateFrom))
+      if (input.dateTo) conds.push(lte(loanPaymentOccurrences.dueDate, input.dateTo))
+      const rows = this.db
+        .select()
+        .from(loanPaymentOccurrences)
+        .where(conds.length ? and(...conds) : undefined)
+        .orderBy(asc(loanPaymentOccurrences.dueDate))
+        .all()
+      return ok(rows.map((row) => this.mapLoanPaymentOccurrence(row)))
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  async getFutureFixedPressure(
+    input: FuturePressureInput = {},
+  ): Promise<Result<FuturePressureSummary>> {
+    try {
+      const dateFrom = input.dateFrom ?? todayKey()
+      const dateTo = input.dateTo ?? addInterval(dateFrom, "monthly", 1)
+      const settings = await this.getCurrencySettings()
+      const displayCurrency = normalizeCurrency(
+        settings.success ? settings.data.displayCurrency : DEFAULT_CURRENCY,
+      )
+      // Mixed-currency obligations are summed per currency, then each bucket is converted
+      // to the display currency at the current rate before adding the totals together.
+      const subscriptionPlans = this.db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.status, "active"))
+        .all()
+      const subscriptionBuckets = new Map<string, number>()
+      for (const occurrence of projectSubscriptionPlans(subscriptionPlans, dateFrom, dateTo)) {
+        const amount = Number(occurrence.amount)
+        if (!Number.isFinite(amount)) continue
+        subscriptionBuckets.set(
+          occurrence.currency,
+          (subscriptionBuckets.get(occurrence.currency) ?? 0) + amount,
+        )
+      }
+      const subRows = [...subscriptionBuckets].map(([currency, total]) => ({ currency, total }))
+      // Loan payment occurrences inherit the loan's currency, so join to group by it.
+      const loanRows = this.db
+        .select({
+          currency: loans.currency,
+          total: sumReal(loanPaymentOccurrences.paymentAmount),
+        })
+        .from(loanPaymentOccurrences)
+        .innerJoin(loans, eq(loanPaymentOccurrences.loanId, loans.id))
+        .where(
+          and(
+            gte(loanPaymentOccurrences.dueDate, dateFrom),
+            lte(loanPaymentOccurrences.dueDate, dateTo),
+            inArray(loanPaymentOccurrences.status, ["forecast", "paid"]),
+            eq(loans.status, "active"),
+          ),
+        )
+        .groupBy(loans.currency)
+        .all()
+      const today = todayKey()
+      const subscriptionsTotal = await this.sumConvertedBuckets(subRows, displayCurrency, today)
+      const loansTotal = await this.sumConvertedBuckets(loanRows, displayCurrency, today)
+      return ok({
+        subscriptions: subscriptionsTotal.toFixed(2),
+        loans: loansTotal.toFixed(2),
+        total: (subscriptionsTotal + loansTotal).toFixed(2),
+        currency: displayCurrency,
+      })
+    } catch (error) {
+      return fail(error)
+    }
+  }
+
+  // Convert per-currency subtotals into the display currency and add them. Buckets that
+  // have no available rate are dropped (mirrors net worth's missing-FX degradation).
+  private async sumConvertedBuckets(
+    rows: { currency: string; total: number }[],
+    displayCurrency: string,
+    date: string,
+  ): Promise<number> {
+    let total = 0
+    for (const row of rows) {
+      const amount = Number(row.total ?? 0)
+      if (amount === 0) continue
+      const currency = normalizeCurrency(row.currency)
+      const converted =
+        currency === displayCurrency
+          ? amount
+          : await this.convertAmount(amount, currency, displayCurrency, date)
+      if (converted != null) total += converted
+    }
+    return total
+  }
+}

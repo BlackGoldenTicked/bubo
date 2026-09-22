@@ -1,0 +1,11 @@
+/**
+ * @purpose Re-export shared utility helpers from @bubo/shared.
+ * @role    Utility aggregation point for package consumers.
+ * @deps    Local utility modules.
+ * @gotcha  Avoid adding product-service or renderer-only helpers here.
+ */
+
+export * from "./account"
+export * from "./currency"
+export * from "./platform"
+export * from "./subscription-projection"

@@ -1,0 +1,118 @@
+/**
+ * @purpose Render the daily bars finance chart component.
+ * @role    Reusable renderer chart used by dashboard or feature pages.
+ * @deps    React charting primitives, formatted finance data, and CSS tokens.
+ * @gotcha  Charts must preserve the distinction between cashflow, snapshots, and forecasts.
+ */
+
+import { BarChart, Bar, Cell, ResponsiveContainer, Tooltip } from "recharts"
+import { useCurrencyMoney } from "@/lib/useMoney"
+
+interface Props {
+  data: number[]
+  color?: string
+  todayIndex?: number
+  height?: number
+  labels?: string[]
+  selectedIndex?: number | null
+  onBarClick?: (index: number) => void
+}
+
+function ChartTooltip({
+  active,
+  payload,
+  lastIdx,
+}: {
+  active?: boolean
+  payload?: { value: number; payload: { i: number; label?: string } }[]
+  lastIdx: number
+}) {
+  const fmtc = useCurrencyMoney()
+  if (!active || !payload?.length) return null
+  const v = payload[0].value
+  const i = payload[0].payload.i
+  const dayLabel = payload[0].payload.label ?? (i === lastIdx ? "今天" : `${lastIdx - i} 天前`)
+  return (
+    <div
+      style={{
+        background: "white",
+        border: "1px solid var(--hair-2)",
+        borderRadius: 8,
+        padding: "5px 10px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        fontSize: 12,
+        color: "var(--ink)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <div style={{ fontSize: 10.5, color: "var(--ink-4)", marginBottom: 2 }}>{dayLabel}</div>
+      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 }}>{fmtc(v)}</div>
+    </div>
+  )
+}
+
+export function DailyBars({
+  data,
+  color = "var(--red)",
+  todayIndex,
+  height = 56,
+  labels,
+  selectedIndex,
+  onBarClick,
+}: Props) {
+  const lastIdx = todayIndex ?? data.length - 1
+  const chartData = data.map((v, i) => ({ i, v, label: labels?.[i] }))
+
+  return (
+    <div style={{ position: "relative", outline: "none" }}>
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          data={chartData}
+          margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          barCategoryGap={2}
+          style={{ outline: "none", cursor: onBarClick ? "pointer" : undefined }}
+          tabIndex={-1}
+          onClick={
+            onBarClick
+              ? (state) => {
+                  const index = Number(state.activeTooltipIndex)
+                  if (Number.isInteger(index) && index >= 0 && index < chartData.length) {
+                    onBarClick(index)
+                  }
+                }
+              : undefined
+          }
+        >
+          <Tooltip
+            content={<ChartTooltip lastIdx={lastIdx} />}
+            cursor={{ fill: "var(--hair-3)", radius: 2 }}
+          />
+          <Bar dataKey="v" radius={[2, 2, 0, 0]} isAnimationActive animationDuration={600}>
+            {chartData.map((_, i) => (
+              <Cell
+                key={i}
+                fill={color}
+                fillOpacity={
+                  i === selectedIndex ? 1 : i === lastIdx ? 1 : 0.35 + (i / data.length) * 0.45
+                }
+                stroke={i === selectedIndex ? "var(--ink)" : "transparent"}
+                strokeWidth={i === selectedIndex ? 1 : 0}
+                cursor={onBarClick ? "pointer" : undefined}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 1,
+          background: "var(--hair)",
+        }}
+      />
+    </div>
+  )
+}

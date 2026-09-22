@@ -1,0 +1,233 @@
+name: Release
+
+# Builds Tauri installers and uploads them to a published GitHub Release whenever a v* tag is pushed.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build, for example v0.1.13"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Create published GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          else
+            VERSION="${RELEASE_TAG#v}"
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "bubo $VERSION" \
+              --generate-notes \
+              --latest
+          fi
+
+  release:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            # The updater archive is generated from the app bundle; dmg alone
+            # only produces the manual installer and leaves latest.json without macOS.
+            bundles: app,dmg
+            asset_pattern: bubo-[version]-arm64[ext]
+          - os: windows-latest
+            bundles: nsis
+            asset_pattern: bubo-[version]-x64[setup][ext]
+    runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Require updater signing key
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ] || [ -z "$TAURI_SIGNING_PRIVATE_KEY_PASSWORD" ]; then
+            echo "Missing TAURI_SIGNING_PRIVATE_KEY or TAURI_SIGNING_PRIVATE_KEY_PASSWORD." >&2
+            exit 1
+          fi
+
+      - name: Configure Apple signing and notarization
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          for required_name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_API_ISSUER APPLE_API_KEY APPLE_API_KEY_P8; do
+            if [ -z "${!required_name}" ]; then
+              echo "Missing required macOS release secret: $required_name" >&2
+              exit 1
+            fi
+          done
+
+          CERTIFICATE_PATH="$RUNNER_TEMP/bubo-certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/bubo-build.keychain-db"
+          KEYCHAIN_PASSWORD="bubo-ci-keychain"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | sed -n 's/.*"\([^"]*\)".*/\1/p' | head -1)"
+          if [ -z "$SIGNING_IDENTITY" ]; then
+            echo "No code-signing identity found after importing APPLE_CERTIFICATE" >&2
+            exit 1
+          fi
+          echo "APPLE_SIGNING_IDENTITY=$SIGNING_IDENTITY" >> "$GITHUB_ENV"
+
+          KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY}.p8"
+          printf '%s' "$APPLE_API_KEY_P8" > "$KEY_PATH"
+          echo "APPLE_API_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Build and upload Tauri installer
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: pnpm tauri
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: bubo ${{ env.RELEASE_TAG }}
+          releaseDraft: false
+          uploadUpdaterJson: true
+          uploadUpdaterSignatures: true
+          updaterJsonPreferNsis: true
+          releaseAssetNamePattern: ${{ matrix.asset_pattern }}
+          args: --bundles ${{ matrix.bundles }}
+
+  normalize-updater-json:
+    name: Normalize and validate updater metadata
+    needs: release
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout updater public key
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Replace API asset URLs and require supported platforms
+        shell: bash
+        run: |
+          set -euo pipefail
+          updater_dir="$RUNNER_TEMP/bubo-updater"
+          mkdir -p "$updater_dir"
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern latest.json \
+            --dir "$updater_dir" \
+            --clobber
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" \
+            > "$updater_dir/release.json"
+
+          UPDATER_DIR="$updater_dir" node <<'NODE'
+          const fs = require("node:fs")
+          const path = require("node:path")
+
+          const updaterDir = process.env.UPDATER_DIR
+          const latestPath = path.join(updaterDir, "latest.json")
+          const latest = JSON.parse(fs.readFileSync(latestPath, "utf8"))
+          const release = JSON.parse(fs.readFileSync(path.join(updaterDir, "release.json"), "utf8"))
+          const tauriConfig = JSON.parse(
+            fs.readFileSync("apps/desktop/src-tauri/tauri.conf.json", "utf8"),
+          )
+          const assetsById = new Map(
+            release.assets.map((asset) => [String(asset.id), asset.browser_download_url]),
+          )
+          const minisignKeyId = (encodedEnvelope) => {
+            const envelope = Buffer.from(encodedEnvelope, "base64").toString("utf8").trim()
+            const payload = envelope.split(/\r?\n/)[1]
+            const raw = payload ? Buffer.from(payload, "base64") : Buffer.alloc(0)
+            if (raw.length < 10) throw new Error("Invalid minisign envelope")
+            return raw.subarray(2, 10).toString("hex")
+          }
+          const expectedKeyId = minisignKeyId(tauriConfig.plugins.updater.pubkey)
+
+          for (const [platform, entry] of Object.entries(latest.platforms ?? {})) {
+            const assetId = entry.url.match(/\/releases\/assets\/(\d+)$/)?.[1]
+            if (assetId) {
+              const directUrl = assetsById.get(assetId)
+              if (!directUrl) throw new Error(`Updater asset ${assetId} for ${platform} was not found`)
+              entry.url = directUrl
+            } else if (!entry.url.includes("/releases/download/")) {
+              throw new Error(`Unsupported updater URL for ${platform}: ${entry.url}`)
+            }
+          }
+
+          for (const platform of ["darwin-aarch64", "windows-x86_64"]) {
+            const entry = latest.platforms?.[platform]
+            if (!entry?.signature || !entry?.url) {
+              throw new Error(`latest.json is missing ${platform} updater metadata`)
+            }
+            if (minisignKeyId(entry.signature) !== expectedKeyId) {
+              throw new Error(`latest.json ${platform} signature uses a different updater key`)
+            }
+          }
+
+          fs.writeFileSync(latestPath, `${JSON.stringify(latest, null, 2)}\n`)
+          NODE
+
+          gh release upload "$RELEASE_TAG" "$updater_dir/latest.json" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
