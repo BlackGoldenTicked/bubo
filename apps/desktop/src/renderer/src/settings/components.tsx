@@ -1,12 +1,12 @@
 /**
  * @purpose Shared settings menu-item building blocks (group labels, rows, controls).
  * @role    Renderer UI primitives reused across the settings surfaces.
- * @deps    React and @heroui/react Tabs.
+ * @deps    React and @heroui/react Tabs/Switch.
  * @gotcha  RowShell is the single source of row sizing — keep every settings row on it.
  */
 
 import type { CSSProperties, ReactNode } from "react"
-import { Tabs } from "@heroui/react"
+import { Switch, Tabs } from "@heroui/react"
 
 const CHEVRON = (
   <svg
@@ -134,20 +134,21 @@ export function LinkRow({
   )
 }
 
-export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+export function Toggle({
+  on,
+  onChange,
+  ariaLabel,
+}: {
+  on: boolean
+  onChange: (v: boolean) => void
+  ariaLabel?: string
+}) {
   return (
-    <div
-      onClick={() => onChange(!on)}
-      className={`relative h-[23px] w-10 shrink-0 cursor-pointer rounded-full transition-colors duration-[180ms] ${
-        on ? "bg-[var(--accent)]" : "bg-[var(--hair)]"
-      }`}
-    >
-      <span
-        className={`absolute left-[2.5px] top-[2.5px] block h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_3px_rgba(20,40,30,.28)] transition-transform duration-[180ms] ${
-          on ? "translate-x-[17px]" : "translate-x-0"
-        }`}
-      />
-    </div>
+    <Switch isSelected={on} onChange={onChange} aria-label={ariaLabel}>
+      <Switch.Control>
+        <Switch.Thumb />
+      </Switch.Control>
+    </Switch>
   )
 }
 

@@ -20,6 +20,7 @@ import { BigNumber } from "../components/ui/BigNumber"
 import { StatBlock } from "../components/ui/StatBlock"
 import { SectionTitle } from "../components/ui/SectionTitle"
 import { Dim } from "../components/ui/Dim"
+import { EmptyState } from "../components/ui/EmptyState"
 import { UpcomingRow } from "../components/ui/UpcomingRow"
 import { BudgetBar } from "../components/ui/BudgetBar"
 import { TransactionTable } from "../components/ui/TransactionTable"
@@ -543,7 +544,7 @@ export function OverviewPage() {
                 </Dim>
               </div>
               {budgets.length === 0 ? (
-                <Dim className="text-[12px]">暂无消费记录 · 导入账单后自动统计</Dim>
+                <EmptyState compact title="暂无消费记录" hint="导入账单后自动统计" />
               ) : (
                 <div className="flex flex-col gap-2.5">
                   {visibleBudgets.map((b, i) => (
@@ -590,7 +591,7 @@ export function OverviewPage() {
                 </Dim>
               </div>
               {upcoming.length === 0 ? (
-                <Dim className="text-[12px]">未来 30 天暂无定期扣费</Dim>
+                <EmptyState compact title="未来 30 天暂无定期扣费" />
               ) : (
                 <div>
                   {visibleUpcoming.map((u, i) => (
@@ -637,10 +638,7 @@ export function OverviewPage() {
         </div>
         <ScrollArea className="min-h-0 flex-1 px-5 py-3 [&_td]:py-3">
           {recentTx.length === 0 ? (
-            <div className="py-12 text-center">
-              <Dim className="block text-[12px]">暂无流水记录</Dim>
-              <Dim className="mt-1 block text-[11px]">前往「流水」页面导入账单</Dim>
-            </div>
+            <EmptyState title="暂无流水记录" hint="前往「流水」页面导入账单" />
           ) : (
             <TransactionTable rows={transactionRows} variant="compact" />
           )}
@@ -663,9 +661,7 @@ export function OverviewPage() {
             </Drawer.Header>
             <Drawer.Body>
               {selectedBucketRows.length === 0 ? (
-                <div className="py-8 text-center">
-                  <Dim className="block text-[12px]">这一天暂无消费流水</Dim>
-                </div>
+                <EmptyState compact title="这一天暂无消费流水" />
               ) : (
                 <div className="overflow-hidden">
                   <TransactionTable rows={selectedBucketRows} />

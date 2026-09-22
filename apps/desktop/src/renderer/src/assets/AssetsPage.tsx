@@ -27,6 +27,8 @@ import { StatBlock } from "../components/ui/StatBlock"
 import { SectionTitle } from "../components/ui/SectionTitle"
 import { ColorDot } from "../components/ui/ColorDot"
 import { Dim } from "../components/ui/Dim"
+import { EmptyState } from "../components/ui/EmptyState"
+import { QueryState } from "../components/ui/QueryState"
 import { AssetTreemap } from "../components/charts/AssetTreemap"
 import { AddAssetModal, TYPE_LABEL } from "./AddAssetModal"
 import type { AssetForm } from "./AddAssetModal"
@@ -521,48 +523,45 @@ export function AssetsPage() {
         <Panel defaultSize={60} minSize={30}>
           <ScrollArea className="h-full">
             <div style={{ padding: "16px 32px 112px" }}>
-              {(selectedGroup ? [selectedGroup] : ["现金", "投资", "不动产", "负债", "其他"]).map(
-                (g) => {
-                  const items = groups.get(g)
-                  if (!items || items.length === 0) return null
-                  return (
-                    <div key={g}>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: "var(--ink-4)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1em",
-                          padding: "12px 0 4px",
-                        }}
-                      >
-                        {g}
+              <QueryState query={assetSnapshotsQuery} skeletonRows={6}>
+                {(selectedGroup ? [selectedGroup] : ["现金", "投资", "不动产", "负债", "其他"]).map(
+                  (g) => {
+                    const items = groups.get(g)
+                    if (!items || items.length === 0) return null
+                    return (
+                      <div key={g}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "var(--ink-4)",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.1em",
+                            padding: "12px 0 4px",
+                          }}
+                        >
+                          {g}
+                        </div>
+                        {items.map((a) => (
+                          <AssetRow
+                            key={a.id}
+                            asset={a}
+                            change={changeByAsset.get(String(a.assetItemId)) ?? NO_CHANGE}
+                            onSelect={setDetailAsset}
+                          />
+                        ))}
                       </div>
-                      {items.map((a) => (
-                        <AssetRow
-                          key={a.id}
-                          asset={a}
-                          change={changeByAsset.get(String(a.assetItemId)) ?? NO_CHANGE}
-                          onSelect={setDetailAsset}
-                        />
-                      ))}
-                    </div>
-                  )
-                },
-              )}
-              {assetSnapshots.length === 0 && (
-                <div
-                  style={{
-                    padding: "28px 0",
-                    fontSize: 12,
-                    color: "var(--ink-4)",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  暂无资产快照。添加账户后，这里会显示最新余额和历史增长。
-                </div>
-              )}
+                    )
+                  },
+                )}
+                {assetSnapshots.length === 0 && (
+                  <EmptyState
+                    title="暂无资产快照"
+                    hint="添加账户后，这里会显示最新余额和历史增长"
+                    action={{ label: "＋ 添加账户", onClick: openAdd }}
+                  />
+                )}
+              </QueryState>
               <div style={{ marginTop: 16, fontSize: 11, color: "var(--ink-4)", lineHeight: 1.6 }}>
                 余额自己手动记录，不从流水推算。允许和流水之间有误差。
               </div>

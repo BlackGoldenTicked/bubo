@@ -7,7 +7,6 @@
 
 import { createRoot } from "react-dom/client"
 import { App } from "./App"
-import "./i18n"
 import "./index.css"
 import { installDesktopRuntimeBridge } from "./lib/desktop-runtime"
 import { TRPCProvider } from "./providers/trpc-provider"

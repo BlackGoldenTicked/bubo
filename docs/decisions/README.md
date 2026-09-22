@@ -30,3 +30,4 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0014   | Display Investment P&L From Manual Cost Basis      | Accepted | 2026-09-22 |
 | 0015   | Materialize Investment Value Into System Snapshots | Accepted | 2026-09-22 |
 | 0016   | Keep Contract Positions Display-Only               | Accepted | 2026-09-22 |
+| 0017   | Unify Renderer States, Failures, And Copy Language | Accepted | 2026-09-22 |

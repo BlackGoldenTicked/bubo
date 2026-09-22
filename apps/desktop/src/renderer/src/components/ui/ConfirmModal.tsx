@@ -1,13 +1,15 @@
 /**
  * @purpose Render the confirm modal renderer UI primitive.
  * @role    Local desktop UI atom shared across feature pages.
- * @deps    React props, CSS tokens, and small formatting helpers.
- * @gotcha  Keep product data fetching out of reusable UI atoms.
+ * @deps    React props, HeroUI Modal, CSS tokens, and reportActionError.
+ * @gotcha  onConfirm/onCancel rejections are reported through reportActionError;
+ *          callers must not toast the same error again.
  */
 
 import { useCallback, useState, type ReactNode } from "react"
 import { atom, useAtom, useSetAtom } from "jotai"
 import { Button, Modal } from "@heroui/react"
+import { reportActionError } from "@/lib/reportError"
 
 export interface ConfirmOptions {
   title: string
@@ -40,6 +42,10 @@ export function GlobalConfirmModal() {
     setLoading(true)
     try {
       await opts?.onConfirm?.()
+    } catch (error) {
+      // The global mutation cache already toasts mutation failures; this keeps
+      // non-mutation rejections visible instead of becoming unhandled.
+      reportActionError(error)
     } finally {
       setLoading(false)
       setOpts(null)
@@ -48,8 +54,13 @@ export function GlobalConfirmModal() {
 
   async function handleCancel() {
     if (loading) return
-    await opts?.onCancel?.()
-    setOpts(null)
+    try {
+      await opts?.onCancel?.()
+    } catch (error) {
+      reportActionError(error)
+    } finally {
+      setOpts(null)
+    }
   }
 
   return (

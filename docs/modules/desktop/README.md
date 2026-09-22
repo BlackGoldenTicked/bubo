@@ -53,8 +53,8 @@ renderer, routing, local app resources, and desktop packaging configuration.
   read time and show explicitly linked cashflow as separate actual-deduction history.
 - `components/charts/` - renderer chart components.
 - `components/layout/` - desktop shell, title bar, persistent top navigation, and banners.
-- `components/ui/` - renderer-local UI atoms that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), and `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel).
-- `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
+- `components/ui/` - renderer-local UI atoms that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
+- `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
 - `lib/mouseHistoryNavigation.ts` maps side buttons, browser history keys, and macOS Command+[ / Command+] to TanStack Router history on Tauri.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.
 
@@ -130,6 +130,15 @@ Update `apps/desktop/src/renderer/src/env.d.ts` whenever the `window.bubo` contr
 - Renderer feature UI should prefer HeroUI controls and Tailwind utilities.
   Inline styles are reserved for dynamic runtime values, chart-library prop
   objects, and values Tailwind cannot express cleanly.
+- Renderer copy is Chinese and lives inline; the app is local-only and has no
+  i18n layer. Query pending/failure renders through `components/ui/QueryState.tsx`
+  (or `QuerySkeleton`/`QueryErrorState` for partial regions) and empty states
+  through `components/ui/EmptyState.tsx`, not inline 加载中 / 加载失败 text.
+- Mutation failures toast through one global path only: the `MutationCache.onError`
+  in `lib/trpc.ts` calls `reportActionError` (`lib/reportError.ts`), which dedupes
+  by error identity. Callers that need extra handling must reuse
+  `reportActionError`, not `notify`, so the same error is not toasted twice.
+  See [ADR 0017](../../decisions/0017-unify-renderer-states-failures-and-copy-language.md).
 - Dashboard cashflow range selection is a renderer preference persisted in
   `localStorage`; it does not change the active ledger or database state.
 - Dashboard loan debt is a read-time projection: the overview loads loan

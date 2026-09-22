@@ -12,7 +12,7 @@ import { useNavigate } from "@tanstack/react-router"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { LedgerSection } from "./LedgerSection"
-import { GroupLabel, LinkRow, Row, Toggle } from "./components"
+import { LinkRow, Row, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
 import { amountsHiddenAtom } from "@/lib/state/uiAtoms"
@@ -112,50 +112,24 @@ export function SettingsPage() {
               ? "检查或安装失败，可重试"
               : "从 GitHub Releases 获取"
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        overflow: "hidden",
-        background: "white",
-      }}
-    >
+    <div className="flex h-full flex-col overflow-hidden bg-white">
       {/* Fixed header */}
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "28px 32px 20px",
-          borderBottom: "1px solid var(--hair-2)",
-        }}
-      >
-        <div style={{ width: 540, maxWidth: 540, margin: "0 auto" }}>
-          <div
-            style={{
-              fontFamily: "var(--mono)",
-              fontSize: 26,
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              color: "var(--ink)",
-              marginBottom: 4,
-            }}
-          >
+      <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pt-7 pb-5">
+        <div className="mx-auto w-[540px]">
+          <div className="mb-1 font-['IBM_Plex_Mono'] text-[26px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
             设置
           </div>
-          <div style={{ fontSize: 12.5, color: "var(--ink-4)" }}>
-            bubo · 个人版 · 数据全部存在本机
-          </div>
+          <div className="text-[12.5px] text-[var(--ink-4)]">bubo · 个人版 · 数据全部存在本机</div>
         </div>
       </div>
 
       {/* Scrollable content */}
-      <ScrollArea className="h-full" style={{ flex: 1, minHeight: 0 }}>
-        <div style={{ width: 540, maxWidth: 540, margin: "0 auto", padding: "0 0 60px" }}>
+      <ScrollArea className="h-full flex-1 min-h-0">
+        <div className="mx-auto w-[540px] pb-[60px]">
           {/* 显示偏好 */}
-          <div style={{ marginTop: 30 }}>
-            <GroupLabel>显示偏好</GroupLabel>
+          <SettingsGroup title="显示偏好">
             <Row first label="主显示货币" sub="所有资产、净资产汇总以此折算">
-              <div style={{ width: 168 }}>
+              <div className="w-[168px]">
                 <CurrencySelect
                   value={displayCurrency}
                   onChange={(code) => updateCurrency.mutate({ displayCurrency: code })}
@@ -170,36 +144,27 @@ export function SettingsPage() {
               {refreshRates.isPending ? "刷新汇率中…" : "刷新汇率"}
             </LinkRow>
             <Row label="隐藏金额" sub="演示或截图时把数字打码为 ⋯⋯">
-              <Toggle on={hide} onChange={setHide} />
+              <Toggle on={hide} onChange={setHide} ariaLabel="隐藏金额" />
             </Row>
-          </div>
+          </SettingsGroup>
 
           {/* 分类 */}
-          <div style={{ marginTop: 30 }}>
-            <GroupLabel>分类</GroupLabel>
+          <SettingsGroup title="分类">
             <LinkRow
               note={`${categories.length} 个`}
               onClick={() => void navigate({ to: "/settings-categories" })}
             >
               分类管理
             </LinkRow>
-          </div>
+          </SettingsGroup>
 
           {/* 账本 */}
           <LedgerSection />
 
           {/* 关于 */}
-          <div style={{ marginTop: 30 }}>
-            <GroupLabel>关于</GroupLabel>
+          <SettingsGroup title="关于">
             <Row first label="版本">
-              <span
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 12.5,
-                  color: "var(--ink-4)",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <span className="whitespace-nowrap font-['IBM_Plex_Mono'] text-[12.5px] text-[var(--ink-4)]">
                 {appVersion ? `v${appVersion}` : "—"}
               </span>
             </Row>
@@ -212,22 +177,10 @@ export function SettingsPage() {
             >
               手动下载最新版
             </LinkRow>
-            <LinkRow>服务条款</LinkRow>
-            <LinkRow>隐私政策</LinkRow>
-            <LinkRow>开源许可</LinkRow>
-          </div>
+          </SettingsGroup>
 
           {/* Footer */}
-          <div
-            style={{
-              fontSize: 11,
-              color: "var(--ink-4)",
-              lineHeight: 1.6,
-              marginTop: 26,
-              paddingTop: 18,
-              borderTop: "1px solid var(--hair-2)",
-            }}
-          >
+          <div className="mt-[26px] border-t border-[var(--hair-2)] pt-[18px] text-[11px] leading-[1.6] text-[var(--ink-4)]">
             bubo 不联网、不上传，所有账单与余额仅保存在这台设备。卸载或清除数据后无法恢复。
           </div>
         </div>

@@ -20,6 +20,8 @@ import { useConfirm } from "../components/ui/ConfirmModal"
 import { ColorPickerField } from "../components/ui/ColorPickerField"
 import { ColorDot } from "../components/ui/ColorDot"
 import { FormField } from "../components/ui/FormField"
+import { QueryState } from "../components/ui/QueryState"
+import { SettingsGroup } from "./components"
 
 const CATEGORY_KINDS = [
   { value: "expense", label: "支出" },
@@ -30,14 +32,14 @@ const CATEGORY_KINDS = [
   { value: "adjustment", label: "调整" },
 ] as const
 
-const KIND_META: Record<string, { label: string; tone: string }> = {
-  expense: { label: "支出", tone: "var(--red)" },
-  income: { label: "收入", tone: "var(--accent)" },
-  transfer: { label: "转账", tone: "var(--ink-3)" },
-  debt: { label: "债务", tone: "var(--red)" },
-  asset_movement: { label: "资产流转", tone: "var(--ink-3)" },
-  adjustment: { label: "调整", tone: "var(--ink-3)" },
-  neutral: { label: "中性", tone: "var(--ink-3)" },
+const KIND_META: Record<string, { label: string; toneClass: string }> = {
+  expense: { label: "支出", toneClass: "text-[var(--red)]" },
+  income: { label: "收入", toneClass: "text-[var(--accent)]" },
+  transfer: { label: "转账", toneClass: "text-[var(--ink-3)]" },
+  debt: { label: "债务", toneClass: "text-[var(--red)]" },
+  asset_movement: { label: "资产流转", toneClass: "text-[var(--ink-3)]" },
+  adjustment: { label: "调整", toneClass: "text-[var(--ink-3)]" },
+  neutral: { label: "中性", toneClass: "text-[var(--ink-3)]" },
 }
 
 const KIND_FALLBACK_COLOR: Record<string, string> = {
@@ -67,6 +69,9 @@ interface CategoryStats {
   monthAmount: number
 }
 
+/** Shared grid template so the header row and data rows stay column-aligned. */
+const CATEGORY_GRID = "grid-cols-[minmax(160px,1fr)_104px_104px_104px_124px]"
+
 function kindOf(category: CategorySummary) {
   return category.categoryKind || category.kind || "expense"
 }
@@ -94,33 +99,11 @@ function statFor(category: CategorySummary, stats: Map<string, CategoryStats>) {
   return stats.get(String(category.id)) ?? { count: 0, monthAmount: 0 }
 }
 
-function GroupLabel({ children }: { children: string }) {
-  return (
-    <div
-      style={{
-        fontSize: 10.5,
-        fontWeight: 600,
-        letterSpacing: ".1em",
-        textTransform: "uppercase",
-        color: "var(--ink-4)",
-        marginBottom: 4,
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
 function KindBadge({ kind, archived }: { kind: string; archived?: boolean }) {
-  const meta = KIND_META[kind] ?? { label: kind, tone: "var(--ink-3)" }
+  const meta = KIND_META[kind] ?? { label: kind, toneClass: "text-[var(--ink-3)]" }
   return (
     <span
-      style={{
-        fontSize: 11.5,
-        fontWeight: 500,
-        color: archived ? "var(--ink-4)" : meta.tone,
-        whiteSpace: "nowrap",
-      }}
+      className={`whitespace-nowrap text-[11.5px] font-medium ${archived ? "text-[var(--ink-4)]" : meta.toneClass}`}
     >
       {archived ? "已归档" : meta.label}
     </span>
@@ -176,7 +159,7 @@ function CategoryModal({
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Heading>{category ? "编辑分类" : "新建分类"}</Modal.Heading>
-            <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 2 }}>
+            <p className="mt-0.5 text-[12px] text-[var(--ink-4)]">
               分类只影响流水归类和统计，不改变现金流金额。
             </p>
           </Modal.Header>
@@ -187,7 +170,7 @@ function CategoryModal({
                 event.preventDefault()
                 void handleSubmit(onSave)()
               }}
-              style={{ display: "flex", flexDirection: "column", gap: 14 }}
+              className="flex flex-col gap-3.5"
             >
               <FormField label="分类名称" required error={errors.name?.message}>
                 <Input
@@ -200,7 +183,7 @@ function CategoryModal({
                 />
               </FormField>
               <FormField label="类型" required>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div className="flex flex-wrap gap-2">
                   {CATEGORY_KINDS.map((kind) => {
                     const active = form.categoryKind === kind.value
                     return (
@@ -208,17 +191,11 @@ function CategoryModal({
                         key={kind.value}
                         type="button"
                         onClick={() => setValue("categoryKind", kind.value)}
-                        style={{
-                          height: 30,
-                          border: active ? "1px solid var(--accent)" : "1px solid var(--hair-2)",
-                          borderRadius: 6,
-                          background: active ? "var(--accent-soft)" : "white",
-                          color: active ? "var(--accent)" : "var(--ink-2)",
-                          cursor: "pointer",
-                          fontSize: 12,
-                          fontWeight: 500,
-                          padding: "0 10px",
-                        }}
+                        className={`h-[30px] cursor-pointer rounded-md border px-2.5 text-[12px] font-medium ${
+                          active
+                            ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
+                            : "border-[var(--hair-2)] bg-white text-[var(--ink-2)]"
+                        }`}
                       >
                         {kind.label}
                       </button>
@@ -240,13 +217,13 @@ function CategoryModal({
           <Modal.Footer>
             <Button
               variant="primary"
+              className="rounded-[5px]"
               isDisabled={saving || isSubmitting}
               onPress={() => void handleSubmit(onSave)()}
-              style={{ borderRadius: 5 }}
             >
               {saving ? "保存中..." : "保存"}
             </Button>
-            <Button variant="outline" onPress={onClose} style={{ borderRadius: 5 }}>
+            <Button variant="outline" className="rounded-[5px]" onPress={onClose}>
               取消
             </Button>
           </Modal.Footer>
@@ -271,65 +248,45 @@ function CategoryRow({
   const kind = kindOf(category)
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(160px, 1fr) 104px 104px 104px 124px",
-        alignItems: "center",
-        gap: 12,
-        minHeight: 50,
-        padding: "10px 0",
-        borderTop: "1px solid var(--hair-3)",
-        opacity: category.archived ? 0.46 : 1,
-      }}
+      className={`grid min-h-[50px] items-center gap-3 border-t border-[var(--hair-3)] py-2.5 ${CATEGORY_GRID} ${
+        category.archived ? "opacity-[0.46]" : ""
+      }`}
     >
-      <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 9 }}>
+      <div className="flex min-w-0 items-center gap-[9px]">
         <ColorDot color={colorFor(category)} size={9} />
-        <div style={{ minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: 13.5,
-              fontWeight: 500,
-              color: "var(--ink)",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
+        <div className="min-w-0">
+          <div className="truncate text-[13.5px] font-medium text-[var(--ink)]">
             {category.name}
           </div>
         </div>
       </div>
       <KindBadge kind={kind} archived={category.archived} />
-      <span style={{ fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap" }}>
+      <span className="whitespace-nowrap text-[11.5px] text-[var(--ink-3)]">
         {stats.count > 0 ? `${stats.count} 笔` : "暂无流水"}
       </span>
       <span
-        style={{
-          fontFamily: "IBM Plex Mono, monospace",
-          fontSize: 12,
-          color: stats.monthAmount > 0 ? "var(--ink)" : "var(--ink-4)",
-          textAlign: "right",
-          whiteSpace: "nowrap",
-        }}
+        className={`text-right whitespace-nowrap font-['IBM_Plex_Mono'] text-[12px] ${
+          stats.monthAmount > 0 ? "text-[var(--ink)]" : "text-[var(--ink-4)]"
+        }`}
       >
         ¥{fmt(stats.monthAmount)}
       </span>
       {!category.archived ? (
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+        <div className="flex justify-end gap-0.5">
           <Button size="sm" variant="ghost" onPress={() => onEdit(category)}>
             编辑
           </Button>
           <Button
             size="sm"
             variant="ghost"
+            className="text-[var(--red)]"
             onPress={() => onArchive(category)}
-            style={{ color: "var(--red)" }}
           >
             归档
           </Button>
         </div>
       ) : (
-        <span style={{ fontSize: 11.5, color: "var(--ink-4)", textAlign: "right" }}>不可选</span>
+        <span className="text-right text-[11.5px] text-[var(--ink-4)]">不可选</span>
       )}
     </div>
   )
@@ -353,31 +310,19 @@ function CategorySection({
   const activeCount = categories.filter((category) => !category.archived).length
 
   return (
-    <section style={{ marginTop: 30 }}>
-      <GroupLabel>{title}</GroupLabel>
-      <div style={{ display: "flex", alignItems: "baseline", marginBottom: 6 }}>
-        <span style={{ fontSize: 13.5, color: "var(--ink)", fontWeight: 500 }}>
-          {activeCount} 个可用
-        </span>
-        <span style={{ fontSize: 11.5, color: "var(--ink-4)", marginLeft: 8 }}>{note}</span>
+    <SettingsGroup title={title}>
+      <div className="mb-1.5 flex items-baseline">
+        <span className="text-[13.5px] font-medium text-[var(--ink)]">{activeCount} 个可用</span>
+        <span className="ml-2 text-[11.5px] text-[var(--ink-4)]">{note}</span>
       </div>
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(160px, 1fr) 104px 104px 104px 124px",
-          gap: 12,
-          padding: "4px 0 7px",
-          borderTop: "1px solid var(--hair-2)",
-          color: "var(--ink-4)",
-          fontSize: 10.5,
-          fontWeight: 500,
-        }}
+        className={`grid gap-3 border-t border-[var(--hair-2)] pt-1 pb-[7px] text-[10.5px] font-medium text-[var(--ink-4)] ${CATEGORY_GRID}`}
       >
         <span>分类</span>
         <span>类型</span>
         <span>引用</span>
-        <span style={{ textAlign: "right" }}>本月</span>
-        <span style={{ textAlign: "right" }}>操作</span>
+        <span className="text-right">本月</span>
+        <span className="text-right">操作</span>
       </div>
       {categories.map((category) => (
         <CategoryRow
@@ -389,18 +334,11 @@ function CategorySection({
         />
       ))}
       {categories.length === 0 && (
-        <div
-          style={{
-            padding: "18px 0",
-            fontSize: 12,
-            color: "var(--ink-4)",
-            borderTop: "1px solid var(--hair-3)",
-          }}
-        >
+        <div className="border-t border-[var(--hair-3)] py-[18px] text-[12px] text-[var(--ink-4)]">
           暂无分类
         </div>
       )}
-    </section>
+    </SettingsGroup>
   )
 }
 
@@ -492,62 +430,33 @@ export function CategoriesPage() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        overflow: "hidden",
-        background: "white",
-      }}
-    >
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "28px 32px 20px",
-          borderBottom: "1px solid var(--hair-2)",
-        }}
-      >
-        <div style={{ width: 720, maxWidth: "100%", margin: "0 auto" }}>
-          <div style={{ marginBottom: 14 }}>
+    <div className="flex h-full flex-col overflow-hidden bg-white">
+      <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pt-7 pb-5">
+        <div className="mx-auto w-[720px] max-w-full">
+          <div className="mb-3.5">
             <BackButton label="返回设置" onBack={() => void navigate({ to: "/settings" })} />
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 18 }}>
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 26,
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                  color: "var(--ink)",
-                  marginBottom: 4,
-                }}
-              >
+          <div className="flex items-end gap-[18px]">
+            <div className="min-w-0">
+              <div className="mb-1 font-['IBM_Plex_Mono'] text-[26px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
                 分类管理
               </div>
-              <div style={{ fontSize: 12.5, color: "var(--ink-4)" }}>
+              <div className="text-[12.5px] text-[var(--ink-4)]">
                 分类按收入、支出和其他现金流分组；同名分类可以存在于不同类型。
               </div>
             </div>
-            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                <span style={{ fontSize: 12, color: "var(--ink-4)" }}>可用</span>
-                <span
-                  style={{
-                    fontFamily: "IBM Plex Mono, monospace",
-                    fontSize: 18,
-                    fontWeight: 600,
-                  }}
-                >
+            <div className="ml-auto flex items-center gap-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-[12px] text-[var(--ink-4)]">可用</span>
+                <span className="font-['IBM_Plex_Mono'] text-[18px] font-semibold">
                   {activeCount}
                 </span>
-                <span style={{ fontSize: 12, color: "var(--ink-4)" }}>归档 {archivedCount}</span>
+                <span className="text-[12px] text-[var(--ink-4)]">归档 {archivedCount}</span>
               </div>
               <Button
                 size="sm"
                 variant="primary"
-                style={{ borderRadius: 5 }}
+                className="rounded-[5px]"
                 onPress={() => openCategoryForm(null)}
               >
                 + 新建分类
@@ -557,42 +466,36 @@ export function CategoriesPage() {
         </div>
       </div>
 
-      <ScrollArea className="h-full" style={{ flex: 1, minHeight: 0 }}>
-        <div
-          style={{
-            width: 720,
-            maxWidth: "100%",
-            boxSizing: "border-box",
-            margin: "0 auto",
-            padding: "0 0 112px",
-          }}
-        >
-          <CategorySection
-            title="支出分类"
-            note="用于消费结构、预算引用和流水筛选"
-            categories={expenseCategories}
-            stats={stats}
-            onEdit={openCategoryForm}
-            onArchive={confirmArchiveCategory}
-          />
+      <ScrollArea className="h-full flex-1 min-h-0">
+        <div className="mx-auto box-border w-[720px] max-w-full pb-28">
+          <QueryState query={categoriesQuery} skeletonRows={6}>
+            <CategorySection
+              title="支出分类"
+              note="用于消费结构、预算引用和流水筛选"
+              categories={expenseCategories}
+              stats={stats}
+              onEdit={openCategoryForm}
+              onArchive={confirmArchiveCategory}
+            />
 
-          <CategorySection
-            title="收入分类"
-            note="用于收入结构分析，不进入支出预算"
-            categories={incomeCategories}
-            stats={stats}
-            onEdit={openCategoryForm}
-            onArchive={confirmArchiveCategory}
-          />
+            <CategorySection
+              title="收入分类"
+              note="用于收入结构分析，不进入支出预算"
+              categories={incomeCategories}
+              stats={stats}
+              onEdit={openCategoryForm}
+              onArchive={confirmArchiveCategory}
+            />
 
-          <CategorySection
-            title="其他现金流"
-            note="转账、债务、资产流转和调整类分类"
-            categories={otherCategories}
-            stats={stats}
-            onEdit={openCategoryForm}
-            onArchive={confirmArchiveCategory}
-          />
+            <CategorySection
+              title="其他现金流"
+              note="转账、债务、资产流转和调整类分类"
+              categories={otherCategories}
+              stats={stats}
+              onEdit={openCategoryForm}
+              onArchive={confirmArchiveCategory}
+            />
+          </QueryState>
         </div>
       </ScrollArea>
       <CategoryModal

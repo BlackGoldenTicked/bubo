@@ -20,6 +20,7 @@ import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { DateInput } from "../components/ui/DateInput"
 import { currencySymbol, nextSubscriptionChargeDate, projectSubscriptionPlan } from "@bubo/shared"
 import { LinkedCashflowDrawer } from "../cashflow-links/LinkedCashflowDrawer"
+import { QuerySkeleton, QueryErrorState } from "../components/ui/QueryState"
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -144,11 +145,16 @@ export function SubscriptionDetailPanel({ id, onBack }: Props) {
         <div style={{ marginBottom: 12 }}>
           <BackButton label="返回订阅" onBack={onBack} />
         </div>
-        {subscriptionsQuery.isPending && (
-          <div style={{ fontSize: 13, color: "var(--ink-4)" }}>加载中…</div>
+        {subscriptionsQuery.isPending && <QuerySkeleton rows={4} />}
+
+        {subscriptionsQuery.isError && (
+          <QueryErrorState
+            error={subscriptionsQuery.error}
+            onRetry={() => void subscriptionsQuery.refetch()}
+          />
         )}
 
-        {!subscriptionsQuery.isPending && !sub && (
+        {!subscriptionsQuery.isPending && !subscriptionsQuery.isError && !sub && (
           <div style={{ fontSize: 13, color: "var(--ink-4)" }}>未找到该订阅</div>
         )}
 

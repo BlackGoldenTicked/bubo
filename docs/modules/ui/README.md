@@ -18,7 +18,7 @@
 - `scroll-area.tsx` - shared scroll area primitive.
 - `simple-toast.tsx` - lightweight toast surface (Sonner, bottom-right). `notify` exposes `success`/`error`/`message`/`loading`/`dismiss` plus `action(title, { id, actionLabel, onAction })` for persistent toasts with a button.
 - `lib/utils.ts` - class-name merging helper.
-- `styles/globals.css` - shared tokens and base CSS imported by the renderer. Desktop window dragging is declared explicitly by the Tauri title-bar component rather than by global runtime-specific selectors.
+- `styles/globals.css` - shared tokens and base CSS imported by the renderer: the bubo accent and custom `--ink-*`/`--hair-*`/`--surface-*` custom properties, the `--mono` financial-figure stack, and the zero-specificity `:where(...):focus-visible` outline that styles raw interactive elements without overriding HeroUI's own focus rings. Desktop window dragging is declared explicitly by the Tauri title-bar component rather than by global runtime-specific selectors.
 
 ## Data Flow
 

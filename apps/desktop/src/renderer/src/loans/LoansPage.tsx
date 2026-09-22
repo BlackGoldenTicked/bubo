@@ -11,6 +11,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router"
 import { Controller, useForm } from "react-hook-form"
 import { ScrollArea } from "../components/ui/ScrollArea"
+import { EmptyState } from "../components/ui/EmptyState"
+import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
 import { addDays, localDateKey } from "@/lib/dates"
@@ -391,172 +393,176 @@ export function LoansPage() {
         <div
           style={{ padding: "22px 32px 112px", display: "flex", flexDirection: "column", gap: 26 }}
         >
-          {loans.map((l) => {
-            const pct = (l.paid / l.termTotal) * 100
-            const yrsLeft = (l.termLeft / 12).toFixed(1)
-            const paidAmt = l.total - l.remain
+          <QueryState query={loansQuery} skeletonRows={5}>
+            {loans.map((l) => {
+              const pct = (l.paid / l.termTotal) * 100
+              const yrsLeft = (l.termLeft / 12).toFixed(1)
+              const paidAmt = l.total - l.remain
 
-            return (
-              <div key={l.id}>
-                {/* Title row */}
-                <div style={{ display: "flex", alignItems: "baseline", marginBottom: 12 }}>
-                  <button
-                    onClick={() => navigate({ to: "/loans/$id", params: { id: String(l.id) } })}
-                    style={{
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: "var(--ink)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      textDecoration: "underline",
-                      textDecorationColor: "var(--hair)",
-                      textUnderlineOffset: 3,
-                    }}
-                  >
-                    {l.name}
-                  </button>
-                  <span style={{ fontSize: 11, color: "var(--ink-4)", marginLeft: 8 }}>
-                    {l.bank} · {l.rate}% · 月供 {currencySymbol(l.cur)}
-                    {fmt(l.monthly)} · 每条 1 期
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--mono)",
-                      fontSize: 18,
-                      fontWeight: 600,
-                      marginLeft: "auto",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    {currencySymbol(l.cur)}
-                    {fmt(l.remain)}
-                  </span>
-                </div>
-
-                {/* Bars + pct */}
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <LoanScheduleBar
-                    sched={l.sched}
-                    paid={l.paid}
-                    termTotal={l.termTotal}
-                    monthly={l.monthly}
-                    symbol={currencySymbol(l.cur)}
-                  />
-
-                  {/* Pct label */}
-                  <span
-                    style={{
-                      fontFamily: "var(--mono)",
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "var(--accent)",
-                      flexShrink: 0,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    已还 {pct.toFixed(0)}%
-                  </span>
-                </div>
-
-                {/* Legend row */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginTop: 12,
-                    gap: 18,
-                    fontSize: 11,
-                  }}
-                >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+              return (
+                <div key={l.id}>
+                  {/* Title row */}
+                  <div style={{ display: "flex", alignItems: "baseline", marginBottom: 12 }}>
+                    <button
+                      onClick={() => navigate({ to: "/loans/$id", params: { id: String(l.id) } })}
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        color: "var(--ink)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: 0,
+                        textDecoration: "underline",
+                        textDecorationColor: "var(--hair)",
+                        textUnderlineOffset: 3,
+                      }}
+                    >
+                      {l.name}
+                    </button>
+                    <span style={{ fontSize: 11, color: "var(--ink-4)", marginLeft: 8 }}>
+                      {l.bank} · {l.rate}% · 月供 {currencySymbol(l.cur)}
+                      {fmt(l.monthly)} · 每条 1 期
+                    </span>
                     <span
                       style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 2,
-                        background: "var(--accent)",
-                        flexShrink: 0,
-                        display: "inline-block",
+                        fontFamily: "var(--mono)",
+                        fontSize: 18,
+                        fontWeight: 600,
+                        marginLeft: "auto",
+                        letterSpacing: "-0.02em",
                       }}
-                    />
-                    <span style={{ color: "var(--ink-4)" }}>已还 {l.paid} 期 · 偿本金</span>
-                    <b style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>
-                      {currencySymbol(l.cur)}
-                      {fmt(paidAmt)}
-                    </b>
-                  </span>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 2,
-                        background: "var(--surface-3)",
-                        boxShadow: "inset 0 0 0 1px var(--hair)",
-                        flexShrink: 0,
-                        display: "inline-block",
-                      }}
-                    />
-                    <span style={{ color: "var(--ink-4)" }}>剩 {l.termLeft} 期 · 余本金</span>
-                    <b style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>
+                    >
                       {currencySymbol(l.cur)}
                       {fmt(l.remain)}
-                    </b>
-                  </span>
-                  <span
+                    </span>
+                  </div>
+
+                  {/* Bars + pct */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                    <LoanScheduleBar
+                      sched={l.sched}
+                      paid={l.paid}
+                      termTotal={l.termTotal}
+                      monthly={l.monthly}
+                      symbol={currencySymbol(l.cur)}
+                    />
+
+                    {/* Pct label */}
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "var(--accent)",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      已还 {pct.toFixed(0)}%
+                    </span>
+                  </div>
+
+                  {/* Legend row */}
+                  <div
                     style={{
-                      fontFamily: "var(--mono)",
-                      color: "var(--ink-4)",
-                      marginLeft: "auto",
-                      whiteSpace: "nowrap",
+                      display: "flex",
+                      alignItems: "center",
+                      marginTop: 12,
+                      gap: 18,
+                      fontSize: 11,
                     }}
                   >
-                    已还 {pct.toFixed(0)}% · 约 {yrsLeft} 年还清
-                  </span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 2,
+                          background: "var(--accent)",
+                          flexShrink: 0,
+                          display: "inline-block",
+                        }}
+                      />
+                      <span style={{ color: "var(--ink-4)" }}>已还 {l.paid} 期 · 偿本金</span>
+                      <b style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>
+                        {currencySymbol(l.cur)}
+                        {fmt(paidAmt)}
+                      </b>
+                    </span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 2,
+                          background: "var(--surface-3)",
+                          boxShadow: "inset 0 0 0 1px var(--hair)",
+                          flexShrink: 0,
+                          display: "inline-block",
+                        }}
+                      />
+                      <span style={{ color: "var(--ink-4)" }}>剩 {l.termLeft} 期 · 余本金</span>
+                      <b style={{ fontFamily: "var(--mono)", fontWeight: 600 }}>
+                        {currencySymbol(l.cur)}
+                        {fmt(l.remain)}
+                      </b>
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: "var(--mono)",
+                        color: "var(--ink-4)",
+                        marginLeft: "auto",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      已还 {pct.toFixed(0)}% · 约 {yrsLeft} 年还清
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
 
-          {/* Credit card row */}
-          {loans.length === 0 && (
-            <div style={{ fontSize: 12, color: "var(--ink-4)", lineHeight: 1.7 }}>
-              暂无贷款计划。添加贷款后，这里会显示未来还款节奏；资产负债仍以资产快照为准。
-            </div>
-          )}
+            {/* Credit card row */}
+            {loans.length === 0 && (
+              <EmptyState
+                title="暂无贷款计划"
+                hint="添加贷款后，这里会显示未来还款节奏；资产负债仍以资产快照为准"
+                action={{ label: "＋ 添加贷款", onClick: () => setShowAdd(true) }}
+              />
+            )}
 
-          {card && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "14px 0",
-                borderTop: "1px solid var(--hair-2)",
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
-                {card.name}
-              </span>
-              <span style={{ fontSize: 11, color: "var(--ink-4)" }}>
-                {card.bank} · {card.label}
-              </span>
-              <span
+            {card && (
+              <div
                 style={{
-                  fontFamily: "var(--mono)",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  marginLeft: "auto",
-                  letterSpacing: "-0.02em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "14px 0",
+                  borderTop: "1px solid var(--hair-2)",
                 }}
               >
-                {currencySymbol(card.cur)}
-                {fmt(card.remain)}
-              </span>
-            </div>
-          )}
+                <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink)" }}>
+                  {card.name}
+                </span>
+                <span style={{ fontSize: 11, color: "var(--ink-4)" }}>
+                  {card.bank} · {card.label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "var(--mono)",
+                    fontSize: 16,
+                    fontWeight: 600,
+                    marginLeft: "auto",
+                    letterSpacing: "-0.02em",
+                  }}
+                >
+                  {currencySymbol(card.cur)}
+                  {fmt(card.remain)}
+                </span>
+              </div>
+            )}
+          </QueryState>
         </div>
       </ScrollArea>
 

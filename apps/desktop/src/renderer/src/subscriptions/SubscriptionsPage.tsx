@@ -11,6 +11,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useRouterState } from "@tanstack/react-router"
 import { Controller, useForm } from "react-hook-form"
 import { ScrollArea } from "../components/ui/ScrollArea"
+import { EmptyState } from "../components/ui/EmptyState"
+import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
 import { localDateKey, monthCells } from "@/lib/dates"
@@ -436,75 +438,87 @@ export function SubscriptionsPage() {
           {/* Scrollable list */}
           <ScrollArea className="h-full" style={{ flex: 1, minHeight: 0 }}>
             <div style={{ padding: "0 18px 16px" }}>
-              {subs.map((s, i) => (
-                <div key={s.id} style={{ borderTop: i === 0 ? "none" : "1px solid var(--hair-3)" }}>
-                  <Button
-                    variant="ghost"
-                    onPress={() => setSelectedId(s.id)}
-                    style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      height: "auto",
-                      padding: "8px 6px",
-                      border: "none",
-                      borderRadius: 6,
-                      outline: "none",
-                      boxShadow: "none",
-                      textAlign: "left",
-                      justifyContent: "flex-start",
-                      background: selectedId === s.id ? "var(--surface-2)" : "transparent",
-                    }}
+              <QueryState query={subscriptionsQuery} skeletonRows={5}>
+                {subs.map((s, i) => (
+                  <div
+                    key={s.id}
+                    style={{ borderTop: i === 0 ? "none" : "1px solid var(--hair-3)" }}
                   >
-                    <span
+                    <Button
+                      variant="ghost"
+                      onPress={() => setSelectedId(s.id)}
                       style={{
-                        display: "inline-flex",
+                        width: "100%",
+                        display: "flex",
                         alignItems: "center",
-                        padding: "2px 8px",
-                        borderRadius: 100,
-                        fontSize: 9.5,
-                        border: "1px solid var(--hair)",
-                        background: "var(--surface-2)",
-                        color: "var(--ink-3)",
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
+                        gap: 10,
+                        height: "auto",
+                        padding: "8px 6px",
+                        border: "none",
+                        borderRadius: 6,
+                        outline: "none",
+                        boxShadow: "none",
+                        textAlign: "left",
+                        justifyContent: "flex-start",
+                        background: selectedId === s.id ? "var(--surface-2)" : "transparent",
                       }}
                     >
-                      {s.cycle}付
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
+                      <span
                         style={{
-                          fontSize: 13,
-                          color: "var(--ink)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "2px 8px",
+                          borderRadius: 100,
+                          fontSize: 9.5,
+                          border: "1px solid var(--hair)",
+                          background: "var(--surface-2)",
+                          color: "var(--ink-3)",
                           whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          flexShrink: 0,
                         }}
                       >
-                        {s.name}
+                        {s.cycle}付
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            color: "var(--ink)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {s.name}
+                        </div>
+                        <div style={{ fontSize: 10.5, color: "var(--ink-4)", marginTop: 1 }}>
+                          下次 {s.next} · {s.auto ? "自动续费" : "手动"}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 10.5, color: "var(--ink-4)", marginTop: 1 }}>
-                        下次 {s.next} · {s.auto ? "自动续费" : "手动"}
-                      </div>
-                    </div>
-                    <span
-                      style={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        fontFamily: "var(--mono)",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        letterSpacing: "-0.01em",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <MoneyAmount amount={s.amt} currency={s.cur} base={base} />
-                    </span>
-                  </Button>
-                </div>
-              ))}
+                      <span
+                        style={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          fontFamily: "var(--mono)",
+                          fontSize: 13,
+                          fontWeight: 500,
+                          letterSpacing: "-0.01em",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <MoneyAmount amount={s.amt} currency={s.cur} base={base} />
+                      </span>
+                    </Button>
+                  </div>
+                ))}
+                {subs.length === 0 && (
+                  <EmptyState
+                    title="暂无订阅"
+                    hint="添加订阅后，这里会显示每月固定支出与扣费日历"
+                    action={{ label: "＋ 添加订阅", onClick: () => setShowAdd(true) }}
+                  />
+                )}
+              </QueryState>
             </div>
           </ScrollArea>
 

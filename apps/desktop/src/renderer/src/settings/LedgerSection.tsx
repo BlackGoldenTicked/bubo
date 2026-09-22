@@ -211,8 +211,7 @@ export function LedgerSection() {
           <Button
             size="sm"
             variant="secondary"
-            className={ACTION_BTN}
-            style={{ borderRadius: 6 }}
+            className={`${ACTION_BTN} rounded-[6px]`}
             onPress={() => void createForm.handleSubmit(handleCreate)()}
           >
             创建并切换

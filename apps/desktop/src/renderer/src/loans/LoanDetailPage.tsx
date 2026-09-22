@@ -23,6 +23,7 @@ import { LoanScheduleBar } from "./LoanScheduleBar"
 import { buildLoanSchedule } from "./loanSchedule"
 import { FormField } from "../components/ui/FormField"
 import { LinkedCashflowDrawer } from "../cashflow-links/LinkedCashflowDrawer"
+import { QuerySkeleton, QueryErrorState } from "../components/ui/QueryState"
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -147,14 +148,10 @@ export function LoanDetailPage() {
             <div style={{ marginBottom: 14 }}>
               <BackButton label="返回负债" onBack={() => navigate({ to: "/loans" })} />
             </div>
-            {loanQuery.isPending && (
-              <div style={{ fontSize: 13, color: "var(--ink-4)" }}>加载中…</div>
-            )}
+            {loanQuery.isPending && <QuerySkeleton rows={5} className="py-2" />}
 
             {loanQuery.isError && (
-              <div style={{ fontSize: 13, color: "var(--red)" }}>
-                加载失败：{loanQuery.error?.message ?? "未知错误"}
-              </div>
+              <QueryErrorState error={loanQuery.error} onRetry={() => void loanQuery.refetch()} />
             )}
 
             {!loanQuery.isPending && !loanQuery.isError && !loan && (

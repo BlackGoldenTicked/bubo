@@ -18,6 +18,7 @@ import { BigNumber } from "../components/ui/BigNumber"
 import { SectionTitle } from "../components/ui/SectionTitle"
 import { Dim } from "../components/ui/Dim"
 import { BackButton } from "../components/ui/BackButton"
+import { QueryState } from "../components/ui/QueryState"
 import {
   MonthlyCashflowCombo,
   MonthlyNetBars,
@@ -140,100 +141,102 @@ export function AnalysisPage() {
           <div className="mb-3">
             <BackButton label="返回" onBack={() => router.history.back()} />
           </div>
-          <div className="flex items-start gap-6">
-            <div>
-              <Kicker className="mb-1.5">现金流分析</Kicker>
-              <div className="flex items-baseline gap-3">
-                <BigNumber
-                  className={`text-[42px] ${latestNet >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}
-                >
-                  {signed(latestNet)}
-                </BigNumber>
-                <Dim className="text-[11px]">
-                  {latest ? `${monthLabel(latest.month)}结余` : "暂无数据"}
-                </Dim>
-              </div>
-              <div className="flex gap-[30px] mt-3">
-                <div>
-                  <Dim className="text-[10.5px] block mb-1">收入合计</Dim>
-                  <span className="font-['IBM_Plex_Mono'] text-[13px] font-semibold text-[var(--green)]">
-                    {fmtc(incomeTotal)}
-                  </span>
-                </div>
-                <div>
-                  <Dim className="text-[10.5px] block mb-1">支出合计</Dim>
-                  <span className="font-['IBM_Plex_Mono'] text-[13px] font-semibold text-[var(--red)]">
-                    {fmtc(expenseTotal)}
-                  </span>
-                </div>
-                <div>
-                  <Dim className="text-[10.5px] block mb-1">月均结余</Dim>
-                  <span
-                    className={`font-['IBM_Plex_Mono'] text-[13px] font-semibold ${averageNet >= 0 ? "text-[var(--ink)]" : "text-[var(--red)]"}`}
+          <QueryState query={trendQuery} skeletonRows={6}>
+            <div className="flex items-start gap-6">
+              <div>
+                <Kicker className="mb-1.5">现金流分析</Kicker>
+                <div className="flex items-baseline gap-3">
+                  <BigNumber
+                    className={`text-[42px] ${latestNet >= 0 ? "text-[var(--green)]" : "text-[var(--red)]"}`}
                   >
-                    {signed(averageNet)}
-                  </span>
+                    {signed(latestNet)}
+                  </BigNumber>
+                  <Dim className="text-[11px]">
+                    {latest ? `${monthLabel(latest.month)}结余` : "暂无数据"}
+                  </Dim>
+                </div>
+                <div className="flex gap-[30px] mt-3">
+                  <div>
+                    <Dim className="text-[10.5px] block mb-1">收入合计</Dim>
+                    <span className="font-['IBM_Plex_Mono'] text-[13px] font-semibold text-[var(--green)]">
+                      {fmtc(incomeTotal)}
+                    </span>
+                  </div>
+                  <div>
+                    <Dim className="text-[10.5px] block mb-1">支出合计</Dim>
+                    <span className="font-['IBM_Plex_Mono'] text-[13px] font-semibold text-[var(--red)]">
+                      {fmtc(expenseTotal)}
+                    </span>
+                  </div>
+                  <div>
+                    <Dim className="text-[10.5px] block mb-1">月均结余</Dim>
+                    <span
+                      className={`font-['IBM_Plex_Mono'] text-[13px] font-semibold ${averageNet >= 0 ? "text-[var(--ink)]" : "text-[var(--red)]"}`}
+                    >
+                      {signed(averageNet)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="ml-auto flex items-center gap-3.5">
+                <Dim className="text-[10.5px]">
+                  正结余 {positiveMonths}/{trend.length || range.months} 月
+                  {previous ? ` · 较上月 ${signed(latestDelta)}` : ""}
+                </Dim>
+                <RangeControl value={rangeKey} onChange={setRangeKey} />
+              </div>
+            </div>
+
+            <div className="mt-8">
+              <div className="flex items-baseline mb-3">
+                <SectionTitle>净结余趋势</SectionTitle>
+                <Dim className="text-[10.5px] ml-2">正负柱显示每月收入减支出</Dim>
+                <Link
+                  to="/imports"
+                  className="ml-auto cursor-pointer text-[11px] text-[var(--accent)] hover:opacity-75 transition-opacity"
+                >
+                  查看流水 →
+                </Link>
+              </div>
+              <MonthlyNetBars data={trend} showAxis height={160} />
+            </div>
+
+            <div className="mt-[34px]">
+              <div className="flex items-baseline mb-3">
+                <SectionTitle>收入 / 支出 / 结余</SectionTitle>
+                <Dim className="text-[10.5px] ml-2">按月对比现金流稳定性</Dim>
+                <div className="ml-auto">
+                  <Legend />
+                </div>
+              </div>
+              <MonthlyCashflowCombo data={trend} height={244} />
+            </div>
+
+            <div className="mt-[30px] grid grid-cols-3 gap-7 border-t border-[var(--hair-2)] pt-[18px]">
+              <div>
+                <Dim className="text-[10.5px] block mb-1">最好月份</Dim>
+                <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--green)]">
+                  {bestMonth
+                    ? `${monthLabel(bestMonth.month)} ${signed(Number(bestMonth.net))}`
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <Dim className="text-[10.5px] block mb-1">压力月份</Dim>
+                <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--red)]">
+                  {worstMonth
+                    ? `${monthLabel(worstMonth.month)} ${signed(Number(worstMonth.net))}`
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <Dim className="text-[10.5px] block mb-1">结余率</Dim>
+                <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--ink)]">
+                  {incomeTotal > 0 ? `${fmt((netTotal / incomeTotal) * 100, 1)}%` : "—"}
                 </div>
               </div>
             </div>
-            <div className="ml-auto flex items-center gap-3.5">
-              <Dim className="text-[10.5px]">
-                正结余 {positiveMonths}/{trend.length || range.months} 月
-                {previous ? ` · 较上月 ${signed(latestDelta)}` : ""}
-              </Dim>
-              <RangeControl value={rangeKey} onChange={setRangeKey} />
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="flex items-baseline mb-3">
-              <SectionTitle>净结余趋势</SectionTitle>
-              <Dim className="text-[10.5px] ml-2">正负柱显示每月收入减支出</Dim>
-              <Link
-                to="/imports"
-                className="ml-auto cursor-pointer text-[11px] text-[var(--accent)] hover:opacity-75 transition-opacity"
-              >
-                查看流水 →
-              </Link>
-            </div>
-            <MonthlyNetBars data={trend} showAxis height={160} />
-          </div>
-
-          <div className="mt-[34px]">
-            <div className="flex items-baseline mb-3">
-              <SectionTitle>收入 / 支出 / 结余</SectionTitle>
-              <Dim className="text-[10.5px] ml-2">按月对比现金流稳定性</Dim>
-              <div className="ml-auto">
-                <Legend />
-              </div>
-            </div>
-            <MonthlyCashflowCombo data={trend} height={244} />
-          </div>
-
-          <div className="mt-[30px] grid grid-cols-3 gap-7 border-t border-[var(--hair-2)] pt-[18px]">
-            <div>
-              <Dim className="text-[10.5px] block mb-1">最好月份</Dim>
-              <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--green)]">
-                {bestMonth
-                  ? `${monthLabel(bestMonth.month)} ${signed(Number(bestMonth.net))}`
-                  : "—"}
-              </div>
-            </div>
-            <div>
-              <Dim className="text-[10.5px] block mb-1">压力月份</Dim>
-              <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--red)]">
-                {worstMonth
-                  ? `${monthLabel(worstMonth.month)} ${signed(Number(worstMonth.net))}`
-                  : "—"}
-              </div>
-            </div>
-            <div>
-              <Dim className="text-[10.5px] block mb-1">结余率</Dim>
-              <div className="font-['IBM_Plex_Mono'] text-[18px] font-semibold text-[var(--ink)]">
-                {incomeTotal > 0 ? `${fmt((netTotal / incomeTotal) * 100, 1)}%` : "—"}
-              </div>
-            </div>
-          </div>
+          </QueryState>
         </div>
       </ScrollArea>
     </div>

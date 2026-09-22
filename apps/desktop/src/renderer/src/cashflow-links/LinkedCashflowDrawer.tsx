@@ -12,6 +12,7 @@ import { currencySymbol } from "@bubo/shared"
 import { notify } from "@bubo/ui"
 import type { CashflowLinkOwnerType } from "@bubo/api"
 import { trpc } from "@/lib/trpc"
+import { reportActionError } from "@/lib/reportError"
 import { useMoney } from "@/lib/useMoney"
 import { CashflowPickerModal } from "./CashflowPickerModal"
 
@@ -44,9 +45,7 @@ export function LinkedCashflowDrawer({ open, ownerType, ownerId, ownerLabel, onC
         await queryClient.invalidateQueries(trpc.cashflow.linkedTo.queryFilter())
         notify.success("已解绑")
       },
-      onError: (error) => {
-        notify.error(`解绑失败：${error instanceof Error ? error.message : String(error)}`)
-      },
+      onError: (error) => reportActionError(error, "解绑失败"),
     }),
   )
 

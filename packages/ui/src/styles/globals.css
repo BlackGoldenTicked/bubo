@@ -48,6 +48,9 @@
   --amber: #ad7c2c;
 
   --accent-soft: color-mix(in srgb, #14794a 12%, transparent);
+
+  /* Monospace stack for financial figures; used by loans and settings surfaces. */
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /* Desktop drag-region utilities; Tauri's title bar also carries data-tauri-drag-region. */
@@ -58,4 +61,11 @@
 .no-drag-region {
   -webkit-app-region: no-drag;
   app-region: no-drag;
+}
+
+/* Keyboard focus ring for raw interactive elements. The :where() wrapper keeps
+   specificity at 0 so HeroUI's own focus-ring/outline-none classes keep winning. */
+:where(a[href], button, summary, [role="button"], [role="tab"], [role="switch"]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
