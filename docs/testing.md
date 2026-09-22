@@ -66,6 +66,10 @@ Confirm:
   grouping and replayed cost/P&L, record a quote, and confirm the linked account's
   same-day `system` snapshot shows in the assets surface while a same-day manual
   balance still wins net worth.
+- Contracts: on the investments page contracts tab, create a long/short position with
+  leverage and margin, verify the derived notional/margin/unrealized P&L, close it with
+  an exit price, and confirm nothing new appears in net worth, cashflow, or the assets
+  surface.
 - Settings show the app version, a manual update check/install action, and a
   browser download fallback. Development builds must reject production update
   checks.

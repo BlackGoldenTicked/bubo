@@ -8,3 +8,4 @@
 export * from "./common/bubo-primitives.contract"
 export * from "./assets/asset.contract"
 export * from "./investments/investment.contract"
+export * from "./investments/contract.contract"

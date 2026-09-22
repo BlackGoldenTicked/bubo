@@ -11,6 +11,7 @@ import type {
   BudgetPeriodRow,
   BudgetSetRow,
   CategoryRow,
+  ContractPositionRow,
   CurrencySettingsRow,
   ExchangeRateRow,
   InvestmentTransactionRow,
@@ -27,6 +28,7 @@ import type {
   AssetItemSummary,
   AssetSnapshotSummary,
   AssetSnapshotType,
+  ContractPositionSummary,
   InvestmentPositionSummary,
   InvestmentTransactionSummary,
   PriceQuoteSummary,
@@ -211,6 +213,29 @@ export function mapPriceQuote(row: PriceQuoteRow): PriceQuoteSummary {
     currency: row.currency,
     quotedAt: row.quotedAt,
     source: row.source,
+  }
+}
+
+export function mapContractPosition(row: ContractPositionRow): ContractPositionSummary {
+  return {
+    id: row.id,
+    symbol: row.symbol,
+    side: row.side,
+    marginMode: row.marginMode,
+    leverageBps: row.leverageBps,
+    quantity: row.quantity,
+    entryPrice: row.entryPrice,
+    markPrice: row.markPrice,
+    exitPrice: row.exitPrice,
+    liquidationPrice: row.liquidationPrice,
+    marginAmount: row.marginAmount,
+    currency: row.currency,
+    status: row.status,
+    openedAt: row.openedAt,
+    closedAt: row.closedAt,
+    note: row.note,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
   }
 }
 

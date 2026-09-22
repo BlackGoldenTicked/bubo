@@ -201,6 +201,8 @@ export const priceQuotes = sqliteTable("price_quotes", {
 
 ### 阶段 3 — 合约/衍生品（高风险，谨慎）
 
+> 实施注记（2026-09-22）：已按本节落地，最终决策见 [ADR 0016](../decisions/0016-keep-contract-positions-display-only.md)。与草案的差异：不存 `unrealized_pnl` 列，盈亏全部派生；无 `asset_item_id`，合约纯展示、不物化，保证金余额仅经用户手动资产快照计入净资产；新增 `exit_price` 列；币种默认 USD（USDT 不在精选货币列表，不能经 CurrencySelect 选择）；杠杆存 `leverage_bps` 并校验 1x–125x。
+
 加密合约（永续/期货）本质是衍生品，不是「持有资产」。需要独立子模型：
 
 ```ts
@@ -235,13 +237,13 @@ export const contractPositions = sqliteTable("contract_positions", {
 
 ## 任务分解
 
-1. [ ] **A 品牌**：改 `tauri.conf.json` 名称/标题；替换图标；调主题 token；配置自己的更新源与签名。
-2. [ ] **A 数据目录决策**：确认是否改 `identifier`（影响旧数据可见性）。
-3. [ ] **B 模块增删**：确定要移除的模块；按 Part B 步骤删导航/路由/页面，保留数据表。
+1. [ ] **A 品牌**：名称/标题（`bubo`）、图标（`bubo.iconset`/`bubo.icns`）、主题 token（`--accent` 等）均已完成；**剩余：更新源与签名**（暂缓）——updater `endpoints` 已按 [ADR 0013](../decisions/0013-rename-brand-to-bubo.md) 移除，待自有 Release 仓库后恢复并换自有签名公钥（私钥入 CI secrets）。
+2. [x] **A 数据目录决策**（已随品牌重塑执行 2026-09-22，见 [ADR 0013](../decisions/0013-rename-brand-to-bubo.md)）：identifier 定为 `com.chaordex.bubo`；旧数据（`com.flowm.desktop/flowm.sqlite3`）需手动拷贝重命名，不自动读取。
+3. [x] **B 模块增删**（已决策：不移除任何模块）：导航/路由/页面/数据表全部原样保留，无需删改。
 4. [x] **C 阶段 1**：`AddAssetModal` 暴露数量/成本/现价；展示层算盈亏。验证手感。（已完成 2026-09-22，见 [ADR 0014](../decisions/0014-display-asset-pnl-from-cost-basis.md)）
 5. [x] **C 阶段 2**（已完成 2026-09-22，见 [ADR 0015](../decisions/0015-route-investment-value-through-system-snapshots.md)）：建投资领域三表 + 全链路 + 导航；净资产按「物化 system 快照」接入；行情先纯手动。
-6. [ ] **C 阶段 3**（可选）：合约子模型单独立项。
-7. [ ] 每阶段补测试 + 文档（file header、`docs/modules/*`、必要时写 ADR）。
+6. [x] **C 阶段 3**（已完成 2026-09-22，见 [ADR 0016](../decisions/0016-keep-contract-positions-display-only.md)）：合约子模型单独立项；合约纯展示、盈亏全派生、无物化。
+7. [x] 每阶段补测试 + 文档（C 阶段 1/2/3 已补齐：ADR 0014/0015/0016、`docs/modules/*` 与 file header、合约新增 22 个测试，全套 112 测试通过）。
 
 ## 风险
 

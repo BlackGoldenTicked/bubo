@@ -39,6 +39,8 @@ import {
 } from "../../../presentation/mappers/sqlite-row-mappers"
 import {
   fail,
+  formatMoney,
+  formatQuantity,
   newId,
   normalizeCurrency,
   nowIso,
@@ -66,22 +68,6 @@ function toTradeInput(row: {
     price: row.price,
     feeAmount: row.feeAmount,
   }
-}
-
-/** Up to 8 decimals, trailing zeros trimmed (quantities read as plain numbers). */
-function formatQuantity(value: number): string {
-  if (!Number.isFinite(value)) return "0"
-  const [int, frac = ""] = value.toFixed(8).split(".")
-  const trimmed = frac.replace(/0+$/, "")
-  return trimmed === "" ? int : `${int}.${trimmed}`
-}
-
-/** Up to 8 decimals, trailing zeros trimmed, at least 2 decimals for money display. */
-function formatMoney(value: number): string {
-  if (!Number.isFinite(value)) return "0.00"
-  const [int, frac = ""] = value.toFixed(8).split(".")
-  const trimmed = frac.replace(/0+$/, "")
-  return `${int}.${trimmed.padEnd(2, "0")}`
 }
 
 export abstract class InvestmentsApiRepository extends AssetsApiRepository {

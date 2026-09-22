@@ -21,6 +21,8 @@
   net worth, and asset change contracts shared by renderer and API.
 - `contracts/investments/investment.contract.ts` - investment position, trade, and
   manual price-quote DTOs and inputs shared by renderer and API.
+- `contracts/investments/contract.contract.ts` - leveraged contract-position DTOs
+  and inputs for the display-only derivatives layer.
 - `ipc/index.ts` - ledger-change events emitted by the CLI or desktop background
   maintenance and the local socket path helper used for CLI commit refresh
   notifications.

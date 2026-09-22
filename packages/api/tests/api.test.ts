@@ -1272,6 +1272,7 @@ describe("@bubo/api — clean-slate data model", () => {
       "investment_positions",
       "investment_transactions",
       "price_quotes",
+      "contract_positions",
       "subscriptions",
       "loans",
       "loan_payment_occurrences",
@@ -1348,6 +1349,7 @@ describe("@bubo/api — clean-slate data model", () => {
     const firstDemoPositionCount = await countRows(db, "investment_positions", "id like 'demo_%'")
     const firstDemoTradeCount = await countRows(db, "investment_transactions", "id like 'demo_%'")
     const firstDemoQuoteCount = await countRows(db, "price_quotes", "id like 'demo_%'")
+    const firstDemoContractCount = await countRows(db, "contract_positions", "id like 'demo_%'")
 
     await seedDemoData(db, { anchorDate: "2026-06-12" })
 
@@ -1360,6 +1362,9 @@ describe("@bubo/api — clean-slate data model", () => {
       firstDemoTradeCount,
     )
     expect(await countRows(db, "price_quotes", "id like 'demo_%'")).toBe(firstDemoQuoteCount)
+    expect(await countRows(db, "contract_positions", "id like 'demo_%'")).toBe(
+      firstDemoContractCount,
+    )
     expect(expectOk(await api.getCashflowEvent(manual.id))?.title).toBe("手工咖啡")
   }, 60_000)
 
@@ -1409,6 +1414,7 @@ describe("@bubo/api — clean-slate data model", () => {
       "investment_positions",
       "investment_transactions",
       "price_quotes",
+      "contract_positions",
       "subscriptions",
       "subscription_occurrences",
       "loans",

@@ -8,7 +8,7 @@
 
 import { memo, useMemo, useState } from "react"
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels"
-import { Button } from "@heroui/react"
+import { Button, Tabs } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type {
   AddInvestmentTransactionInput,
@@ -29,6 +29,7 @@ import { Dim } from "../components/ui/Dim"
 import { BackButton } from "../components/ui/BackButton"
 import { useConfirm } from "../components/ui/ConfirmModal"
 import { AddPositionModal, emptyPositionForm, type PositionForm } from "./AddPositionModal"
+import { ContractsPanel } from "./ContractsPanel"
 import { TradeModal, emptyTradeForm, type TradeForm } from "./TradeModal"
 import { QuoteModal, emptyQuoteForm, type QuoteForm } from "./QuoteModal"
 import {
@@ -43,6 +44,8 @@ interface PositionRowProps {
   selected: boolean
   onSelect: (position: InvestmentPositionSummary) => void
 }
+
+type InvestmentTab = "spots" | "contracts"
 
 const PositionRow = memo(function PositionRow({ position, selected, onSelect }: PositionRowProps) {
   const fmt = useMoney()
@@ -125,6 +128,7 @@ export function InvestmentsPage() {
   const fmt = useMoney()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
+  const [activeTab, setActiveTab] = useState<InvestmentTab>("spots")
   const positionsQuery = useQuery(trpc.investments.positions.queryOptions({}))
   const accountsQuery = useQuery(trpc.assets.items.queryOptions())
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -316,212 +320,252 @@ export function InvestmentsPage() {
         background: "white",
       }}
     >
-      {/* Header — fixed, never scrolls */}
-      <div
-        style={{
-          flexShrink: 0,
-          padding: "28px 32px 16px",
-          borderBottom: "1px solid var(--hair-2)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 36 }}>
-          <div>
-            <Kicker className="mb-1.5">投资 · 现在值多少</Kicker>
-            <BigNumber style={{ fontSize: 40 }}>
-              <span style={{ fontSize: 18, marginRight: 6, fontWeight: 400 }}>{baseSymbol}</span>
-              {fmt(totals.marketValue)}
-            </BigNumber>
-            {totals.missingFx > 0 && (
-              <Dim style={{ fontSize: 10.5, marginTop: 4 }}>
-                {totals.missingFx} 个持仓缺少汇率，未计入合计
-              </Dim>
-            )}
-          </div>
-          <div
-            style={{
-              marginLeft: "auto",
-              display: "flex",
-              gap: 30,
-              paddingTop: 20,
-              alignItems: "center",
-            }}
-          >
-            <StatBlock label="持仓成本" value={`${baseSymbol}${fmt(totals.costBasis)}`} />
-            <StatBlock
-              label="未实现盈亏"
-              value={
-                <span style={{ color: totals.unrealized >= 0 ? "var(--accent)" : "var(--red)" }}>
-                  {totals.unrealized >= 0 ? "+" : "−"}
-                  {baseSymbol}
-                  {fmt(Math.abs(totals.unrealized))}
-                </span>
-              }
-            />
-            <StatBlock
-              label="已实现盈亏"
-              value={
-                <span style={{ color: totals.realized >= 0 ? "var(--accent)" : "var(--red)" }}>
-                  {totals.realized >= 0 ? "+" : "−"}
-                  {baseSymbol}
-                  {fmt(Math.abs(totals.realized))}
-                </span>
-              }
-            />
-            <StatBlock label="持仓" value={openPositions.length} />
-            <Button
-              size="sm"
-              variant="primary"
-              style={{ borderRadius: 5 }}
-              onPress={openAddPosition}
-            >
-              ＋ 新建持仓
-            </Button>
-          </div>
-        </div>
-        {error != null && (
-          <div style={{ marginTop: 10, fontSize: 11.5, color: "var(--red)" }}>{error}</div>
-        )}
+      {/* View tabs — spot positions or contract rows */}
+      <div style={{ flexShrink: 0, padding: "16px 32px 0" }}>
+        <Tabs
+          selectedKey={activeTab}
+          onSelectionChange={(key) => setActiveTab(key as InvestmentTab)}
+          aria-label="投资视图切换"
+        >
+          <Tabs.ListContainer>
+            <Tabs.List>
+              <Tabs.Tab id="spots" className="h-7 min-w-[88px] whitespace-nowrap px-4 text-[13px]">
+                现货持仓
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab
+                id="contracts"
+                className="h-7 min-w-[88px] whitespace-nowrap px-4 text-[13px]"
+              >
+                合约仓位
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
       </div>
 
-      {/* Content — fills remaining height */}
-      <PanelGroup orientation="horizontal" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {/* Left: independently scrollable positions list */}
-        <Panel defaultSize={60} minSize={30}>
-          <ScrollArea className="h-full">
-            <div style={{ padding: "16px 32px 112px" }}>
-              {[
-                { title: "持仓中", items: openPositions },
-                { title: "已清仓", items: closedPositions },
-              ].map(({ title, items }) => {
-                if (items.length === 0) return null
-                return (
-                  <div key={title}>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: "var(--ink-4)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.1em",
-                        padding: "12px 0 4px",
-                      }}
-                    >
-                      {title}
-                    </div>
-                    {items.map((position) => (
-                      <PositionRow
-                        key={position.id}
-                        position={position}
-                        selected={String(position.id) === selectedId}
-                        onSelect={(next) => setSelectedId(String(next.id))}
-                      />
-                    ))}
-                  </div>
-                )
-              })}
-              {positions.length === 0 && (
-                <div
-                  style={{
-                    padding: "28px 0",
-                    fontSize: 12,
-                    color: "var(--ink-4)",
-                    lineHeight: 1.7,
-                  }}
-                >
-                  暂无持仓。新建持仓后，这里会按交易重放显示数量、成本和盈亏。
-                </div>
-              )}
-              <div style={{ marginTop: 16, fontSize: 11, color: "var(--ink-4)", lineHeight: 1.7 }}>
-                持仓市值按当天自动写入关联账户的资产快照，净资产只读快照、不重复计算；
-                未关联账户的持仓只在本页展示，不进净资产。交易不会自动生成流水。
-              </div>
-            </div>
-          </ScrollArea>
-        </Panel>
-
-        <PanelResizeHandle
-          style={{
-            position: "relative",
-            width: 4,
-            background: "transparent",
-            cursor: "col-resize",
-          }}
-        >
+      {activeTab === "contracts" ? (
+        <ContractsPanel />
+      ) : (
+        <>
+          {/* Header — fixed, never scrolls */}
           <div
             style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: "1.5px",
-              width: 1,
-              background: "var(--hair-2)",
+              flexShrink: 0,
+              padding: "16px 32px 16px",
+              borderBottom: "1px solid var(--hair-2)",
             }}
-          />
-        </PanelResizeHandle>
-
-        {/* Right: position detail */}
-        <Panel defaultSize={40} minSize={20}>
-          <ScrollArea className="h-full">
-            <div style={{ padding: "16px 32px 112px" }}>
-              {selectedPosition == null ? (
-                <>
-                  <SectionTitle>持仓明细</SectionTitle>
-                  <div
-                    style={{
-                      marginTop: 12,
-                      fontSize: 12,
-                      color: "var(--ink-4)",
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    从左侧选择一个持仓，查看交易记录、未实现盈亏，并录入买卖或现价。
-                  </div>
-                </>
-              ) : (
-                <PositionDetail
-                  position={selectedPosition}
-                  transactions={detail?.transactions ?? []}
-                  saving={saving}
-                  onBack={() => setSelectedId(null)}
-                  onTrade={() => openTrade(selectedPosition)}
-                  onQuote={() => openQuote(selectedPosition)}
-                  onDelete={() => removePosition(selectedPosition)}
-                  onDeleteTransaction={(id) =>
-                    void run(async () => {
-                      await deleteTransaction.mutateAsync({ id })
-                    })
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 36 }}>
+              <div>
+                <Kicker className="mb-1.5">投资 · 现在值多少</Kicker>
+                <BigNumber style={{ fontSize: 40 }}>
+                  <span style={{ fontSize: 18, marginRight: 6, fontWeight: 400 }}>
+                    {baseSymbol}
+                  </span>
+                  {fmt(totals.marketValue)}
+                </BigNumber>
+                {totals.missingFx > 0 && (
+                  <Dim style={{ fontSize: 10.5, marginTop: 4 }}>
+                    {totals.missingFx} 个持仓缺少汇率，未计入合计
+                  </Dim>
+                )}
+              </div>
+              <div
+                style={{
+                  marginLeft: "auto",
+                  display: "flex",
+                  gap: 30,
+                  paddingTop: 20,
+                  alignItems: "center",
+                }}
+              >
+                <StatBlock label="持仓成本" value={`${baseSymbol}${fmt(totals.costBasis)}`} />
+                <StatBlock
+                  label="未实现盈亏"
+                  value={
+                    <span
+                      style={{ color: totals.unrealized >= 0 ? "var(--accent)" : "var(--red)" }}
+                    >
+                      {totals.unrealized >= 0 ? "+" : "−"}
+                      {baseSymbol}
+                      {fmt(Math.abs(totals.unrealized))}
+                    </span>
                   }
                 />
-              )}
+                <StatBlock
+                  label="已实现盈亏"
+                  value={
+                    <span style={{ color: totals.realized >= 0 ? "var(--accent)" : "var(--red)" }}>
+                      {totals.realized >= 0 ? "+" : "−"}
+                      {baseSymbol}
+                      {fmt(Math.abs(totals.realized))}
+                    </span>
+                  }
+                />
+                <StatBlock label="持仓" value={openPositions.length} />
+                <Button
+                  size="sm"
+                  variant="primary"
+                  style={{ borderRadius: 5 }}
+                  onPress={openAddPosition}
+                >
+                  ＋ 新建持仓
+                </Button>
+              </div>
             </div>
-          </ScrollArea>
-        </Panel>
-      </PanelGroup>
+            {error != null && (
+              <div style={{ marginTop: 10, fontSize: 11.5, color: "var(--red)" }}>{error}</div>
+            )}
+          </div>
 
-      <AddPositionModal
-        open={showAddPosition}
-        form={positionForm}
-        accounts={accounts}
-        saving={saving}
-        onSave={savePosition}
-        onClose={() => setShowAddPosition(false)}
-      />
-      <TradeModal
-        open={tradeTarget != null}
-        form={tradeForm}
-        position={tradeTarget}
-        saving={saving}
-        onSave={saveTrade}
-        onClose={() => setTradeTarget(null)}
-      />
-      <QuoteModal
-        open={quoteTarget != null}
-        form={quoteForm}
-        position={quoteTarget}
-        saving={saving}
-        onSave={saveQuote}
-        onClose={() => setQuoteTarget(null)}
-      />
+          {/* Content — fills remaining height */}
+          <PanelGroup
+            orientation="horizontal"
+            style={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+          >
+            {/* Left: independently scrollable positions list */}
+            <Panel defaultSize={60} minSize={30}>
+              <ScrollArea className="h-full">
+                <div style={{ padding: "16px 32px 112px" }}>
+                  {[
+                    { title: "持仓中", items: openPositions },
+                    { title: "已清仓", items: closedPositions },
+                  ].map(({ title, items }) => {
+                    if (items.length === 0) return null
+                    return (
+                      <div key={title}>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: "var(--ink-4)",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.1em",
+                            padding: "12px 0 4px",
+                          }}
+                        >
+                          {title}
+                        </div>
+                        {items.map((position) => (
+                          <PositionRow
+                            key={position.id}
+                            position={position}
+                            selected={String(position.id) === selectedId}
+                            onSelect={(next) => setSelectedId(String(next.id))}
+                          />
+                        ))}
+                      </div>
+                    )
+                  })}
+                  {positions.length === 0 && (
+                    <div
+                      style={{
+                        padding: "28px 0",
+                        fontSize: 12,
+                        color: "var(--ink-4)",
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      暂无持仓。新建持仓后，这里会按交易重放显示数量、成本和盈亏。
+                    </div>
+                  )}
+                  <div
+                    style={{ marginTop: 16, fontSize: 11, color: "var(--ink-4)", lineHeight: 1.7 }}
+                  >
+                    持仓市值按当天自动写入关联账户的资产快照，净资产只读快照、不重复计算；
+                    未关联账户的持仓只在本页展示，不进净资产。交易不会自动生成流水。
+                  </div>
+                </div>
+              </ScrollArea>
+            </Panel>
+
+            <PanelResizeHandle
+              style={{
+                position: "relative",
+                width: 4,
+                background: "transparent",
+                cursor: "col-resize",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: "1.5px",
+                  width: 1,
+                  background: "var(--hair-2)",
+                }}
+              />
+            </PanelResizeHandle>
+
+            {/* Right: position detail */}
+            <Panel defaultSize={40} minSize={20}>
+              <ScrollArea className="h-full">
+                <div style={{ padding: "16px 32px 112px" }}>
+                  {selectedPosition == null ? (
+                    <>
+                      <SectionTitle>持仓明细</SectionTitle>
+                      <div
+                        style={{
+                          marginTop: 12,
+                          fontSize: 12,
+                          color: "var(--ink-4)",
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        从左侧选择一个持仓，查看交易记录、未实现盈亏，并录入买卖或现价。
+                      </div>
+                    </>
+                  ) : (
+                    <PositionDetail
+                      position={selectedPosition}
+                      transactions={detail?.transactions ?? []}
+                      saving={saving}
+                      onBack={() => setSelectedId(null)}
+                      onTrade={() => openTrade(selectedPosition)}
+                      onQuote={() => openQuote(selectedPosition)}
+                      onDelete={() => removePosition(selectedPosition)}
+                      onDeleteTransaction={(id) =>
+                        void run(async () => {
+                          await deleteTransaction.mutateAsync({ id })
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              </ScrollArea>
+            </Panel>
+          </PanelGroup>
+
+          <AddPositionModal
+            open={showAddPosition}
+            form={positionForm}
+            accounts={accounts}
+            saving={saving}
+            onSave={savePosition}
+            onClose={() => setShowAddPosition(false)}
+          />
+          <TradeModal
+            open={tradeTarget != null}
+            form={tradeForm}
+            position={tradeTarget}
+            saving={saving}
+            onSave={saveTrade}
+            onClose={() => setTradeTarget(null)}
+          />
+          <QuoteModal
+            open={quoteTarget != null}
+            form={quoteForm}
+            position={quoteTarget}
+            saving={saving}
+            onSave={saveQuote}
+            onClose={() => setQuoteTarget(null)}
+          />
+        </>
+      )}
     </div>
   )
 }

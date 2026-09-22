@@ -1,5 +1,5 @@
 /**
- * @purpose Provide shared API helper primitives for IDs, dates, currency, cashflow kind mapping, SQL aggregates, and Result wrapping.
+ * @purpose Provide shared API helper primitives for IDs, dates, currency, number formatting, cashflow kind mapping, SQL aggregates, and Result wrapping.
  * @role    Low-level utility layer reused by SQLite facade modules.
  * @deps    drizzle-orm SQL helpers, @bubo/shared Result, and shared contracts.
  * @gotcha  Keep helpers side-effect free except for ID/time generation at API boundaries.
@@ -76,6 +76,22 @@ export function toSqlId(id: BuboId): string {
 
 export function todayKey(): string {
   return new Date().toISOString().slice(0, 10)
+}
+
+/** Up to 8 decimals, trailing zeros trimmed (quantities read as plain numbers). */
+export function formatQuantity(value: number): string {
+  if (!Number.isFinite(value)) return "0"
+  const [int, frac = ""] = value.toFixed(8).split(".")
+  const trimmed = frac.replace(/0+$/, "")
+  return trimmed === "" ? int : `${int}.${trimmed}`
+}
+
+/** Up to 8 decimals, trailing zeros trimmed, at least 2 decimals for money display. */
+export function formatMoney(value: number): string {
+  if (!Number.isFinite(value)) return "0.00"
+  const [int, frac = ""] = value.toFixed(8).split(".")
+  const trimmed = frac.replace(/0+$/, "")
+  return `${int}.${trimmed.padEnd(2, "0")}`
 }
 
 export function addInterval(date: string, cycle: string, interval: number): string {

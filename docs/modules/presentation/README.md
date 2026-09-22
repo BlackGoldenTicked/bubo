@@ -9,9 +9,9 @@ DTOs returned by the bubo API facade.
 
 - `packages/api/src/presentation/mappers/sqlite-row-mappers.ts` - shared row
   mappers for categories, cashflow, assets, investment positions/trades/quotes,
-  subscription plans, loans, budgets, links, and dashboard records. Subscription
-  schedule projections do not have a SQLite row mapper because they are derived at
-  read time.
+  contract positions, subscription plans, loans, budgets, links, and dashboard
+  records. Subscription schedule projections do not have a SQLite row mapper
+  because they are derived at read time.
 
 ## Data Flow
 

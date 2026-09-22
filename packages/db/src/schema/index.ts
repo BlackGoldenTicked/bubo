@@ -313,6 +313,45 @@ export const priceQuotes = sqliteTable(
   }),
 )
 
+// ── Contract positions (derivatives layer) ─────────────────────────────────
+// Futures and perpetuals are direction on an underlying, not a holding. The
+// row keeps the user's margin and mark; unrealized P&L is always derived from
+// side/entry/mark so no stored number can drift. Contract rows never feed net
+// worth: only a margin balance recorded as an asset snapshot does.
+
+export const contractPositions = sqliteTable(
+  "contract_positions",
+  {
+    id: text("id").primaryKey(),
+    symbol: text("symbol").notNull(),
+    side: text("side", { enum: ["long", "short"] }).notNull(),
+    marginMode: text("margin_mode", { enum: ["isolated", "cross"] })
+      .notNull()
+      .default("isolated"),
+    /** Leverage ×10000 (10x = 100000) keeps the stored value an integer. */
+    leverageBps: integer("leverage_bps").notNull().default(10000),
+    quantity: text("quantity").notNull(),
+    entryPrice: text("entry_price").notNull(),
+    markPrice: text("mark_price"),
+    exitPrice: text("exit_price"),
+    liquidationPrice: text("liquidation_price"),
+    marginAmount: text("margin_amount"),
+    currency: text("currency").notNull().default("USD"),
+    status: text("status", { enum: ["open", "closed", "liquidated"] })
+      .notNull()
+      .default("open"),
+    openedAt: text("opened_at").notNull(),
+    closedAt: text("closed_at"),
+    note: text("note"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => ({
+    symbolIdx: index("idx_contract_positions_symbol").on(t.symbol),
+    statusIdx: index("idx_contract_positions_status").on(t.status),
+  }),
+)
+
 export const subscriptions = sqliteTable(
   "subscriptions",
   {
@@ -572,6 +611,8 @@ export type InvestmentTransactionRow = typeof investmentTransactions.$inferSelec
 export type InvestmentTransactionInsert = typeof investmentTransactions.$inferInsert
 export type PriceQuoteRow = typeof priceQuotes.$inferSelect
 export type PriceQuoteInsert = typeof priceQuotes.$inferInsert
+export type ContractPositionRow = typeof contractPositions.$inferSelect
+export type ContractPositionInsert = typeof contractPositions.$inferInsert
 export type SubscriptionRow = typeof subscriptions.$inferSelect
 export type SubscriptionInsert = typeof subscriptions.$inferInsert
 export type SubscriptionOccurrenceRow = typeof subscriptionOccurrences.$inferSelect

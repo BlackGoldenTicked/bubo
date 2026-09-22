@@ -313,6 +313,43 @@ export const appRouter = router({
         callApi(ctx, (api) => api.listPriceQuotes(requiredInput<"listPriceQuotes">(input))),
       ),
   }),
+  contracts: router({
+    positions: publicProcedure
+      .input(apiInput<"listContractPositions">())
+      .query(({ ctx, input }) =>
+        callApi(ctx, (api) =>
+          api.listContractPositions(inputOrEmpty<"listContractPositions">(input)),
+        ),
+      ),
+    createPosition: publicProcedure
+      .input(apiInput<"createContractPosition">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) =>
+          api.createContractPosition(requiredInput<"createContractPosition">(input)),
+        ),
+      ),
+    updatePosition: publicProcedure
+      .input(apiInput<"updateContractPosition">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) =>
+          api.updateContractPosition(requiredInput<"updateContractPosition">(input)),
+        ),
+      ),
+    closePosition: publicProcedure
+      .input(apiInput<"closeContractPosition">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) =>
+          api.closeContractPosition(requiredInput<"closeContractPosition">(input)),
+        ),
+      ),
+    deletePosition: publicProcedure
+      .input(apiInput<"deleteContractPosition">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) =>
+          api.deleteContractPosition(requiredInput<"deleteContractPosition">(input)),
+        ),
+      ),
+  }),
   subscriptions: router({
     list: publicProcedure
       .input(apiInput<"listSubscriptions">())

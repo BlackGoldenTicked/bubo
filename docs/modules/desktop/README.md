@@ -44,6 +44,9 @@ renderer, routing, local app resources, and desktop packaging configuration.
   position detail with trade history, buy/sell and quote forms, and realized/unrealized P&L
   derived from the replayed position state. Linked accounts receive materialized system
   snapshots, and the surface stays explicit that market value is estimated from manual quotes.
+  A top-level tab switches to `ContractsPanel`: leveraged contract rows grouped by
+  open/closed/liquidated with create/update/close/delete forms whose P&L math mirrors
+  `contract-rules.ts` and stays outside net worth.
 - `loans/` - future loan obligation views and schedule calculations.
 - `settings/` - ledger, category, and app configuration surfaces.
 - `subscriptions/` - recurring future obligation views that project calendar/list dates from plans at
@@ -197,6 +200,12 @@ Update `apps/desktop/src/renderer/src/env.d.ts` whenever the `window.bubo` contr
   open market value into a same-day `system` snapshot for net worth, while a same-day manual
   balance still wins. Positions must match the linked account currency, and deleting the last
   open position clears the materialized snapshot.
+- Contract positions are display-only: the contracts tab derives notional, margin, and P&L at
+  render time via `investments/contractDisplay.ts`, never materializes snapshots, and never
+  touches cashflow or the linked-account rules above. Closing records an outcome — `closed`
+  requires an exit price, while `liquidated` realizes the posted margin as a loss. Only a margin
+  balance the user records as an asset snapshot reaches net worth. See
+  [ADR 0016](../../decisions/0016-keep-contract-positions-display-only.md).
 - Analysis charts summarize past cashflow only; keep them visually connected to
   cashflow review, not asset reconciliation or forecast planning.
 - The demo ledger banner is intentionally non-dismissible while a demo ledger is active; the explicit exit is switching to a non-demo ledger.

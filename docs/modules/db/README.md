@@ -23,6 +23,10 @@ handle used by the Tauri Node sidecar, CLI, and API package.
   investment layer: trade-replayed holdings, their buy/sell history, and manual
   quotes. Materialized `system` asset snapshots stay the only path into net worth
   (see [ADR 0015](../../decisions/0015-route-investment-value-through-system-snapshots.md)).
+- `contract_positions` describes leveraged futures/perpetual rows. It is display-only:
+  contract P&L is derived from mark/exit prices at read time and never materialized
+  into snapshots or cashflow
+  (see [ADR 0016](../../decisions/0016-keep-contract-positions-display-only.md)).
 - Budgets, categories, subscriptions, and loans support planning and review workflows.
 - Subscription forecasts are derived from `subscriptions` at read time and are not persisted.
   `subscription_occurrences` remains temporarily in the schema only as an ignored compatibility

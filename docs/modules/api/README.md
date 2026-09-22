@@ -19,17 +19,21 @@ presentation mappers.
 - `packages/api/src/infrastructure/db/repositories/agent-ledger-api.repository.ts` - rule-checked agent patch persistence.
 - `packages/api/src/domain/assets/asset-rules.ts` - pure asset normalization rules.
 - `packages/api/src/domain/investments/investment-rules.ts` - pure trade replay, weighted-average cost, and P&L rules.
+- `packages/api/src/domain/investments/contract-rules.ts` - pure leveraged-contract parsing, leverage bounds, and derived P&L rules.
 - `packages/api/src/use-cases/assets/assets-api.ts` - present asset facade methods backed by asset use cases and repositories.
 - `packages/api/src/use-cases/assets/upsert-asset-snapshot.ts` - multi-step asset snapshot upsert workflow.
 - `packages/api/src/use-cases/investments/investments-api.ts` - investment facade methods backed by the investments repository.
 - `packages/api/src/infrastructure/db/repositories/assets.repository.ts` - Drizzle-backed asset item and snapshot persistence.
 - `packages/api/src/infrastructure/db/repositories/investments.repository.ts` - Drizzle-backed position, trade, and quote persistence.
 - `packages/api/src/infrastructure/db/repositories/investments-api.repository.ts` - investment facade implementation, including system snapshot materialization for linked accounts.
+- `packages/api/src/infrastructure/db/repositories/contracts-api.repository.ts` - contract-position facade implementation over `contract_positions`; P&L stays derived display math.
 - `packages/api/src/presentation/mappers/sqlite-row-mappers.ts` - SQLite row to renderer contract mappers.
 - `packages/api/src/default-seed.ts` - default categories and lightweight personal starter data.
 - `packages/api/src/demo-seed.ts` - full deterministic demo ledger data.
 - `packages/api/tests/api.test.ts` - integration tests for the facade against SQLite.
 - `packages/api/tests/investments.test.ts` - integration tests for positions, trades, quotes, and net-worth materialization.
+- `packages/api/tests/contracts.test.ts` - integration tests for contract-position CRUD and close/liquidate outcomes.
+- `packages/api/tests/contract-rules.test.ts` - unit tests for contract parsing, leverage bounds, and derived P&L.
 
 ## Use-Case Map
 
@@ -85,7 +89,8 @@ latest monthly budget period's active items and scopes into the target month.
 
 `demo-seed.ts` owns the larger packaged sample ledger used by `bubo-demo.sqlite3`,
 including trade-driven investment positions with manual quotes whose open market
-value stays in the same ballpark as the linked account's manual snapshot.
+value stays in the same ballpark as the linked account's manual snapshot, plus a
+small set of open/closed/liquidated contract positions that stay outside net worth.
 
 The personal starter seed should be idempotent and conservative. It should only run for new non-demo ledgers and must use the public bubo API facade for domain objects instead of inserting cross-domain starter rows directly. This keeps the seed aligned with validation, read-time subscription projection, loan occurrence generation, and the asymmetric finance model.
 
@@ -102,6 +107,12 @@ The personal starter seed should be idempotent and conservative. It should only 
   snapshots (one per linked account per day); a same-day manual snapshot wins the
   latest-snapshot read by ISO-vs-date ordering. Positions without a linked account
   stay display-only. See [ADR 0015](../../decisions/0015-route-investment-value-through-system-snapshots.md).
+- Contract positions are a display-only derivatives layer: rows carry no
+  `asset_item_id`, never materialize snapshots, and P&L is derived from
+  mark/exit prices at read time (`contract-rules.ts`). Deleting a contract
+  touches nothing else; only a margin balance the user records as an asset
+  snapshot reaches net worth. See
+  [ADR 0016](../../decisions/0016-keep-contract-positions-display-only.md).
 - Cross-currency aggregation (net worth, future pressure) converts each amount to the display currency at the latest cached rate via `convertAmount`; buckets without an available rate are dropped (net worth surfaces them as `missingFx`). Conversion never mutates stored amounts, and past cashflow is intentionally not converted.
 - Asset item archive/restore must preserve snapshot history. Default asset
   snapshot and net worth queries use active accounts only; explicit archived

@@ -121,6 +121,34 @@ describe("TauriLedgerStore", () => {
         )
       }
 
+      const contract = await request({
+        type: "mutation",
+        path: "contracts.createPosition",
+        input: {
+          symbol: "BTCUSD",
+          side: "long",
+          leverageBps: 100_000,
+          quantity: "0.5",
+          entryPrice: "60000",
+          markPrice: "64500",
+        },
+      })
+      expect(contract.ok).toBe(true)
+
+      const contracts = await request({
+        type: "query",
+        path: "contracts.positions",
+        input: {},
+      })
+      expect(contracts.ok).toBe(true)
+      if (contracts.ok) {
+        expect(contracts.data).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ symbol: "BTCUSD", side: "long", status: "open" }),
+          ]),
+        )
+      }
+
       const dbPath = store.getActiveFilePath()!
       const event: LedgerChangeEvent = {
         type: "ledger.changed",

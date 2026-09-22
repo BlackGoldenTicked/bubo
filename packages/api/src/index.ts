@@ -17,8 +17,12 @@ import type {
   AssetSnapshotSummary,
   AssetSparklinePoint,
   CashflowKind,
+  CloseContractPositionInput,
+  ContractPositionSummary,
   CreateAssetItemInput,
+  CreateContractPositionInput,
   CreateInvestmentPositionInput,
+  DeleteContractPositionInput,
   DeleteInvestmentPositionInput,
   DeleteInvestmentTransactionInput,
   Direction,
@@ -29,6 +33,7 @@ import type {
   ListAssetItemsInput,
   ListAssetSnapshotsInput,
   ListAssetSparklinesInput,
+  ListContractPositionsInput,
   ListInvestmentPositionsInput,
   ListPriceQuotesInput,
   MoneyAmount,
@@ -38,6 +43,7 @@ import type {
   RecordPriceQuoteInput,
   UpdateAssetItemInput,
   UpdateAssetSnapshotInput,
+  UpdateContractPositionInput,
   UpdateInvestmentPositionInput,
   UpsertAssetSnapshotInput,
 } from "@bubo/shared/contracts"
@@ -55,8 +61,15 @@ export type {
   AssetSparklinePoint,
   AssetType,
   CashflowKind,
+  CloseContractPositionInput,
+  ContractMarginMode,
+  ContractPositionStatus,
+  ContractPositionSummary,
+  ContractSide,
   CreateAssetItemInput,
+  CreateContractPositionInput,
   CreateInvestmentPositionInput,
+  DeleteContractPositionInput,
   DeleteInvestmentPositionInput,
   DeleteInvestmentTransactionInput,
   Direction,
@@ -71,6 +84,7 @@ export type {
   ListAssetItemsInput,
   ListAssetSnapshotsInput,
   ListAssetSparklinesInput,
+  ListContractPositionsInput,
   ListInvestmentPositionsInput,
   ListPriceQuotesInput,
   MoneyAmount,
@@ -80,6 +94,7 @@ export type {
   RecordPriceQuoteInput,
   UpdateAssetItemInput,
   UpdateAssetSnapshotInput,
+  UpdateContractPositionInput,
   UpdateInvestmentPositionInput,
   UpsertAssetSnapshotInput,
 } from "@bubo/shared/contracts"
@@ -173,6 +188,18 @@ export interface BuboApi {
   ): Promise<Result<InvestmentPositionDetail>>
   recordPriceQuote(input: RecordPriceQuoteInput): Promise<Result<PriceQuoteSummary>>
   listPriceQuotes(input: ListPriceQuotesInput): Promise<Result<PriceQuoteSummary[]>>
+
+  listContractPositions(
+    input?: ListContractPositionsInput,
+  ): Promise<Result<ContractPositionSummary[]>>
+  createContractPosition(
+    input: CreateContractPositionInput,
+  ): Promise<Result<ContractPositionSummary>>
+  updateContractPosition(
+    input: UpdateContractPositionInput,
+  ): Promise<Result<ContractPositionSummary>>
+  closeContractPosition(input: CloseContractPositionInput): Promise<Result<ContractPositionSummary>>
+  deleteContractPosition(input: DeleteContractPositionInput): Promise<Result<void>>
 
   listSubscriptions(input?: ListSubscriptionsInput): Promise<Result<SubscriptionSummary[]>>
   createSubscription(input: CreateSubscriptionInput): Promise<Result<SubscriptionSummary>>

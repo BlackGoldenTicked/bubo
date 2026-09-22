@@ -17,7 +17,7 @@ import type {
   SubscriptionSummary,
   UpdateSubscriptionInput,
 } from "../../../index"
-import { InvestmentsApiRepository } from "./investments-api.repository"
+import { ContractsApiRepository } from "./contracts-api.repository"
 import { fail, newId, normalizeCurrency, nowIso, ok, toSqlId } from "../../../shared/api-helpers"
 
 function localDateKey(date = new Date()): string {
@@ -33,7 +33,7 @@ function addDaysKey(dateKey: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-export abstract class SubscriptionsApiRepository extends InvestmentsApiRepository {
+export abstract class SubscriptionsApiRepository extends ContractsApiRepository {
   async listSubscriptions(
     input: ListSubscriptionsInput = {},
   ): Promise<Result<SubscriptionSummary[]>> {

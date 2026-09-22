@@ -17,6 +17,7 @@ import {
   cashflowEventTags,
   cashflowEvents,
   categories,
+  contractPositions,
   currencySettings,
   exchangeRates,
   investmentPositions,
@@ -52,6 +53,7 @@ const TARGET_TABLES = [
   "investment_positions",
   "investment_transactions",
   "price_quotes",
+  "contract_positions",
   "subscriptions",
   "subscription_occurrences",
   "loans",
@@ -89,6 +91,7 @@ const TABLE_MAP: Record<TargetTable, SQLiteTable> = {
   investment_positions: investmentPositions,
   investment_transactions: investmentTransactions,
   price_quotes: priceQuotes,
+  contract_positions: contractPositions,
   subscriptions,
   subscription_occurrences: subscriptionOccurrences,
   loans,
@@ -509,6 +512,86 @@ const INVESTMENTS: DemoHolding[] = [
       { price: "402.00", daysAgo: 7 },
       { price: "415.00", daysAgo: 0 },
     ],
+  },
+]
+
+/**
+ * Demo contract rows covering the three lifecycle states.
+ *
+ * Contracts are pure display records: they carry direction, leverage, and margin,
+ * and never materialize into asset snapshots, so seeding keeps them out of net
+ * worth. P&L derives from these fields at read time rather than storing numbers
+ * that could drift.
+ */
+interface DemoContract {
+  key: string
+  symbol: string
+  side: "long" | "short"
+  marginMode: "isolated" | "cross"
+  /** Leverage as a multiple; stored as ×10000 bps. */
+  leverage: number
+  quantity: string
+  entryPrice: string
+  markPrice?: string
+  exitPrice?: string
+  liquidationPrice?: string
+  marginAmount?: string
+  currency: string
+  status: "open" | "closed" | "liquidated"
+  openedDaysAgo: number
+  closedDaysAgo?: number
+  note: string
+}
+
+const CONTRACTS: DemoContract[] = [
+  {
+    key: "btc_long",
+    symbol: "BTCUSD",
+    side: "long",
+    marginMode: "isolated",
+    leverage: 10,
+    quantity: "0.5",
+    entryPrice: "60000.00",
+    markPrice: "64500.00",
+    liquidationPrice: "55000.00",
+    marginAmount: "3000.00",
+    currency: "USD",
+    status: "open",
+    openedDaysAgo: 21,
+    note: "demo perpetual long; P&L derives from the mark price",
+  },
+  {
+    key: "eth_short",
+    symbol: "ETHUSD",
+    side: "short",
+    marginMode: "cross",
+    leverage: 5,
+    quantity: "4",
+    entryPrice: "3200.00",
+    exitPrice: "2950.00",
+    marginAmount: "2560.00",
+    currency: "USD",
+    status: "closed",
+    openedDaysAgo: 45,
+    closedDaysAgo: 12,
+    note: "demo closed short; realized P&L uses the exit price",
+  },
+  {
+    key: "sol_long",
+    symbol: "SOLUSD",
+    side: "long",
+    marginMode: "isolated",
+    leverage: 20,
+    quantity: "50",
+    entryPrice: "160.00",
+    exitPrice: "145.00",
+    liquidationPrice: "152.00",
+    marginAmount: "400.00",
+    currency: "USD",
+    status: "liquidated",
+    openedDaysAgo: 60,
+    closedDaysAgo: 40,
+    note: "demo liquidation; realizes the full margin as a loss",
   },
 ]
 
@@ -1319,6 +1402,40 @@ function buildDemoStatements(ctx: SeedContext): DemoBuildResult {
     })
   }
 
+  // Contract rows are display records: direction, leverage, and margin only.
+  // They never materialize into snapshots, so seeding keeps them out of net worth.
+  for (const contract of CONTRACTS) {
+    const openedAt = toIsoAt(toDate(addDays(parseDate(ctx.anchorDate), -contract.openedDaysAgo)), 9)
+    const closedAt =
+      contract.closedDaysAgo != null
+        ? toIsoAt(toDate(addDays(parseDate(ctx.anchorDate), -contract.closedDaysAgo)), 15)
+        : null
+    push("contract_positions", (db) => {
+      db.insert(contractPositions)
+        .values({
+          id: demoId("ctr", contract.key),
+          symbol: contract.symbol,
+          side: contract.side,
+          marginMode: contract.marginMode,
+          leverageBps: contract.leverage * 10_000,
+          quantity: contract.quantity,
+          entryPrice: contract.entryPrice,
+          markPrice: contract.markPrice ?? null,
+          exitPrice: contract.exitPrice ?? null,
+          liquidationPrice: contract.liquidationPrice ?? null,
+          marginAmount: contract.marginAmount ?? null,
+          currency: contract.currency,
+          status: contract.status,
+          openedAt,
+          closedAt,
+          note: contract.note,
+          createdAt: openedAt,
+          updatedAt: closedAt ?? openedAt,
+        })
+        .run()
+    })
+  }
+
   for (const monthDate of ctx.months) {
     const month = monthKey(monthDate)
     const fundMove = cashflowIds.get(`fund_buy_${month}`)
@@ -1523,6 +1640,7 @@ async function deleteDemoData(db: Database): Promise<Record<string, number>> {
       or(demoLike(investmentPositions.id), demoLike(investmentPositions.assetItemId))!,
     ],
     ["price_quotes", demoLike(priceQuotes.id)],
+    ["contract_positions", demoLike(contractPositions.id)],
     ["asset_snapshots", or(demoLike(assetSnapshots.id), demoLike(assetSnapshots.assetItemId))!],
     ["asset_items", demoLike(assetItems.id)],
     [
@@ -1830,6 +1948,26 @@ export async function validateDemoData(
   metrics.investmentValue = investmentValue.toFixed(2)
   if (replayMismatches > 0) issues.push("investment position state does not match its trades")
   if (investmentValue <= 0) issues.push("investment market value is empty")
+
+  const contractRows = db
+    .select()
+    .from(contractPositions)
+    .where(like(contractPositions.id, `${DEMO_PREFIX}%`))
+    .all()
+  const openContracts = contractRows.filter((row) => row.status === "open")
+  metrics.contractPositions = contractRows.length
+  metrics.contractOpenPositions = openContracts.length
+  if (contractRows.length <= 0) issues.push("contract positions are empty")
+  if (openContracts.length <= 0) issues.push("contract positions are not open")
+  // Close state must agree with its timestamps, and leverage stays in the 1x–125x band.
+  const contractStateMismatches = contractRows.filter((row) =>
+    row.status === "open" ? row.closedAt != null : row.closedAt == null,
+  ).length
+  if (contractStateMismatches > 0) issues.push("contract close state does not match its timestamps")
+  const badLeverage = contractRows.filter(
+    (row) => row.leverageBps < 10_000 || row.leverageBps > 1_250_000,
+  ).length
+  if (badLeverage > 0) issues.push("contract leverage is outside the 1x–125x range")
 
   const future = expectOk(
     await api.getFutureFixedPressure({
