@@ -35,11 +35,11 @@ function ChartTooltip({
   return (
     <div
       style={{
-        background: "white",
+        background: "var(--surface-1)",
         border: "1px solid var(--hair-2)",
         borderRadius: 8,
         padding: "5px 10px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        boxShadow: "var(--popover-shadow)",
         fontSize: 12,
         color: "var(--ink)",
         whiteSpace: "nowrap",

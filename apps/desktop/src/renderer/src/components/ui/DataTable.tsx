@@ -26,7 +26,7 @@ export function DataTable({ columns, children }: DataTableProps) {
           {columns.map((col, i) => (
             <th
               key={i}
-              className="text-[10px] uppercase tracking-[0.08em] text-[var(--ink-4)] font-semibold py-1.5 border-b border-[var(--hair)] sticky top-0 bg-white"
+              className="text-[10px] uppercase tracking-[0.08em] text-[var(--ink-4)] font-semibold py-1.5 border-b border-[var(--hair)] sticky top-0 bg-[var(--surface-1)]"
               style={{ width: col.width, textAlign: col.align ?? "left" }}
             >
               {col.label}

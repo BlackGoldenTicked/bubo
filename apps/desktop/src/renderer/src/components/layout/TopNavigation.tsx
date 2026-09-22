@@ -34,7 +34,7 @@ export function TopNavigation() {
   return (
     <header
       data-tauri-drag-region
-      className="drag-region relative z-30 flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--hair)] bg-white px-7"
+      className="drag-region relative z-30 flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--hair)] bg-[var(--surface-1)] px-7"
     >
       <nav
         data-tauri-drag-region

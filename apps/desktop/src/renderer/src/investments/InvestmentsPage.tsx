@@ -317,7 +317,7 @@ export function InvestmentsPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       {/* View tabs — spot positions or contract rows */}

@@ -4,6 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>bubo</title>
+    <script>
+      // Apply the stored theme before first paint; mirrored by useThemeEffect in React.
+      ;(() => {
+        let preference = "system"
+        try {
+          const stored = JSON.parse(localStorage.getItem("bubo.theme") ?? "null")
+          if (stored === "light" || stored === "dark" || stored === "system") preference = stored
+        } catch {
+          // Ignore unreadable storage and fall back to the system preference.
+        }
+        const dark =
+          preference === "dark" ||
+          (preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+        document.documentElement.dataset.theme = dark ? "dark" : "light"
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

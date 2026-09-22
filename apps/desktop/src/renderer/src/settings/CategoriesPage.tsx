@@ -194,7 +194,7 @@ function CategoryModal({
                         className={`h-[30px] cursor-pointer rounded-md border px-2.5 text-[12px] font-medium ${
                           active
                             ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]"
-                            : "border-[var(--hair-2)] bg-white text-[var(--ink-2)]"
+                            : "border-[var(--hair-2)] bg-[var(--surface-1)] text-[var(--ink-2)]"
                         }`}
                       >
                         {kind.label}
@@ -430,7 +430,7 @@ export function CategoriesPage() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white">
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--surface-1)]">
       <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pt-7 pb-5">
         <div className="mx-auto w-[720px] max-w-full">
           <div className="mb-3.5">

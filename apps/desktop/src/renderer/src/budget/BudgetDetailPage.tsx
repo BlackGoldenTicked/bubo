@@ -175,7 +175,7 @@ export function BudgetDetailPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       <ScrollArea className="h-full" style={{ flex: 1, minHeight: 0 }}>

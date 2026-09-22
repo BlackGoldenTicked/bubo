@@ -316,7 +316,7 @@ export function LoansPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       {/* Fixed header */}

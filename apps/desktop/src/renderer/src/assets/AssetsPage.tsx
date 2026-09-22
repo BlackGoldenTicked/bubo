@@ -463,7 +463,7 @@ export function AssetsPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       {/* Header — fixed, never scrolls */}

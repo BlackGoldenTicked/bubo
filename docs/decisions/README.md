@@ -31,3 +31,4 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0015   | Materialize Investment Value Into System Snapshots | Accepted | 2026-09-22 |
 | 0016   | Keep Contract Positions Display-Only               | Accepted | 2026-09-22 |
 | 0017   | Unify Renderer States, Failures, And Copy Language | Accepted | 2026-09-22 |
+| 0018   | Renderer Theme System With Dark Mode               | Accepted | 2026-09-22 |

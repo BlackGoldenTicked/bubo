@@ -17,6 +17,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `apps/desktop/src/main/trpc/transport.ts` - compact sidecar request dispatcher.
 - `apps/desktop/src/main/trpc/ledger-service.ts` - runtime-neutral ledger lifecycle contract.
 - `apps/desktop/src/renderer/src` - React renderer routes, feature pages, providers, and app styles.
+- `apps/desktop/src/renderer/index.html` - renderer entry HTML carrying the pre-paint theme boot script.
 - `apps/desktop/src/renderer/src/env.d.ts` - typed `window.bubo` renderer contract.
 - `apps/desktop/src/renderer/src/lib/desktop-runtime.ts` - Tauri adapter for native commands, import/reveal, CLI refresh, version, signed updates, and manual download fallback.
 - `apps/desktop/resources/icons` - shared desktop app icon sources and macOS `.icns` asset.
@@ -54,7 +55,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `components/charts/` - renderer chart components.
 - `components/layout/` - desktop shell, title bar, persistent top navigation, and banners.
 - `components/ui/` - renderer-local UI atoms that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
-- `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
+- `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), `lib/theme.ts` resolves the stored `light | dark | system` preference into `<html data-theme>` and the native window appearance, and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
 - `lib/mouseHistoryNavigation.ts` maps side buttons, browser history keys, and macOS Command+[ / Command+] to TanStack Router history on Tauri.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.
 
@@ -139,6 +140,13 @@ Update `apps/desktop/src/renderer/src/env.d.ts` whenever the `window.bubo` contr
   by error identity. Callers that need extra handling must reuse
   `reportActionError`, not `notify`, so the same error is not toasted twice.
   See [ADR 0017](../../decisions/0017-unify-renderer-states-failures-and-copy-language.md).
+- The renderer theme has one contract: `themePreferenceAtom` (`bubo.theme`, default
+  `system`) is applied by `lib/theme.ts` to `<html data-theme>` and the native
+  window via Tauri `setTheme`; `renderer/index.html` mirrors the same storage key
+  before first paint. New surfaces use `--surface-1` for page/panel faces instead
+  of `bg-white` (literal whites are only for content on colored fills), and every
+  new bubo token needs both a `:root` and a `[data-theme="dark"]` value.
+  See [ADR 0018](../../decisions/0018-renderer-theme-system.md).
 - Dashboard cashflow range selection is a renderer preference persisted in
   `localStorage`; it does not change the active ledger or database state.
 - Dashboard loan debt is a read-time projection: the overview loads loan

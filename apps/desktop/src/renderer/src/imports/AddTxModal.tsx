@@ -66,8 +66,8 @@ function TypeButton({
         fontWeight: 500,
         cursor: "pointer",
         border: active ? "none" : "1px solid var(--hair-2)",
-        background: active ? "var(--accent)" : "white",
-        color: active ? "white" : "var(--ink-3)",
+        background: active ? "var(--accent)" : "var(--surface-1)",
+        color: active ? "var(--accent-foreground)" : "var(--ink-3)",
         transition: "all 0.15s",
       }}
     >
@@ -97,7 +97,7 @@ function CatChip({
         gap: 5,
         borderRadius: 6,
         borderColor: active ? color : "var(--hair-2)",
-        background: active ? `${color}1f` : "white",
+        background: active ? `${color}1f` : "var(--surface-1)",
         color: active ? color : "var(--ink-3)",
         fontWeight: active ? 650 : 500,
       }}

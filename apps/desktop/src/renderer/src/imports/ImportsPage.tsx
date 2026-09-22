@@ -299,7 +299,13 @@ function DonutChart({
             }}
           />
         ))}
-        <circle cx={cx} cy={cy} r={r - thick / 2} fill="white" style={{ pointerEvents: "none" }} />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={r - thick / 2}
+          fill="var(--surface-1)"
+          style={{ pointerEvents: "none" }}
+        />
       </svg>
       {tooltip && (
         <div
@@ -307,11 +313,11 @@ function DonutChart({
             position: "absolute",
             left: tooltip.x + 10,
             top: tooltip.y - 10,
-            background: "white",
+            background: "var(--surface-1)",
             border: "1px solid var(--hair-2)",
             borderRadius: 7,
             padding: "6px 10px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--popover-shadow)",
             pointerEvents: "none",
             whiteSpace: "nowrap",
             zIndex: 10,
@@ -820,7 +826,7 @@ export function ImportsPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       {/* Header — fixed */}
@@ -930,7 +936,7 @@ export function ImportsPage() {
           className="bubo-scroller"
           style={{ flex: "0 0 68%", minWidth: 0, height: "100%", overflowY: "auto" }}
         >
-          <div className="sticky top-0 z-[2] border-b border-[var(--hair-3)] bg-white px-8 pb-2.5">
+          <div className="sticky top-0 z-[2] border-b border-[var(--hair-3)] bg-[var(--surface-1)] px-8 pb-2.5">
             <form
               className="flex flex-wrap items-end gap-2"
               onSubmit={(event) => event.preventDefault()}
@@ -1078,7 +1084,9 @@ export function ImportsPage() {
                 <col key={col.id} style={{ width: col.getSize() }} />
               ))}
             </colgroup>
-            <thead style={{ position: "sticky", top: 65, zIndex: 1, background: "white" }}>
+            <thead
+              style={{ position: "sticky", top: 65, zIndex: 1, background: "var(--surface-1)" }}
+            >
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} style={{ borderBottom: "1px solid var(--hair-2)" }}>
                   {hg.headers.map((h) => (
@@ -1092,7 +1100,7 @@ export function ImportsPage() {
                         fontWeight: 500,
                         color: "var(--ink-4)",
                         whiteSpace: "nowrap",
-                        background: "white",
+                        background: "var(--surface-1)",
                       }}
                     >
                       {flexRender(h.column.columnDef.header, h.getContext())}

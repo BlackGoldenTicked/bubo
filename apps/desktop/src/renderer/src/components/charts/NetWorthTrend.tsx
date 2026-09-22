@@ -20,11 +20,11 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: { value
   return (
     <div
       style={{
-        background: "white",
+        background: "var(--surface-1)",
         border: "1px solid var(--hair-2)",
         borderRadius: 8,
         padding: "5px 10px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+        boxShadow: "var(--popover-shadow)",
         fontSize: 12,
         fontFamily: "'IBM Plex Mono', monospace",
         color: "var(--ink)",

@@ -12,17 +12,31 @@ import { useNavigate } from "@tanstack/react-router"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { LedgerSection } from "./LedgerSection"
-import { LinkRow, Row, SettingsGroup, Toggle } from "./components"
+import { LinkRow, Row, SegTabs, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { amountsHiddenAtom } from "@/lib/state/uiAtoms"
+import { amountsHiddenAtom, themePreferenceAtom, type ThemePreference } from "@/lib/state/uiAtoms"
 import { installAvailableUpdate } from "@/lib/appUpdate"
 
 type UpdateStatus = "idle" | "checking" | "up-to-date" | "available" | "installing" | "error"
 
+const THEME_LABELS: Record<ThemePreference, string> = {
+  light: "浅色",
+  dark: "深色",
+  system: "跟随系统",
+}
+
+/** Reverse map for SegTabs, whose option keys are the display labels. */
+const THEME_VALUES: Record<string, ThemePreference> = {
+  浅色: "light",
+  深色: "dark",
+  跟随系统: "system",
+}
+
 export function SettingsPage() {
   const navigate = useNavigate()
   const [hide, setHide] = useAtom(amountsHiddenAtom)
+  const [theme, setTheme] = useAtom(themePreferenceAtom)
   const queryClient = useQueryClient()
   const categoriesQuery = useQuery(trpc.reference.categories.queryOptions())
   const currencyQuery = useQuery(trpc.reference.currencySettings.queryOptions())
@@ -112,7 +126,7 @@ export function SettingsPage() {
               ? "检查或安装失败，可重试"
               : "从 GitHub Releases 获取"
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white">
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--surface-1)]">
       {/* Fixed header */}
       <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pt-7 pb-5">
         <div className="mx-auto w-[540px]">
@@ -145,6 +159,13 @@ export function SettingsPage() {
             </LinkRow>
             <Row label="隐藏金额" sub="演示或截图时把数字打码为 ⋯⋯">
               <Toggle on={hide} onChange={setHide} ariaLabel="隐藏金额" />
+            </Row>
+            <Row label="主题" sub="界面明暗配色">
+              <SegTabs
+                opts={["浅色", "深色", "跟随系统"]}
+                val={THEME_LABELS[theme]}
+                onChange={(value) => setTheme(THEME_VALUES[value] ?? "system")}
+              />
             </Row>
           </SettingsGroup>
 

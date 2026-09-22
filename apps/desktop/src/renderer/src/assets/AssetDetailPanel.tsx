@@ -105,11 +105,11 @@ function ChartTooltip({
   return (
     <div
       style={{
-        background: "white",
+        background: "var(--surface-1)",
         border: "1px solid var(--hair-2)",
         borderRadius: 6,
         padding: "5px 10px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+        boxShadow: "var(--popover-shadow)",
       }}
     >
       <div style={{ fontSize: 10, color: "var(--ink-4)", marginBottom: 2 }}>

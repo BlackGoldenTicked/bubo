@@ -15,7 +15,7 @@ import { trpc } from "@/lib/trpc"
 import { useLedgerSwitch } from "@/lib/switchLedger"
 
 const INPUT_CLASS =
-  "min-w-0 flex-[0_1_220px] rounded-[7px] border border-[var(--hair)] bg-white px-[9px] py-[5px] text-[13px] font-medium text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+  "min-w-0 flex-[0_1_220px] rounded-[7px] border border-[var(--hair)] bg-[var(--surface-1)] px-[9px] py-[5px] text-[13px] font-medium text-[var(--ink)] outline-none focus:border-[var(--accent)]"
 
 /** Compact styling for ledger action buttons — smaller than HeroUI's `sm`. */
 const ACTION_BTN = "h-auto min-h-0 px-2 py-[3px] text-[11.5px]"

@@ -74,7 +74,7 @@ function TrendTooltip({
     },
   ]
   return (
-    <div className="whitespace-nowrap rounded-lg border border-[var(--hair-2)] bg-white px-2.5 py-[7px] text-[var(--ink)] shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+    <div className="whitespace-nowrap rounded-lg border border-[var(--hair-2)] bg-[var(--surface-1)] px-2.5 py-[7px] text-[var(--ink)] shadow-[var(--popover-shadow)]">
       <div className="mb-1.5 text-[10.5px] text-[var(--ink-4)]">
         {label ?? row.label} · {row.month}
       </div>
@@ -203,8 +203,8 @@ export function MonthlyCashflowCombo({
             dataKey="net"
             stroke="var(--ink)"
             strokeWidth={2}
-            dot={{ r: 2.4, fill: "white", stroke: "var(--ink)", strokeWidth: 1.4 }}
-            activeDot={{ r: 3.5, fill: "var(--ink)", stroke: "white", strokeWidth: 1.4 }}
+            dot={{ r: 2.4, fill: "var(--surface-1)", stroke: "var(--ink)", strokeWidth: 1.4 }}
+            activeDot={{ r: 3.5, fill: "var(--ink)", stroke: "var(--surface-1)", strokeWidth: 1.4 }}
             isAnimationActive
             animationDuration={700}
           />

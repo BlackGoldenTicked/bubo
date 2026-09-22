@@ -203,7 +203,7 @@ function AddSubModal({
                       width: 18,
                       height: 18,
                       borderRadius: "50%",
-                      background: "white",
+                      background: "var(--accent-foreground)",
                       transition: "left .15s",
                       boxShadow: "0 1px 3px rgba(0,0,0,.2)",
                     }}
@@ -339,7 +339,7 @@ export function SubscriptionsPage() {
         flexDirection: "column",
         height: "100%",
         overflow: "hidden",
-        background: "white",
+        background: "var(--surface-1)",
       }}
     >
       {/* Fixed header */}
@@ -528,7 +528,7 @@ export function SubscriptionsPage() {
               flexShrink: 0,
               padding: "12px 24px 20px",
               borderTop: "1px dashed var(--ink-4)",
-              background: "white",
+              background: "var(--surface-1)",
             }}
           >
             <div style={{ display: "flex", alignItems: "baseline", marginBottom: 5 }}>

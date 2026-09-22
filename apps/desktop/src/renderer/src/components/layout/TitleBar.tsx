@@ -18,7 +18,7 @@ export function TitleBar({ children }: TitleBarProps) {
       <div
         data-tauri-drag-region
         data-window-drag-handle
-        className="drag-region h-6 shrink-0 bg-white"
+        className="drag-region h-6 shrink-0 bg-[var(--surface-1)]"
       />
       {children}
     </div>

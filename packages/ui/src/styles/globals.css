@@ -40,6 +40,7 @@
   --hair-2: #eef1ee;
   --hair-3: #f3f5f3;
 
+  --surface-1: #ffffff;
   --surface-2: #f7f9f7;
   --surface-3: #f1f4f1;
 
@@ -48,9 +49,52 @@
   --amber: #ad7c2c;
 
   --accent-soft: color-mix(in srgb, #14794a 12%, transparent);
+  --popover-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 
   /* Monospace stack for financial figures; used by loans and settings surfaces. */
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Dark palette — crx-ui (Lumno) neutral scale with bubo brand accents lifted
+   for contrast. Unlayered on purpose: these declarations must beat HeroUI's
+   @layer theme values, matching how the :root brand overrides above work.
+   Activated by the renderer theme effect via document.documentElement. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #f3f4f6;
+  --ink-2: #d1d5db;
+  --ink-3: #9ca3af;
+  --ink-4: #6b7280;
+  --ink-5: #4b5563;
+
+  --hair: #2d2d2d;
+  --hair-2: #242424;
+  --hair-3: #1d1d1d;
+
+  --surface-1: #111111;
+  --surface-2: #191919;
+  --surface-3: #202020;
+
+  --green: #2fa36c;
+  --red: #dd6b55;
+  --amber: #d6a54e;
+
+  --accent: #2fa36c;
+  --accent-foreground: #ffffff;
+  --danger: #dd6b55;
+  --danger-foreground: #ffffff;
+  --success: #2fa36c;
+  --success-foreground: #ffffff;
+
+  --accent-soft: color-mix(in srgb, #2fa36c 18%, transparent);
+  --popover-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Paint the document so the first dark frame never flashes white and window
+   resize gutters stay on-theme. */
+html {
+  background: var(--surface-1);
 }
 
 /* Desktop drag-region utilities; Tauri's title bar also carries data-tauri-drag-region. */

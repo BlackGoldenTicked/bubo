@@ -15,12 +15,14 @@ import { DemoLedgerBanner } from "../components/layout/DemoLedgerBanner"
 import { AppUpdateTracker } from "../components/layout/AppUpdateTracker"
 import { GlobalConfirmModal } from "../components/ui/ConfirmModal"
 import { buboPerfLog, roundMs } from "../lib/debug/perf"
+import { useThemeEffect } from "../lib/theme"
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
 function RootLayout() {
+  useThemeEffect()
   const href = useRouterState({ select: (state) => state.location.href })
   const previousHref = useRef<string | null>(null)
   const previousCommitAt = useRef(performance.now())

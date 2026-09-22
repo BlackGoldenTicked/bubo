@@ -135,7 +135,7 @@ export function AnalysisPage() {
   )
 
   return (
-    <div className="relative flex flex-col h-full overflow-hidden bg-white">
+    <div className="relative flex flex-col h-full overflow-hidden bg-[var(--surface-1)]">
       <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col px-[34px] pt-[30px] pb-[108px]">
           <div className="mb-3">

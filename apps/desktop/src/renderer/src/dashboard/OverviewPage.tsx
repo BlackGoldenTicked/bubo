@@ -420,7 +420,7 @@ export function OverviewPage() {
   const transactionRows = recentTx.map(toTransactionRow)
 
   return (
-    <div className="relative grid h-full min-h-0 grid-cols-[minmax(500px,1.25fr)_minmax(320px,0.75fr)] overflow-hidden bg-white">
+    <div className="relative grid h-full min-h-0 grid-cols-[minmax(500px,1.25fr)_minmax(320px,0.75fr)] overflow-hidden bg-[var(--surface-1)]">
       <ScrollArea className="min-h-0 border-r border-[var(--hair)]">
         <div className="flex min-h-full flex-col px-7 py-6">
           {/* ── 净资产 + 趋势 ── */}
@@ -620,7 +620,7 @@ export function OverviewPage() {
       </ScrollArea>
 
       {/* ── 右栏：最近流水 ── */}
-      <section className="flex min-h-0 flex-col bg-white">
+      <section className="flex min-h-0 flex-col bg-[var(--surface-1)]">
         <div className="flex h-[66px] shrink-0 items-center border-b border-[var(--hair)] px-6">
           <div>
             <div className="flex items-baseline gap-2">

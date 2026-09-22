@@ -7,7 +7,7 @@
 
 import { createStore } from "jotai/vanilla"
 import { beforeEach, describe, expect, it } from "vitest"
-import { amountsHiddenAtom } from "../lib/state/uiAtoms"
+import { amountsHiddenAtom, themePreferenceAtom } from "../lib/state/uiAtoms"
 
 describe("uiAtoms", () => {
   beforeEach(() => {
@@ -27,5 +27,20 @@ describe("uiAtoms", () => {
 
     expect(store.get(amountsHiddenAtom)).toBe(true)
     expect(window.localStorage.getItem("bubo.amountsHidden")).toBe("true")
+  })
+
+  it("defaults the theme preference to following the system", () => {
+    const store = createStore()
+
+    expect(store.get(themePreferenceAtom)).toBe("system")
+  })
+
+  it("persists an explicit theme preference in storage", () => {
+    const store = createStore()
+
+    store.set(themePreferenceAtom, "dark")
+
+    expect(store.get(themePreferenceAtom)).toBe("dark")
+    expect(window.localStorage.getItem("bubo.theme")).toBe('"dark"')
   })
 })

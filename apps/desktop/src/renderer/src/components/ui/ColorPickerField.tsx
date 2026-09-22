@@ -58,7 +58,7 @@ export function ColorPickerField({
               padding: "0 10px",
               borderRadius: 7,
               border: "1px solid var(--hair-2)",
-              background: "white",
+              background: "var(--surface-1)",
               color: "var(--ink-2)",
               fontSize: 12,
               fontWeight: 500,
