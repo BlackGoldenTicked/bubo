@@ -215,7 +215,6 @@ function AddSubModal({
           <Modal.Footer>
             <Button
               variant="primary"
-              style={{ borderRadius: 5 }}
               isDisabled={isSubmitting}
               onPress={() =>
                 void handleSubmit(async (values) => {
@@ -226,7 +225,7 @@ function AddSubModal({
             >
               {isSubmitting ? "汇率加载中…" : "保存"}
             </Button>
-            <Button variant="outline" style={{ borderRadius: 5 }} slot="close">
+            <Button variant="outline" slot="close">
               取消
             </Button>
           </Modal.Footer>
@@ -402,7 +401,6 @@ export function SubscriptionsPage() {
             <Button
               size="sm"
               variant="primary"
-              style={{ borderRadius: 5 }}
               onPress={() => setShowAdd(true)}
             >
               ＋ 添加订阅

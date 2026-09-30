@@ -15,7 +15,13 @@ import { LedgerSection } from "./LedgerSection"
 import { LinkRow, Row, SegTabs, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { amountsHiddenAtom, themePreferenceAtom, type ThemePreference } from "@/lib/state/uiAtoms"
+import {
+  amountsHiddenAtom,
+  themePreferenceAtom,
+  themeStyleAtom,
+  type ThemePreference,
+  type ThemeStyle,
+} from "@/lib/state/uiAtoms"
 import { installAvailableUpdate } from "@/lib/appUpdate"
 
 type UpdateStatus = "idle" | "checking" | "up-to-date" | "available" | "installing" | "error"
@@ -33,10 +39,22 @@ const THEME_VALUES: Record<string, ThemePreference> = {
   跟随系统: "system",
 }
 
+const STYLE_LABELS: Record<ThemeStyle, string> = {
+  bubo: "bubo",
+  lumno: "Lumno",
+}
+
+/** Reverse map for SegTabs, whose option keys are the display labels. */
+const STYLE_VALUES: Record<string, ThemeStyle> = {
+  bubo: "bubo",
+  Lumno: "lumno",
+}
+
 export function SettingsPage() {
   const navigate = useNavigate()
   const [hide, setHide] = useAtom(amountsHiddenAtom)
   const [theme, setTheme] = useAtom(themePreferenceAtom)
+  const [style, setStyle] = useAtom(themeStyleAtom)
   const queryClient = useQueryClient()
   const categoriesQuery = useQuery(trpc.reference.categories.queryOptions())
   const currencyQuery = useQuery(trpc.reference.currencySettings.queryOptions())
@@ -130,7 +148,7 @@ export function SettingsPage() {
       {/* Fixed header */}
       <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pt-7 pb-5">
         <div className="mx-auto w-[540px]">
-          <div className="mb-1 font-['IBM_Plex_Mono'] text-[26px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
+          <div className="font-display mb-1 text-[26px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
             设置
           </div>
           <div className="text-[12.5px] text-[var(--ink-4)]">bubo · 个人版 · 数据全部存在本机</div>
@@ -160,6 +178,13 @@ export function SettingsPage() {
             <Row label="隐藏金额" sub="演示或截图时把数字打码为 ⋯⋯">
               <Toggle on={hide} onChange={setHide} ariaLabel="隐藏金额" />
             </Row>
+            <Row label="界面风格" sub="两套独立的配色与组件形态">
+              <SegTabs
+                opts={["bubo", "Lumno"]}
+                val={STYLE_LABELS[style]}
+                onChange={(value) => setStyle(STYLE_VALUES[value] ?? "bubo")}
+              />
+            </Row>
             <Row label="主题" sub="界面明暗配色">
               <SegTabs
                 opts={["浅色", "深色", "跟随系统"]}
@@ -185,7 +210,7 @@ export function SettingsPage() {
           {/* 关于 */}
           <SettingsGroup title="关于">
             <Row first label="版本">
-              <span className="whitespace-nowrap font-['IBM_Plex_Mono'] text-[12.5px] text-[var(--ink-4)]">
+              <span className="font-display whitespace-nowrap text-[12.5px] text-[var(--ink-4)]">
                 {appVersion ? `v${appVersion}` : "—"}
               </span>
             </Row>

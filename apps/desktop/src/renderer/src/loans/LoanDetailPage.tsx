@@ -358,7 +358,6 @@ export function LoanDetailPage() {
                   <Button
                     size="sm"
                     variant="primary"
-                    style={{ borderRadius: 5 }}
                     onPress={() => setPrepaying(true)}
                   >
                     提前还款
@@ -366,7 +365,6 @@ export function LoanDetailPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    style={{ borderRadius: 5 }}
                     onPress={() => setEditing(true)}
                   >
                     编辑
@@ -374,7 +372,6 @@ export function LoanDetailPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    style={{ borderRadius: 5 }}
                     onPress={() => setLinkOpen(true)}
                   >
                     扣款流水

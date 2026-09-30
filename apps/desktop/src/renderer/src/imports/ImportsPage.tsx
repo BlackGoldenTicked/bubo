@@ -880,7 +880,6 @@ export function ImportsPage() {
             <Button
               size="sm"
               variant="primary"
-              style={{ borderRadius: 5 }}
               onPress={() => setShowAddTx(true)}
             >
               ＋ 记一笔

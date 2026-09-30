@@ -5,6 +5,8 @@
  * @gotcha  Keep this navigation in the root shell so feature pages never add their own copy.
  *          The separate TitleBar row clears native traffic lights; keep horizontal padding aligned
  *          with overview content. Keep containers draggable and only interactive controls no-drag.
+ *          Shape differences between the two visual styles live in `.bubo-nav*` rules in
+ *          primitives.css, never in per-item Tailwind conditionals here.
  */
 
 import { Link, useRouterState } from "@tanstack/react-router"
@@ -34,13 +36,9 @@ export function TopNavigation() {
   return (
     <header
       data-tauri-drag-region
-      className="drag-region relative z-30 flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--hair)] bg-[var(--surface-1)] px-7"
+      className="drag-region relative z-30 flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--hair)] bg-[var(--surface)] px-7"
     >
-      <nav
-        data-tauri-drag-region
-        aria-label="主导航"
-        className="drag-region flex h-full items-center gap-1"
-      >
+      <nav data-tauri-drag-region aria-label="主导航" className="drag-region bubo-nav">
         {PRIMARY_NAV.map((item) => {
           const active = pathMatches(pathname, item.matches)
           return (
@@ -56,12 +54,7 @@ export function TopNavigation() {
                   active,
                 })
               }
-              className={[
-                "no-drag-region relative flex h-full min-w-[58px] items-center justify-center px-3 text-[12px] font-medium no-underline transition-colors",
-                active
-                  ? "text-[var(--ink)] after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[var(--ink)]"
-                  : "text-[var(--ink-3)] hover:text-[var(--ink)]",
-              ].join(" ")}
+              className="no-drag-region bubo-nav__item"
             >
               {item.label}
             </Link>
@@ -73,24 +66,14 @@ export function TopNavigation() {
           type="button"
           aria-pressed={hidden}
           onClick={() => setHidden((value) => !value)}
-          className={[
-            "no-drag-region rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors",
-            hidden
-              ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-              : "text-[var(--ink-3)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
-          ].join(" ")}
+          className="no-drag-region bubo-nav__action"
         >
           {hidden ? "显示金额" : "隐藏金额"}
         </button>
         <Link
           to="/settings"
           aria-current={settingsActive ? "page" : undefined}
-          className={[
-            "no-drag-region relative flex h-full items-center px-3 text-[12px] font-medium no-underline transition-colors",
-            settingsActive
-              ? "text-[var(--ink)] after:absolute after:inset-x-2 after:bottom-0 after:h-[2px] after:bg-[var(--ink)]"
-              : "text-[var(--ink-3)] hover:text-[var(--ink)]",
-          ].join(" ")}
+          className="no-drag-region bubo-nav__item"
         >
           设置
         </Link>

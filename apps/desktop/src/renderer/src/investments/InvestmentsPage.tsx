@@ -8,7 +8,7 @@
 
 import { memo, useMemo, useState } from "react"
 import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from "react-resizable-panels"
-import { Button, Tabs } from "@heroui/react"
+import { Button, Segmented } from "@bubo/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type {
   AddInvestmentTransactionInput,
@@ -46,6 +46,12 @@ interface PositionRowProps {
 }
 
 type InvestmentTab = "spots" | "contracts"
+
+/** View switcher options; keys must stay in sync with InvestmentTab. */
+const VIEW_TABS = [
+  { key: "spots", label: "现货持仓" },
+  { key: "contracts", label: "合约仓位" },
+]
 
 const PositionRow = memo(function PositionRow({ position, selected, onSelect }: PositionRowProps) {
   const fmt = useMoney()
@@ -322,27 +328,13 @@ export function InvestmentsPage() {
     >
       {/* View tabs — spot positions or contract rows */}
       <div style={{ flexShrink: 0, padding: "16px 32px 0" }}>
-        <Tabs
-          selectedKey={activeTab}
-          onSelectionChange={(key) => setActiveTab(key as InvestmentTab)}
+        <Segmented
+          size="md"
+          options={VIEW_TABS}
+          value={activeTab}
+          onChange={(key) => setActiveTab(key as InvestmentTab)}
           aria-label="投资视图切换"
-        >
-          <Tabs.ListContainer>
-            <Tabs.List>
-              <Tabs.Tab id="spots" className="h-7 min-w-[88px] whitespace-nowrap px-4 text-[13px]">
-                现货持仓
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab
-                id="contracts"
-                className="h-7 min-w-[88px] whitespace-nowrap px-4 text-[13px]"
-              >
-                合约仓位
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        />
       </div>
 
       {activeTab === "contracts" ? (
@@ -408,7 +400,6 @@ export function InvestmentsPage() {
                 <Button
                   size="sm"
                   variant="primary"
-                  style={{ borderRadius: 5 }}
                   onPress={openAddPosition}
                 >
                   ＋ 新建持仓
@@ -668,10 +659,10 @@ function PositionDetail({
       </div>
 
       <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
-        <Button size="sm" variant="primary" style={{ borderRadius: 5 }} onPress={onTrade}>
+        <Button size="sm" variant="primary" onPress={onTrade}>
           买入 / 卖出
         </Button>
-        <Button size="sm" variant="outline" style={{ borderRadius: 5 }} onPress={onQuote}>
+        <Button size="sm" variant="outline" onPress={onQuote}>
           记录现价
         </Button>
         <Button

@@ -159,7 +159,7 @@ export function TradeModal({ open, form, position, saving, onSave, onClose }: Pr
                       <Button
                         size="sm"
                         variant="outline"
-                        style={{ borderRadius: 5, flexShrink: 0 }}
+                        className="shrink-0"
                         onPress={() => setValue("quantity", String(held))}
                       >
                         全部

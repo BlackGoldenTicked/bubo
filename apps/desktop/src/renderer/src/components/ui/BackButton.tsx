@@ -1,12 +1,13 @@
 /**
  * @purpose Unified back affordance for detail pages and in-place panels.
  * @role    Renderer-local UI atom: one ghost button + arrow, two variants (text / icon-only).
- * @deps    HeroUI Button.
+ * @deps    The @bubo/ui Button primitive.
  * @gotcha  Always router-agnostic — pass `onBack` (page callers wrap their own navigate()).
  *          With `label` it renders "← label"; without it, an icon-only button for tight panels.
+ *          Never set the radius inline — the active style owns the button shape.
  */
 
-import { Button } from "@heroui/react"
+import { Button } from "@bubo/ui"
 
 interface BackButtonProps {
   onBack: () => void
@@ -32,19 +33,12 @@ export function BackButton({ onBack, label }: BackButtonProps) {
   if (label == null) {
     return (
       <Button
-        isIconOnly
-        size="sm"
+        iconOnly
+        size="xs"
         variant="ghost"
         aria-label="返回"
         onPress={onBack}
-        style={{
-          width: 24,
-          height: 24,
-          minWidth: 24,
-          borderRadius: 5,
-          marginLeft: -4,
-          color: "var(--ink-4)",
-        }}
+        className="-ml-1 size-6 text-[var(--ink-4)]"
       >
         <ArrowIcon />
       </Button>
@@ -52,22 +46,10 @@ export function BackButton({ onBack, label }: BackButtonProps) {
   }
   return (
     <Button
-      size="sm"
+      size="xs"
       variant="ghost"
       onPress={onBack}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        height: "auto",
-        minWidth: 0,
-        padding: "3px 8px",
-        borderRadius: 6,
-        marginLeft: -8,
-        fontSize: 12,
-        fontWeight: 500,
-        color: "var(--ink-4)",
-      }}
+      className="-ml-2 gap-1 text-[12px] font-medium text-[var(--ink-4)]"
     >
       <ArrowIcon />
       {label}

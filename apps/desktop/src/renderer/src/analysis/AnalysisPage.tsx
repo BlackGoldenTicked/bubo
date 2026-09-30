@@ -6,7 +6,7 @@
  */
 
 import { useMemo, useState } from "react"
-import { Tabs } from "@heroui/react"
+import { Segmented } from "@bubo/ui"
 import { useQuery } from "@tanstack/react-query"
 import { Link, useRouter } from "@tanstack/react-router"
 import { trpc } from "@/lib/trpc"
@@ -49,26 +49,12 @@ function RangeControl({
   onChange: (value: RangeKey) => void
 }) {
   return (
-    <Tabs
-      selectedKey={value}
-      onSelectionChange={(key) => onChange(String(key) as RangeKey)}
+    <Segmented
+      options={RANGE_OPTIONS}
+      value={value}
+      onChange={(key) => onChange(key as RangeKey)}
       aria-label="选择趋势范围"
-    >
-      <Tabs.ListContainer>
-        <Tabs.List>
-          {RANGE_OPTIONS.map((option) => (
-            <Tabs.Tab
-              key={option.key}
-              id={option.key}
-              className="h-6 min-w-[64px] whitespace-nowrap px-4 text-xs"
-            >
-              {option.label}
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs.ListContainer>
-    </Tabs>
+    />
   )
 }
 

@@ -1,13 +1,13 @@
 /**
  * @purpose Render the shared pending/error/ready states for a query result.
  * @role    Renderer-local UI primitive so pages distinguish loading, failure, and data.
- * @deps    React, HeroUI Button, and local UI primitives.
+ * @deps    React, the @bubo/ui Button primitive, and local UI primitives.
  * @gotcha  Accepts a structural query shape (isPending/isError/error/refetch) so it
  *          stays decoupled from TanStack Query internals; pass the query object itself.
  */
 
 import type { ReactNode } from "react"
-import { Button } from "@heroui/react"
+import { Button } from "@bubo/ui"
 import { Dim } from "./Dim"
 
 interface QueryLike {

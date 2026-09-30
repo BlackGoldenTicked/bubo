@@ -1,12 +1,12 @@
 /**
- * @purpose Provide small HeroUI/RHF-compatible form field helpers.
+ * @purpose Provide small form field helpers compatible with react-hook-form layouts.
  * @role    Renderer-local form UI primitive for validation labels and errors.
- * @deps    React children and HeroUI Label.
- * @gotcha  HeroUI v3.1 in this app does not export Form/TextField/FieldError; keep this wrapper thin.
+ * @deps    React children and the @bubo/ui Label primitive.
+ * @gotcha  Keep this wrapper thin — the field itself owns its own border and focus ring.
  */
 
 import type { CSSProperties, ReactNode } from "react"
-import { Label } from "@heroui/react"
+import { Label } from "@bubo/ui"
 
 interface FormFieldProps {
   label: string

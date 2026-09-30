@@ -388,7 +388,6 @@ export function AddTxModal({
           <Modal.Footer>
             <Button
               variant="primary"
-              style={{ borderRadius: 5 }}
               isDisabled={isSubmitting}
               onPress={() =>
                 void handleSubmit((values) => {
@@ -399,7 +398,7 @@ export function AddTxModal({
             >
               {isSubmitting ? "保存中…" : "保存"}
             </Button>
-            <Button variant="outline" style={{ borderRadius: 5 }} slot="close">
+            <Button variant="outline" slot="close">
               取消
             </Button>
           </Modal.Footer>

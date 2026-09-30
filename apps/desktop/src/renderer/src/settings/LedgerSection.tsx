@@ -1,24 +1,21 @@
 /**
  * @purpose Render and manage the settings ledger section workflow.
  * @role    Renderer feature surface for app configuration and reference data.
- * @deps    React, tRPC settings/reference queries, and local UI components.
+ * @deps    React, tRPC settings/reference queries, the @bubo/ui primitives, and local UI components.
  * @gotcha  Settings changes can affect user data paths and categories; keep destructive actions explicit.
  */
 
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Button } from "@heroui/react"
+import { Button, Card, Input } from "@bubo/ui"
 import { useForm } from "react-hook-form"
 import { useConfirm } from "../components/ui/ConfirmModal"
 import { GroupLabel, RowShell } from "./components"
 import { trpc } from "@/lib/trpc"
 import { useLedgerSwitch } from "@/lib/switchLedger"
 
-const INPUT_CLASS =
-  "min-w-0 flex-[0_1_220px] rounded-[7px] border border-[var(--hair)] bg-[var(--surface-1)] px-[9px] py-[5px] text-[13px] font-medium text-[var(--ink)] outline-none focus:border-[var(--accent)]"
-
-/** Compact styling for ledger action buttons — smaller than HeroUI's `sm`. */
-const ACTION_BTN = "h-auto min-h-0 px-2 py-[3px] text-[11.5px]"
+/** Inline ledger-name field; sizing comes from the primitive, only the flex basis is local. */
+const INPUT_CLASS = "min-w-0 flex-[0_1_220px]"
 
 export function LedgerSection() {
   const queryClient = useQueryClient()
@@ -99,150 +96,135 @@ export function LedgerSection() {
   return (
     <div className="mt-[30px]">
       <GroupLabel>账本</GroupLabel>
+      <Card className="overflow-hidden px-4">
+        {ledgers.map((ledger, index) => (
+          <RowShell key={ledger.id} first={index === 0} gap={12}>
+            <span
+              className={`h-[7px] w-[7px] shrink-0 rounded-full ${ledger.active ? "bg-[var(--accent)]" : "bg-[var(--hair)]"}`}
+            />
 
-      {ledgers.map((ledger, index) => (
-        <RowShell key={ledger.id} first={index === 0} gap={12}>
-          <span
-            className={`h-[7px] w-[7px] shrink-0 rounded-full ${ledger.active ? "bg-[var(--accent)]" : "bg-[var(--hair)]"}`}
-          />
-
-          {editingId === ledger.id ? (
-            <input
-              autoFocus
-              {...renameForm.register("name", {
-                validate: (value) => value.trim().length > 0 || "请输入账本名称",
-              })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter")
+            {editingId === ledger.id ? (
+              <Input
+                autoFocus
+                size="sm"
+                {...renameForm.register("name", {
+                  validate: (value) => value.trim().length > 0 || "请输入账本名称",
+                })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter")
+                    void renameForm.handleSubmit((values) => handleRename(ledger.id, values))()
+                  if (e.key === "Escape") {
+                    setEditingId(null)
+                    renameForm.reset({ name: "" })
+                  }
+                }}
+                onBlur={() =>
                   void renameForm.handleSubmit((values) => handleRename(ledger.id, values))()
+                }
+                className={INPUT_CLASS}
+                isInvalid={Boolean(renameForm.formState.errors.name)}
+              />
+            ) : (
+              <span className="min-w-0 truncate text-[13.5px] text-[var(--ink)]">
+                {ledger.name}
+              </span>
+            )}
+
+            {ledger.isDemo && (
+              <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--accent-soft)] px-[7px] py-[2px] text-[10.5px] font-semibold text-[var(--accent)]">
+                示例
+              </span>
+            )}
+
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              {ledger.active ? (
+                <span className="px-1 text-[11.5px] text-[var(--ink-4)]">使用中</span>
+              ) : (
+                <Button size="xs" variant="ghost" onPress={() => handleSwitch(ledger.id)}>
+                  切换
+                </Button>
+              )}
+              <Button
+                size="xs"
+                variant="ghost"
+                onPress={() => {
+                  setEditingId(ledger.id)
+                  renameForm.reset({ name: ledger.name })
+                }}
+              >
+                重命名
+              </Button>
+              <Button
+                size="xs"
+                variant="ghost"
+                onPress={() => handleToggleDemo(ledger.id, !ledger.isDemo)}
+              >
+                {ledger.isDemo ? "取消示例" : "设为示例"}
+              </Button>
+              <Button size="xs" variant="ghost" onPress={() => revealMut.mutate({ id: ledger.id })}>
+                在 Finder 中显示
+              </Button>
+              {!ledger.active && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onPress={() => handleDelete(ledger.id, ledger.name)}
+                >
+                  删除
+                </Button>
+              )}
+            </div>
+          </RowShell>
+        ))}
+
+        {creating ? (
+          <RowShell gap={8}>
+            <Input
+              autoFocus
+              size="sm"
+              placeholder="账本名称"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void createForm.handleSubmit(handleCreate)()
                 if (e.key === "Escape") {
-                  setEditingId(null)
-                  renameForm.reset({ name: "" })
+                  setCreating(false)
+                  createForm.reset({ name: "" })
                 }
               }}
-              onBlur={() =>
-                void renameForm.handleSubmit((values) => handleRename(ledger.id, values))()
-              }
               className={INPUT_CLASS}
-              aria-invalid={Boolean(renameForm.formState.errors.name)}
+              isInvalid={Boolean(createForm.formState.errors.name)}
+              {...createForm.register("name", {
+                validate: (value) => value.trim().length > 0 || "请输入账本名称",
+              })}
             />
-          ) : (
-            <span className="min-w-0 truncate text-[13.5px] text-[var(--ink)]">{ledger.name}</span>
-          )}
-
-          {ledger.isDemo && (
-            <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--accent-soft)] px-[7px] py-[2px] text-[10.5px] font-semibold text-[var(--accent)]">
-              示例
-            </span>
-          )}
-
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            {ledger.active ? (
-              <span className="px-1 text-[11.5px] text-[var(--ink-4)]">使用中</span>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                className={ACTION_BTN}
-                onPress={() => handleSwitch(ledger.id)}
-              >
-                切换
-              </Button>
-            )}
             <Button
-              size="sm"
+              size="xs"
+              variant="secondary"
+              onPress={() => void createForm.handleSubmit(handleCreate)()}
+            >
+              创建并切换
+            </Button>
+            <Button
+              size="xs"
               variant="ghost"
-              className={ACTION_BTN}
               onPress={() => {
-                setEditingId(ledger.id)
-                renameForm.reset({ name: ledger.name })
-              }}
-            >
-              重命名
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={ACTION_BTN}
-              onPress={() => handleToggleDemo(ledger.id, !ledger.isDemo)}
-            >
-              {ledger.isDemo ? "取消示例" : "设为示例"}
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className={ACTION_BTN}
-              onPress={() => revealMut.mutate({ id: ledger.id })}
-            >
-              在 Finder 中显示
-            </Button>
-            {!ledger.active && (
-              <Button
-                size="sm"
-                variant="ghost"
-                className={ACTION_BTN}
-                onPress={() => handleDelete(ledger.id, ledger.name)}
-              >
-                删除
-              </Button>
-            )}
-          </div>
-        </RowShell>
-      ))}
-
-      {creating ? (
-        <RowShell gap={8}>
-          <input
-            autoFocus
-            placeholder="账本名称"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void createForm.handleSubmit(handleCreate)()
-              if (e.key === "Escape") {
                 setCreating(false)
                 createForm.reset({ name: "" })
-              }
-            }}
-            className={INPUT_CLASS}
-            aria-invalid={Boolean(createForm.formState.errors.name)}
-            {...createForm.register("name", {
-              validate: (value) => value.trim().length > 0 || "请输入账本名称",
-            })}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            className={`${ACTION_BTN} rounded-[6px]`}
-            onPress={() => void createForm.handleSubmit(handleCreate)()}
-          >
-            创建并切换
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className={ACTION_BTN}
-            onPress={() => {
-              setCreating(false)
-              createForm.reset({ name: "" })
-            }}
-          >
-            取消
-          </Button>
-        </RowShell>
-      ) : (
-        <RowShell gap={12}>
-          <Button
-            size="sm"
-            variant="ghost"
-            className={ACTION_BTN}
-            onPress={() => setCreating(true)}
-          >
-            ＋ 新建账本
-          </Button>
-          <Button size="sm" variant="ghost" className={ACTION_BTN} onPress={handleImport}>
-            导入 .sqlite3 文件
-          </Button>
-        </RowShell>
-      )}
+              }}
+            >
+              取消
+            </Button>
+          </RowShell>
+        ) : (
+          <RowShell gap={12}>
+            <Button size="xs" variant="ghost" onPress={() => setCreating(true)}>
+              ＋ 新建账本
+            </Button>
+            <Button size="xs" variant="ghost" onPress={handleImport}>
+              导入 .sqlite3 文件
+            </Button>
+          </RowShell>
+        )}
+      </Card>
 
       <div className="mt-2.5 text-[11.5px] leading-relaxed text-[var(--ink-4)]">
         每个账本是一份独立的本地 SQLite

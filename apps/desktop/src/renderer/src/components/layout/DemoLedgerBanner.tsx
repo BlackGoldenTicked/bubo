@@ -6,7 +6,7 @@
  */
 
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Button, InfoIcon } from "@heroui/react"
+import { Button, InfoIcon } from "@bubo/ui"
 import { trpc } from "@/lib/trpc"
 import { useLedgerSwitch } from "@/lib/switchLedger"
 
@@ -35,17 +35,9 @@ export function DemoLedgerBanner() {
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         <Button
-          size="sm"
+          size="xs"
           variant="secondary"
           className="no-drag-region relative z-[10000] shrink-0"
-          style={{
-            borderRadius: 6,
-            height: 24,
-            minHeight: 24,
-            padding: "0 8px",
-            fontSize: 11.5,
-            lineHeight: 1,
-          }}
           isDisabled={switchToPersonal.isPending}
           onPress={() => switchLedger(() => switchToPersonal.mutateAsync())}
         >

@@ -1,12 +1,12 @@
 /**
  * @purpose Render a centered empty-state block with an optional call to action.
  * @role    Renderer-local UI primitive shared by list and panel surfaces.
- * @deps    React, HeroUI Button, TanStack Router Link, and CSS tokens.
+ * @deps    React, the @bubo/ui Button primitive, TanStack Router Link, and CSS tokens.
  * @gotcha  Keep the copy concrete about the next user action; no implementation details.
  */
 
 import type { ReactNode } from "react"
-import { Button } from "@heroui/react"
+import { Button } from "@bubo/ui"
 import { Link } from "@tanstack/react-router"
 
 interface EmptyAction {

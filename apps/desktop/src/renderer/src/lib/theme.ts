@@ -1,13 +1,26 @@
 /**
- * @purpose Resolve and apply the renderer theme (light / dark / system).
- * @role    Theme bridge between the preference atom, the document, and the Tauri window.
- * @deps    Jotai theme atom and the Tauri window API.
- * @gotcha  Keep the stored preference in uiAtoms; this module only derives and applies it.
+ * @purpose Resolve and apply the renderer theme mode (light / dark / system) and visual style.
+ * @role    Theme bridge between the preference atoms, the document, and the Tauri window.
+ * @deps    Jotai theme atoms and the Tauri window API.
+ * @gotcha  Keep the stored preferences in uiAtoms; this module only derives and applies them.
+ *          Only the resolved mode reaches the native window — the style choice is DOM-only.
  */
 
 import { useEffect } from "react"
 import { useAtom } from "jotai"
-import { themePreferenceAtom, type ResolvedTheme, type ThemePreference } from "./state/uiAtoms"
+import {
+  themePreferenceAtom,
+  themeStyleAtom,
+  type ResolvedTheme,
+  type ThemePreference,
+  type ThemeStyle,
+} from "./state/uiAtoms"
+
+/** Style values accepted from storage; mirrored by the pre-paint script in index.html. */
+export const THEME_STYLES: readonly ThemeStyle[] = ["bubo", "lumno"]
+
+/** Skin applied when storage holds nothing usable. */
+export const DEFAULT_THEME_STYLE: ThemeStyle = "bubo"
 
 /** Pure resolution of a preference against the OS appearance — exported for tests. */
 export function resolveTheme(
@@ -16,6 +29,11 @@ export function resolveTheme(
 ): ResolvedTheme {
   if (preference === "system") return systemPrefersDark ? "dark" : "light"
   return preference
+}
+
+/** Pure validation of a stored style value — exported for tests. */
+export function resolveStyle(stored: unknown): ThemeStyle {
+  return THEME_STYLES.includes(stored as ThemeStyle) ? (stored as ThemeStyle) : DEFAULT_THEME_STYLE
 }
 
 /** Sync the native window appearance; no-op outside the Tauri shell (browser dev). */
@@ -29,13 +47,19 @@ async function syncWindowTheme(theme: ResolvedTheme | null): Promise<void> {
 }
 
 /**
- * Apply the stored preference to `<html data-theme>` (HeroUI + bubo tokens both
- * key off it) and to the native window appearance. While the preference is
- * "system" the effect follows OS changes live; `setTheme(null)` does the same
- * for the native title bar.
+ * Apply the stored preferences to `<html>`: `data-style` selects the visual
+ * language (bubo or Lumno token block) and `data-theme` selects the mode that
+ * HeroUI and the shared tokens both key off. The native window only follows the
+ * mode. While the preference is "system" the effect follows OS changes live;
+ * `setTheme(null)` does the same for the native title bar.
  */
 export function useThemeEffect(): void {
   const [preference] = useAtom(themePreferenceAtom)
+  const [style] = useAtom(themeStyleAtom)
+
+  useEffect(() => {
+    document.documentElement.dataset.style = resolveStyle(style)
+  }, [style])
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)")

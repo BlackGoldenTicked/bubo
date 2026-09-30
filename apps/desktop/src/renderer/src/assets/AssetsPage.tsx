@@ -220,7 +220,7 @@ function ArchivedAssetsDrawer({
                         size="sm"
                         variant="primary"
                         isDisabled={restoring}
-                        style={{ borderRadius: 5, flexShrink: 0 }}
+                        className="shrink-0"
                         onPress={() => onRestore(item.id)}
                       >
                         恢复
@@ -510,7 +510,7 @@ export function AssetsPage() {
             />
             <StatBlock label="账户数" value={assetSnapshots.length} />
             <StatBlock label="上次更新" value={lastUpdated} />
-            <Button size="sm" variant="primary" style={{ borderRadius: 5 }} onPress={openAdd}>
+            <Button size="sm" variant="primary" onPress={openAdd}>
               ＋ 添加账户
             </Button>
           </div>

@@ -488,7 +488,6 @@ export function BudgetDetailPage() {
               <Button
                 variant="primary"
                 size="sm"
-                style={{ borderRadius: 5 }}
                 isDisabled={!row}
                 onPress={() => setShowEdit(true)}
               >
@@ -497,7 +496,6 @@ export function BudgetDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                style={{ borderRadius: 5 }}
                 onPress={openBudgetCashflow}
               >
                 查看该类别流水
@@ -506,7 +504,6 @@ export function BudgetDetailPage() {
               <Button
                 variant="danger-soft"
                 size="sm"
-                style={{ borderRadius: 5 }}
                 isDisabled={!row}
                 onPress={() => {
                   if (!row) return

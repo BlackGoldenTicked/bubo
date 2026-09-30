@@ -194,7 +194,7 @@ export function BudgetPage() {
             <Button
               size="sm"
               variant="outline"
-              style={{ borderRadius: 5, marginRight: 8 }}
+              className="mr-2"
               onPress={() => rollover.prompt(true)}
               isDisabled={rollover.isLoading || saving}
             >
@@ -204,7 +204,6 @@ export function BudgetPage() {
           <Button
             size="sm"
             variant="primary"
-            style={{ borderRadius: 5 }}
             onPress={() => setShowAdd(true)}
             isDisabled={
               setsQuery.isPending || periodsQuery.isPending || rollover.isLoading || saving

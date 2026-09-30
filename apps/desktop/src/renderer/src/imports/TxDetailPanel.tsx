@@ -202,14 +202,13 @@ export function TxDetailPanel({ tx, allTxs, onBack, onEdit, onDelete }: Props) {
       <div
         style={{ display: "flex", gap: 8, marginTop: 24, alignItems: "center", flexWrap: "wrap" }}
       >
-        <Button size="sm" variant="outline" style={{ borderRadius: 5 }} onPress={() => onEdit(tx)}>
+        <Button size="sm" variant="outline" onPress={() => onEdit(tx)}>
           编辑流水内容
         </Button>
         <div style={{ flex: 1 }} />
         <Button
           size="sm"
           variant="danger-soft"
-          style={{ borderRadius: 5 }}
           onPress={() =>
             confirm({
               title: "删除流水",

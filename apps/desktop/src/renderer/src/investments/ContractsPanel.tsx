@@ -353,7 +353,7 @@ export function ContractsPanel() {
               }
             />
             <StatBlock label="持仓" value={openContracts.length} />
-            <Button size="sm" variant="primary" style={{ borderRadius: 5 }} onPress={openAdd}>
+            <Button size="sm" variant="primary" onPress={openAdd}>
               ＋ 新建合约
             </Button>
           </div>
@@ -610,10 +610,10 @@ function ContractDetail({
       <div style={{ marginTop: 14, display: "flex", gap: 8 }}>
         {open && (
           <>
-            <Button size="sm" variant="primary" style={{ borderRadius: 5 }} onPress={onUpdate}>
+            <Button size="sm" variant="primary" onPress={onUpdate}>
               更新标记
             </Button>
-            <Button size="sm" variant="outline" style={{ borderRadius: 5 }} onPress={onClose}>
+            <Button size="sm" variant="outline" onPress={onClose}>
               平仓
             </Button>
           </>

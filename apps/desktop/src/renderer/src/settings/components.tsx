@@ -1,12 +1,12 @@
 /**
  * @purpose Shared settings menu-item building blocks (group labels, rows, controls).
  * @role    Renderer UI primitives reused across the settings surfaces.
- * @deps    React and @heroui/react Tabs/Switch.
+ * @deps    React and the @bubo/ui Card, Segmented, and Switch primitives.
  * @gotcha  RowShell is the single source of row sizing — keep every settings row on it.
  */
 
 import type { CSSProperties, ReactNode } from "react"
-import { Switch, Tabs } from "@heroui/react"
+import { Card, Segmented, Switch } from "@bubo/ui"
 
 const CHEVRON = (
   <svg
@@ -41,12 +41,12 @@ export function GroupLabel({ children }: { children: string }) {
   )
 }
 
-/** A settings group: top margin + group label + its rows. */
+/** A settings group: top margin + group label + its rows inside a card surface. */
 export function SettingsGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="mt-[30px]">
       <GroupLabel>{title}</GroupLabel>
-      {children}
+      <Card className="overflow-hidden px-4">{children}</Card>
     </div>
   )
 }
@@ -119,7 +119,7 @@ export function LinkRow({
       onClick={onClick}
       className={`${ROW_CLASS} ${borderClass()} w-full cursor-pointer bg-transparent text-left text-[13.5px] transition-colors ${
         danger
-          ? "text-[#b4493f] hover:text-[#a23a31]"
+          ? "text-[var(--danger)] hover:opacity-80"
           : "text-[var(--ink)] hover:text-[var(--accent)]"
       }`}
     >
@@ -143,13 +143,7 @@ export function Toggle({
   onChange: (v: boolean) => void
   ariaLabel?: string
 }) {
-  return (
-    <Switch isSelected={on} onChange={onChange} aria-label={ariaLabel}>
-      <Switch.Control>
-        <Switch.Thumb />
-      </Switch.Control>
-    </Switch>
-  )
+  return <Switch isSelected={on} onChange={onChange} aria-label={ariaLabel} />
 }
 
 export function SegTabs({
@@ -162,17 +156,10 @@ export function SegTabs({
   onChange: (v: string) => void
 }) {
   return (
-    <Tabs selectedKey={val} onSelectionChange={(k) => onChange(String(k))}>
-      <Tabs.ListContainer>
-        <Tabs.List>
-          {opts.map((o) => (
-            <Tabs.Tab key={o} id={o} className="h-6 px-3 text-xs">
-              {o}
-              <Tabs.Indicator />
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs.ListContainer>
-    </Tabs>
+    <Segmented
+      options={opts.map((option) => ({ key: option, label: option }))}
+      value={val}
+      onChange={onChange}
+    />
   )
 }

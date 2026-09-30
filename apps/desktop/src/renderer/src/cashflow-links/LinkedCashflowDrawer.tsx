@@ -72,7 +72,6 @@ export function LinkedCashflowDrawer({ open, ownerType, ownerId, ownerLabel, onC
                 <Button
                   size="sm"
                   variant="primary"
-                  style={{ borderRadius: 5 }}
                   onPress={() => setPickerOpen(true)}
                 >
                   手动添加

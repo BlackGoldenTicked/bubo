@@ -7,7 +7,7 @@
 
 import { createStore } from "jotai/vanilla"
 import { beforeEach, describe, expect, it } from "vitest"
-import { amountsHiddenAtom, themePreferenceAtom } from "../lib/state/uiAtoms"
+import { amountsHiddenAtom, themePreferenceAtom, themeStyleAtom } from "../lib/state/uiAtoms"
 
 describe("uiAtoms", () => {
   beforeEach(() => {
@@ -41,6 +41,23 @@ describe("uiAtoms", () => {
     store.set(themePreferenceAtom, "dark")
 
     expect(store.get(themePreferenceAtom)).toBe("dark")
+    expect(window.localStorage.getItem("bubo.theme")).toBe('"dark"')
+  })
+
+  it("defaults the visual style to the bubo skin", () => {
+    const store = createStore()
+
+    expect(store.get(themeStyleAtom)).toBe("bubo")
+  })
+
+  it("persists the visual style independently of the theme mode", () => {
+    const store = createStore()
+
+    store.set(themeStyleAtom, "lumno")
+    store.set(themePreferenceAtom, "dark")
+
+    expect(store.get(themeStyleAtom)).toBe("lumno")
+    expect(window.localStorage.getItem("bubo.style")).toBe('"lumno"')
     expect(window.localStorage.getItem("bubo.theme")).toBe('"dark"')
   })
 })

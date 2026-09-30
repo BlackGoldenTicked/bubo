@@ -375,7 +375,6 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
         <Button
           size="sm"
           variant="primary"
-          style={{ borderRadius: 5 }}
           onPress={() => onEdit(asset, "balance")}
         >
           {isInvestment ? "更新市值" : "更新余额"}
@@ -383,7 +382,6 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
         <Button
           size="sm"
           variant="outline"
-          style={{ borderRadius: 5 }}
           onPress={() => onEdit(asset, "account")}
         >
           编辑账户
@@ -392,7 +390,6 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
         <Button
           size="sm"
           variant="danger-soft"
-          style={{ borderRadius: 5 }}
           onPress={() =>
             confirm({
               title: "归档账户",

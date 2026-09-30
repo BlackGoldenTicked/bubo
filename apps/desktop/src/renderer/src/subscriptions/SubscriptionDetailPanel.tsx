@@ -410,7 +410,6 @@ export function SubscriptionDetailPanel({ id, onBack }: Props) {
               <Button
                 size="sm"
                 variant="primary"
-                style={{ borderRadius: 5 }}
                 onPress={async () => {
                   await updateSubscription.mutateAsync({ id, autoRenew: !sub.autoRenew })
                   await refreshSubscriptionViews()
@@ -421,7 +420,6 @@ export function SubscriptionDetailPanel({ id, onBack }: Props) {
               <Button
                 size="sm"
                 variant="outline"
-                style={{ borderRadius: 5 }}
                 onPress={() => setEditing(true)}
               >
                 编辑
@@ -430,7 +428,6 @@ export function SubscriptionDetailPanel({ id, onBack }: Props) {
               <Button
                 size="sm"
                 variant="danger-soft"
-                style={{ borderRadius: 5 }}
                 onPress={() =>
                   confirm({
                     title: "取消订阅",
