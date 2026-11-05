@@ -62,6 +62,10 @@ const PositionRow = memo(function PositionRow({ position, selected, onSelect }: 
   const open = position.status === "open"
   const pnlValue = open ? pnl.unrealizedPnl : Number(position.realizedPnlAmount || 0)
   const pnlLabel = open ? "未实现" : "已实现"
+  // The row leads with what was actually invested; market value stays in the detail panel.
+  const costBasis =
+    Number(position.costBasisAmount ?? 0) ||
+    Number(position.quantity || 0) * Number(position.avgCostPrice ?? 0)
 
   return (
     <div style={{ borderBottom: "1px solid var(--hair-3)" }}>
@@ -110,8 +114,9 @@ const PositionRow = memo(function PositionRow({ position, selected, onSelect }: 
               color: "var(--ink)",
             }}
           >
+            <span style={{ fontSize: 10, color: "var(--ink-4)", marginRight: 4 }}>成本</span>
             {symbol}
-            {fmt(pnl.marketValue, 2)}
+            {fmt(costBasis, 2)}
           </div>
           <div style={{ fontSize: 10.5, marginTop: 1 }}>
             <DeltaText value={pnlValue}>

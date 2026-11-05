@@ -48,7 +48,10 @@ renderer, routing, local app resources, and desktop packaging configuration.
   uses one shared date-range selector above equal-weight expense, income, and savings totals, with
   clickable daily expense bars that open same-period cashflow detail drawers.
 - `imports/` - imported statement and cashflow event views, including `AddTxModal` manual entry, which accepts a prefilled form from a voice cashflow intent.
-- `investments/` - trade-driven holdings with manual price quotes: open/closed position list,
+- `investments/` - trade-driven holdings with manual price quotes. List rows lead with the invested
+  amount (spot: cost basis; leveraged: margin, marked 估 when estimated) so the headline number does
+  not drift with the market; market value and notional live in the detail panel and the summary.
+  Surfaces include the open/closed position list,
   position detail with trade history, buy/sell and quote forms, and realized/unrealized P&L
   derived from the replayed position state. Linked accounts receive materialized system
   snapshots, and the surface stays explicit that market value is estimated from manual quotes.

@@ -109,8 +109,12 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
               color: "var(--ink)",
             }}
           >
+            <span style={{ fontSize: 10, color: "var(--ink-4)", marginRight: 4 }}>保证金</span>
             {symbol}
-            {fmt(pnl.notionalValue, 2)}
+            {fmt(pnl.effectiveMargin, 2)}
+            {contract.marginAmount == null && (
+              <span style={{ fontSize: 9.5, color: "var(--ink-4)", marginLeft: 3 }}>估</span>
+            )}
           </div>
           <div
             style={{
