@@ -95,7 +95,7 @@ export function LedgerSection() {
 
   return (
     <div className="mt-[30px]">
-      <GroupLabel>账本</GroupLabel>
+      <GroupLabel icon="ledger">账本</GroupLabel>
       <Card className="overflow-hidden px-4">
         {ledgers.map((ledger, index) => (
           <RowShell key={ledger.id} first={index === 0} gap={12}>

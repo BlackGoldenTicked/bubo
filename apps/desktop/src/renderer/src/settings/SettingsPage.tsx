@@ -196,7 +196,7 @@ export function SettingsPage() {
           </SettingsGroup>
 
           {/* 分类 */}
-          <SettingsGroup title="分类" icon="cashflow">
+          <SettingsGroup title="分类" icon="categories">
             <LinkRow
               note={`${categories.length} 个`}
               onClick={() => void navigate({ to: "/settings-categories" })}
