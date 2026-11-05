@@ -434,9 +434,17 @@ export function OverviewPage() {
                 {fmt(netWorth)}
               </BigNumber>
               <div className="mt-3 flex gap-6">
-                <StatBlock label="流动资产" value={`${baseSymbol}${fmt(liquidAssets)}`} />
-                <StatBlock label="总资产" value={`${baseSymbol}${fmt(totalAssets)}`} />
-                <StatBlock label="欠款" value={`${baseSymbol}${fmt(totalLiab)}`} />
+                <StatBlock
+                  icon="assets"
+                  label="流动资产"
+                  value={`${baseSymbol}${fmt(liquidAssets)}`}
+                />
+                <StatBlock
+                  icon="assets"
+                  label="总资产"
+                  value={`${baseSymbol}${fmt(totalAssets)}`}
+                />
+                <StatBlock icon="warning" label="欠款" value={`${baseSymbol}${fmt(totalLiab)}`} />
               </div>
             </div>
             <div className="ml-auto hidden min-w-[180px] flex-1 flex-col text-right min-[1120px]:flex">
@@ -535,7 +543,7 @@ export function OverviewPage() {
             {/* 左：消费预算 */}
             <div className="overflow-hidden">
               <div className="mb-3 flex items-baseline">
-                <SectionTitle>消费 · 本月预算</SectionTitle>
+                <SectionTitle icon="budget">消费 · 本月预算</SectionTitle>
                 <Dim className="ml-auto whitespace-nowrap text-[10.5px]">
                   余{" "}
                   <b className="font-['IBM_Plex_Mono'] text-[var(--ink)] font-semibold">
@@ -572,7 +580,7 @@ export function OverviewPage() {
             {/* 右：即将扣费 */}
             <div className="overflow-hidden">
               <div className="mb-3 flex items-baseline">
-                <SectionTitle>即将扣费</SectionTitle>
+                <SectionTitle icon="subscriptions">即将扣费</SectionTitle>
                 <Dim className="text-[10.5px] ml-auto whitespace-nowrap">
                   未来 30 天 · {upcoming.length} 笔
                 </Dim>
@@ -624,7 +632,7 @@ export function OverviewPage() {
         <div className="flex h-[66px] shrink-0 items-center border-b border-[var(--hair)] px-6">
           <div>
             <div className="flex items-baseline gap-2">
-              <SectionTitle>最近流水</SectionTitle>
+              <SectionTitle icon="cashflow">最近流水</SectionTitle>
               {recentTx.length > 0 && <Dim className="text-[11px]">最近 {recentTx.length} 笔</Dim>}
             </div>
             <Dim className="mt-1 block text-[10.5px]">过去现金流 · 不用于推算当前资产余额</Dim>

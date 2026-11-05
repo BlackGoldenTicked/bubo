@@ -649,7 +649,7 @@ export function AssetsPage() {
                       <SectionTitle>{selectedGroup}</SectionTitle>
                     </div>
                   ) : (
-                    <SectionTitle>资产构成</SectionTitle>
+                    <SectionTitle icon="assets">资产构成</SectionTitle>
                   )}
                   <Dim style={{ fontSize: 10.5 }}>
                     {selectedGroup ? (

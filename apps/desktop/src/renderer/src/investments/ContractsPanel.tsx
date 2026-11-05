@@ -446,7 +446,7 @@ export function ContractsPanel() {
             <div style={{ padding: "16px 32px 112px" }}>
               {selectedContract == null ? (
                 <>
-                  <SectionTitle>合约明细</SectionTitle>
+                  <SectionTitle icon="investments">合约明细</SectionTitle>
                   <div
                     style={{
                       marginTop: 12,

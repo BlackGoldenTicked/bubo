@@ -175,7 +175,7 @@ export function AnalysisPage() {
 
             <div className="mt-8">
               <div className="flex items-baseline mb-3">
-                <SectionTitle>净结余趋势</SectionTitle>
+                <SectionTitle icon="cashflow">净结余趋势</SectionTitle>
                 <Dim className="text-[10.5px] ml-2">正负柱显示每月收入减支出</Dim>
                 <Link
                   to="/imports"
@@ -189,7 +189,7 @@ export function AnalysisPage() {
 
             <div className="mt-[34px]">
               <div className="flex items-baseline mb-3">
-                <SectionTitle>收入 / 支出 / 结余</SectionTitle>
+                <SectionTitle icon="cashflow">收入 / 支出 / 结余</SectionTitle>
                 <Dim className="text-[10.5px] ml-2">按月对比现金流稳定性</Dim>
                 <div className="ml-auto">
                   <Legend />

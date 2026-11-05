@@ -410,7 +410,11 @@ export function InvestmentsPage() {
                   alignItems: "center",
                 }}
               >
-                <StatBlock label="持仓成本" value={`${baseSymbol}${fmt(totals.costBasis)}`} />
+                <StatBlock
+                  icon="investments"
+                  label="持仓成本"
+                  value={`${baseSymbol}${fmt(totals.costBasis)}`}
+                />
                 <StatBlock
                   label="未实现盈亏"
                   value={
@@ -531,7 +535,7 @@ export function InvestmentsPage() {
                 <div style={{ padding: "16px 32px 112px" }}>
                   {selectedPosition == null ? (
                     <>
-                      <SectionTitle>持仓明细</SectionTitle>
+                      <SectionTitle icon="investments">持仓明细</SectionTitle>
                       <div
                         style={{
                           marginTop: 12,
@@ -710,7 +714,7 @@ function PositionDetail({
       </div>
 
       <div style={{ marginTop: 20 }}>
-        <SectionTitle>交易记录</SectionTitle>
+        <SectionTitle icon="cashflow">交易记录</SectionTitle>
         {transactions.length === 0 ? (
           <Dim style={{ fontSize: 11.5, marginTop: 8, display: "block" }}>暂无交易记录。</Dim>
         ) : (
