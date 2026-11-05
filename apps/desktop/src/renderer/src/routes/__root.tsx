@@ -27,6 +27,17 @@ function RootLayout() {
   const href = useRouterState({ select: (state) => state.location.href })
   const previousHref = useRef<string | null>(null)
   const previousCommitAt = useRef(performance.now())
+  const contentRef = useRef<HTMLDivElement | null>(null)
+
+  // Replay the page entrance on every navigation. Toggling the class (instead of
+  // remounting) keeps the subtree, its queries, and its scroll containers intact.
+  useEffect(() => {
+    const node = contentRef.current
+    if (!node) return
+    node.classList.remove("bubo-route-enter")
+    void node.offsetWidth
+    node.classList.add("bubo-route-enter")
+  }, [href])
 
   useEffect(() => {
     const now = performance.now()
@@ -43,7 +54,7 @@ function RootLayout() {
     <TitleBar>
       <TopNavigation />
       <DemoLedgerBanner />
-      <div className="min-h-0 flex-1 overflow-hidden">
+      <div ref={contentRef} className="min-h-0 flex-1 overflow-hidden">
         <NuqsAdapter>
           <Outlet />
         </NuqsAdapter>

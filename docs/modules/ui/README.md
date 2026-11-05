@@ -35,6 +35,18 @@
 
 `<html>` carries `data-style` (`bubo` = green brand, tight radius, flat hairline forms; `lumno` = blue brand, gray canvas with white cards, pill and gradient forms) and `data-theme` (`light`/`dark`). Components never branch on the style in TypeScript; only CSS does. A primitive that defines one branch renders unstyled in the other, so both branches plus the dark branch are mandatory. See [ADR 0019](../../decisions/0019-dual-visual-languages-and-drawn-primitives.md).
 
+## Shared State And Numeric Utilities
+
+- `.bubo-row` is the one interactive-row treatment: hover uses `--row-hover`, `aria-selected="true"`
+  uses `--row-selected` plus an inset accent bar, and `:focus-visible` draws an inset outline.
+  Both tokens exist in all four style × mode blocks; rows supply their own height and divider.
+- `.bubo-num` sets tabular figures (and `--font-mono` via `.bubo-num--mono`) so amounts keep
+  their column width as digits change. Amounts also use the `--font-mono` alias rather than a
+  literal font stack.
+- Motion comes from `--dur-*` / `--ease-*`: `.bubo-route-enter` replays a 6px page entrance on
+  navigation, `.bubo-rec-dot` / `.bubo-busy-dot` animate live capture states, and the
+  `prefers-reduced-motion` block at the end of `primitives.css` disables all of them.
+
 ## Data Flow
 
 The renderer imports primitives from `@bubo/ui` and composes them into product-specific pages and panels under `apps/desktop/src/renderer/src`.

@@ -287,9 +287,9 @@ export function VoiceCaptureSheet() {
                 aria-hidden
                 className={`h-2 w-2 shrink-0 rounded-full ${
                   isRecording
-                    ? "animate-pulse bg-[var(--red)]"
+                    ? "bubo-rec-dot bg-[var(--red)]"
                     : isBusy
-                      ? "animate-pulse bg-[var(--accent)]"
+                      ? "bubo-busy-dot bg-[var(--accent)]"
                       : phase === "done"
                         ? "bg-[var(--accent)]"
                         : "bg-[var(--ink-5)]"

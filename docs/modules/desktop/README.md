@@ -61,13 +61,15 @@ renderer, routing, local app resources, and desktop packaging configuration.
   read time and show explicitly linked cashflow as separate actual-deduction history.
 - `components/charts/` - renderer chart components.
 - `components/layout/` - desktop shell, title bar, persistent top navigation, and banners; nav tabs carry a semantic icon from `@bubo/ui`'s `AppIcon` set alongside their label.
-- `components/ui/` - renderer-local UI atoms, including `EmptyState` (optionally icon-led)  that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
+- `components/ui/` - renderer-local UI atoms, including `EmptyState` (optionally icon-led) that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
 - `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), `lib/theme.ts` resolves the stored `light | dark | system` preference into `<html data-theme>` and the native window appearance, and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
 - `lib/mouseHistoryNavigation.ts` maps side buttons, browser history keys, and macOS Command+[ / Command+] to TanStack Router history on Tauri.
 - `lib/voice/audioRecorder.ts` captures microphone audio and encodes 16 kHz mono PCM WAV base64 for the voice entry mutation.
 - `lib/voice/intentHandoff.ts` is the domain-scoped intent bus: it hands a parsed intent to a live page listener or queues it for the page about to mount.
 - `lib/voice/useVoiceIntent.ts` subscribes one feature page to its own domain and prefills that page's form.
 - `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V) that records, transcribes, parses the intent, then opens the matching page.
+- `components/ui/DeltaText.tsx` - signed delta atom: one colour and arrow rule for P&L and change, using the product's accent/green-up and red-down semantics.
+- `routes/__root.tsx` replays `.bubo-route-enter` on every navigation without remounting the subtree, so page transitions animate while queries and scroll state survive.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.
 
 ## Data Flow
