@@ -72,15 +72,15 @@ lets later phases migrate them to the semantic names without a big-bang rewrite.
 
 Style values:
 
-| token | bubo light | bubo dark | lumno light | lumno dark |
-|---|---|---|---|---|
-| `--page-bg` | `#ffffff` | `#111111` | `#f3f5f7` | `#111111` |
-| `--surface` | `#ffffff` | `#191919` | `#ffffff` | `#191919` |
-| `--surface-soft` | `#f7f9f7` | `#202020` | `#f8fafc` | `#202020` |
-| `--surface-border` | `#e6eae6` | `#2d2d2d` | `rgba(17,24,39,.1)` | `rgba(255,255,255,.12)` |
-| `--accent` | `#14794a` | `#2fa36c` | `#2563eb` | `#5b9bff` |
-| `--radius-lg` | `8px` | `8px` | `12px` | `12px` |
-| `--shadow-shell` | none | none | `0 32px 64px -34px rgba(15,23,42,.22)` | `0 34px 68px -34px rgba(0,0,0,.56)` |
+| token              | bubo light | bubo dark | lumno light                            | lumno dark                          |
+| ------------------ | ---------- | --------- | -------------------------------------- | ----------------------------------- |
+| `--page-bg`        | `#ffffff`  | `#111111` | `#f3f5f7`                              | `#111111`                           |
+| `--surface`        | `#ffffff`  | `#191919` | `#ffffff`                              | `#191919`                           |
+| `--surface-soft`   | `#f7f9f7`  | `#202020` | `#f8fafc`                              | `#202020`                           |
+| `--surface-border` | `#e6eae6`  | `#2d2d2d` | `rgba(17,24,39,.1)`                    | `rgba(255,255,255,.12)`             |
+| `--accent`         | `#14794a`  | `#2fa36c` | `#2563eb`                              | `#5b9bff`                           |
+| `--radius-lg`      | `8px`      | `8px`     | `12px`                                 | `12px`                              |
+| `--shadow-shell`   | none       | none      | `0 32px 64px -34px rgba(15,23,42,.22)` | `0 34px 68px -34px rgba(0,0,0,.56)` |
 
 ## Files And Modules
 
@@ -115,6 +115,14 @@ Style values:
   "prefer HeroUI" rule, and the new theme contract.
 
 ## Tasks
+
+Status: phase 1 and phase 2 landed in `9f34745` (token layer, alias
+compatibility, theme/style state, settings style row, and the hand-drawn
+button/card/field/checkbox/switch/select/combobox/menu/modal/drawer/notice/
+spinner/segmented primitives with settings as the migrated pilot surface).
+Phases 3-5 are open; see
+[ADR 0019](../decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+Checkboxes below are ticked as each phase closes.
 
 ### Phase 1 - theme architecture and tokens
 

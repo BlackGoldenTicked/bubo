@@ -6,19 +6,29 @@
 
 ## Key Files
 
-- `packages/ui/src/components/ui/` - reusable primitives such as command, keyboard hint, scroll area, and toast.
+- `packages/ui/src/components/ui/` - reusable primitives and shared control wrappers.
 - `packages/ui/src/lib/utils.ts` - UI utility helpers.
-- `packages/ui/src/styles/globals.css` - shared global styles.
+- `packages/ui/src/styles/globals.css` - entry stylesheet: font import, base layer, and the `@import` of the token and primitive sheets.
+- `packages/ui/src/styles/tokens.css` - the four style × mode token blocks (`[data-style="bubo"|"lumno"]` × light/dark) plus the compatibility aliases (`--surface-1/2/3`, `--hair*`, `--bg`, `--mono`, `--popover-shadow`).
+- `packages/ui/src/styles/primitives.css` - hand-drawn component forms, every one branched on `[data-style]`.
 - `packages/ui/components.json` - shadcn-style component configuration.
 
 ## Primitive Map
 
+- `button.tsx` / `card.tsx` / `label.tsx` - layout and action primitives; the form (square vs pill, flat vs gradient, radius, press feedback) comes from CSS keyed on the active style.
+- `input.tsx` / `select.tsx` / `combobox.tsx` / `checkbox.tsx` / `switch.tsx` / `segmented.tsx` - form controls, replacing the previous component-library versions.
+- `modal.tsx` / `drawer.tsx` / `menu.tsx` / `notice.tsx` - overlay surfaces with portal, focus trap, and the style's own elevation and easing.
+- `spinner.tsx` / `icons.tsx` - loading state and shared icon set.
 - `command.tsx` - command palette primitives based on `cmdk`.
 - `kbd.tsx` - keyboard hint display.
 - `scroll-area.tsx` - shared scroll area primitive.
 - `simple-toast.tsx` - lightweight toast surface (Sonner, bottom-right). `notify` exposes `success`/`error`/`message`/`loading`/`dismiss` plus `action(title, { id, actionLabel, onAction })` for persistent toasts with a button.
 - `lib/utils.ts` - class-name merging helper.
-- `styles/globals.css` - shared tokens and base CSS imported by the renderer: the bubo accent and custom `--ink-*`/`--hair-*`/`--surface-*` custom properties for light (`:root`) and dark (`[data-theme="dark"]`, the crx-ui neutral scale with brand colors lifted for contrast), the `--mono` financial-figure stack, the `--popover-shadow` chart popover shadow, the `html` background paint that prevents a first-frame white flash, and the zero-specificity `:where(...):focus-visible` outline that styles raw interactive elements without overriding HeroUI's own focus rings. Desktop window dragging is declared explicitly by the Tauri title-bar component rather than by global runtime-specific selectors.
+- `styles/*.css` - the token contract and the per-style primitive forms. Tokens cover surfaces, ink, brand and semantic colors, shape, elevation, inset highlights, and motion durations/easings. The `html` background paint prevents a first-frame flash, and a zero-specificity `:where(...):focus-visible` outline styles raw interactive elements without overriding a primitive's own focus treatment. Desktop window dragging is declared explicitly by the Tauri title-bar component rather than by global runtime-specific selectors.
+
+## Style Contract
+
+`<html>` carries `data-style` (`bubo` = green brand, tight radius, flat hairline forms; `lumno` = blue brand, gray canvas with white cards, pill and gradient forms) and `data-theme` (`light`/`dark`). Components never branch on the style in TypeScript; only CSS does. A primitive that defines one branch renders unstyled in the other, so both branches plus the dark branch are mandatory. See [ADR 0019](../../decisions/0019-dual-visual-languages-and-drawn-primitives.md).
 
 ## Data Flow
 

@@ -4,10 +4,10 @@ bubo is a work-focused personal finance desktop app. The UI should feel calm, de
 
 ## Tokens
 
-- Color: use the existing Tailwind and HeroUI tokens first. Reserve semantic colors for money direction, risk, and destructive actions.
+- Color: use the style tokens from `packages/ui` first. Reserve semantic colors for money direction, risk, and destructive actions. Literal whites are only for content sitting on colored fills.
 - Typography: use compact headings inside panels and tables. Avoid hero-scale type in product surfaces.
 - Spacing: default to the existing 4px/8px rhythm. Keep toolbars, forms, and tables stable when data changes.
-- Shape: cards and panels should stay at 8px radius or less unless a local primitive already defines otherwise.
+- Shape: radius, elevation, borders, and motion come from style tokens (`--radius-*`, `--shadow-*`, `--dur-*`, `--ease-*`). Do not hardcode a radius per component; the bubo style stays tight (8px or less) while the Lumno style is rounder by token.
 
 ## Layout
 
@@ -24,9 +24,8 @@ bubo is a work-focused personal finance desktop app. The UI should feel calm, de
 ## Components
 
 - Reuse components from `packages/ui` and local renderer UI before creating new primitives.
-- Prefer HeroUI components for common controls such as tabs, selects, inputs,
-  buttons, modals, drawers, labels, calendars, and form controls. Do not hand-roll
-  these controls unless the local design system lacks the behavior.
+- Common controls (buttons, inputs, selects, comboboxes, checkboxes, switches, tabs, modals, drawers, menus, tooltips) come from the `packages/ui` primitives, not from a component library. Their form is CSS-driven per `[data-style]`, so one primitive must render correctly in both bubo and Lumno.
+- Formatting and appearance must never be overridden per call site (for example inline `borderRadius`); those overrides break the other style. See [ADR 0019](docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md).
 - In renderer UI, prefer Tailwind utility classes for layout, spacing,
   typography, borders, radius, shadows, and token colors. Use inline `style` only
   for dynamic runtime values, chart-library prop objects, or CSS values that

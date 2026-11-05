@@ -23,17 +23,51 @@
 
 ## Renderer UI Rules
 
-- Prefer existing HeroUI controls and local renderer primitives before building
-  custom controls. Tabs, selects, inputs, buttons, modals, drawers, labels,
-  calendars, and form fields should not be hand-rolled when HeroUI already
-  covers the behavior.
+- Shared controls come from `packages/ui/src/components/ui/*`. These primitives
+  render stable semantic classes whose form is CSS-driven by
+  `[data-style="bubo"]` / `[data-style="lumno"]`; a new primitive must define
+  both style branches and a dark branch, or it renders unstyled in the other
+  style. Do not add a component-library dependency for a control. See
+  [ADR 0019](decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+- Never override primitive appearance at the call site, for example inline
+  `borderRadius`, hardcoded pill radius, or a literal white face. Radius,
+  elevation, borders, and motion are style tokens.
 - Prefer Tailwind `className` utilities for renderer layout, spacing,
   typography, borders, radius, shadows, and token colors.
 - Use inline `style` only for values that are genuinely dynamic at runtime,
   chart-library object props, or CSS values that Tailwind cannot express
   cleanly. Do not use inline styles as the default way to design new UI.
 - When touching an old component with nearby inline styles, avoid expanding that
-  pattern. New UI in the same file should still follow HeroUI and Tailwind first.
+  pattern. New UI in the same file should still follow the primitives and
+  Tailwind first.
+
+## Renderer States, Failures, And Copy
+
+See [ADR 0017](decisions/0017-unify-renderer-states-failures-and-copy-language.md).
+
+- Queries render through `QueryState` so loading, failure, and empty are
+  distinguishable. Do not fall back to `data ?? []`, which turns a dead sidecar
+  into a plausible-looking zero.
+- Mutations report failures through the global `MutationCache.onError` path
+  (`reportActionError`). A new mutation must not swallow its error, and a
+  confirm dialog must not close as if the action succeeded.
+- Keyboard focus must stay visible: the zero-specificity global `:focus-visible`
+  ring is the only focus treatment to rely on. Do not add `outline: none`
+  without an equivalent replacement.
+- User-facing copy is inline Chinese. The i18n layer was removed; do not
+  reintroduce i18next without a new decision.
+
+## Shared Contract Changes
+
+`packages/shared` interfaces are also constructed as object literals outside the
+API/mapper path: test fixtures in `apps/desktop/**/__tests__`, API tests, and the
+web marketing mocks under `apps/web/appmock`. Adding or tightening a field on a
+contract breaks those literals with "missing properties" only at full type
+check time.
+
+- After changing a contract interface, search for its distinctive field names,
+  not just the type name, and fix every literal construction site.
+- Run `pnpm check-types` across the workspace before considering the change done.
 
 ## Database Rules
 
@@ -75,6 +109,8 @@ Generated files and ambient tool declarations should be excluded in `check-docs.
 - [ ] The change respects the asymmetric finance model.
 - [ ] Tauri command, Node sidecar, and renderer boundaries remain intact.
 - [ ] SQLite access goes through the Drizzle-backed API layer.
+- [ ] Shared contract changes also fixed every literal construction site
+      (tests, API tests, web mocks).
 - [ ] Relevant module docs and file headers are updated.
 - [ ] Tests or manual verification cover the changed behavior.
 - [ ] `pnpm check-docs` has no hard failures.
