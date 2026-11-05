@@ -6,22 +6,7 @@
  */
 
 import type { CSSProperties, ReactNode } from "react"
-import { Card, Segmented, Switch } from "@bubo/ui"
-
-const CHEVRON = (
-  <svg
-    width="15"
-    height="15"
-    viewBox="0 0 16 16"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M6 3l5 5-5 5" />
-  </svg>
-)
+import { AppIcon, Card, Segmented, Switch, type AppIconName } from "@bubo/ui"
 
 /**
  * Shared row metrics — the single source of truth for settings row sizing.
@@ -33,19 +18,28 @@ function borderClass(first?: boolean): string {
   return first ? "" : "border-t border-[var(--hair-3)]"
 }
 
-export function GroupLabel({ children }: { children: string }) {
+export function GroupLabel({ children, icon }: { children: string; icon?: AppIconName }) {
   return (
-    <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[.1em] text-[var(--ink-4)]">
+    <div className="mb-1 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[.1em] text-[var(--ink-4)]">
+      {icon && <AppIcon name={icon} size={12} />}
       {children}
     </div>
   )
 }
 
 /** A settings group: top margin + group label + its rows inside a card surface. */
-export function SettingsGroup({ title, children }: { title: string; children: ReactNode }) {
+export function SettingsGroup({
+  title,
+  icon,
+  children,
+}: {
+  title: string
+  icon?: AppIconName
+  children: ReactNode
+}) {
   return (
     <div className="mt-[30px]">
-      <GroupLabel>{title}</GroupLabel>
+      <GroupLabel icon={icon}>{title}</GroupLabel>
       <Card className="overflow-hidden px-4">{children}</Card>
     </div>
   )
@@ -129,7 +123,9 @@ export function LinkRow({
           {note}
         </span>
       )}
-      <span className={`${note ? "" : "ml-auto"} text-[var(--ink-4)]`}>{CHEVRON}</span>
+      <span className={`${note ? "" : "ml-auto"} text-[var(--ink-4)]`}>
+        <AppIcon name="chevronRight" size={15} />
+      </span>
     </button>
   )
 }

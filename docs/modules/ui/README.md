@@ -18,7 +18,12 @@
 - `button.tsx` / `card.tsx` / `label.tsx` - layout and action primitives; the form (square vs pill, flat vs gradient, radius, press feedback) comes from CSS keyed on the active style.
 - `input.tsx` / `select.tsx` / `combobox.tsx` / `checkbox.tsx` / `switch.tsx` / `segmented.tsx` - form controls, replacing the previous component-library versions.
 - `modal.tsx` / `drawer.tsx` / `menu.tsx` / `notice.tsx` - overlay surfaces with portal, focus trap, and the style's own elevation and easing.
-- `spinner.tsx` / `icons.tsx` - loading state and shared icon set.
+- `spinner.tsx` / `icons.tsx` - loading state and the hand-drawn glyphs used inside primitives.
+- `app-icon.tsx` - the only icon surface product code should use: `AppIcon` maps semantic names
+  (`dashboard`, `voice`, `eyeOff`, `income`…) onto QingIcon glyphs (Apache-2.0, `qingicon-react`),
+  inherits `currentColor`, defaults to `1em`, and stays `aria-hidden` unless a `label` is passed.
+  Adding an icon is a registry entry here, never a direct glyph import at a call site, so stroke,
+  optical size, and accessibility stay consistent across both visual styles.
 - `command.tsx` - command palette primitives based on `cmdk`.
 - `kbd.tsx` - keyboard hint display.
 - `scroll-area.tsx` - shared scroll area primitive.

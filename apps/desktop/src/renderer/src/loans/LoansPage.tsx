@@ -545,6 +545,7 @@ export function LoansPage() {
             {/* Credit card row */}
             {loans.length === 0 && (
               <EmptyState
+                icon="loans"
                 title="暂无贷款计划"
                 hint="添加贷款后，这里会显示未来还款节奏；资产负债仍以资产快照为准"
                 action={{ label: "＋ 添加贷款", onClick: () => setShowAdd(true) }}

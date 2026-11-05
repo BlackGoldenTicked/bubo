@@ -638,7 +638,7 @@ export function OverviewPage() {
         </div>
         <ScrollArea className="min-h-0 flex-1 px-5 py-3 [&_td]:py-3">
           {recentTx.length === 0 ? (
-            <EmptyState title="暂无流水记录" hint="前往「流水」页面导入账单" />
+            <EmptyState icon="cashflow" title="暂无流水记录" hint="前往「流水」页面导入账单" />
           ) : (
             <TransactionTable rows={transactionRows} variant="compact" />
           )}

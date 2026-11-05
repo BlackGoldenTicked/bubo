@@ -25,6 +25,7 @@ import {
 } from "@tanstack/react-table"
 import { useVirtualizer } from "@tanstack/react-virtual"
 import type { CashflowEventSummary } from "@bubo/api"
+import { AppIcon } from "@bubo/ui"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
@@ -894,7 +895,8 @@ export function ImportsPage() {
           </div>
           <div style={{ marginLeft: "auto", paddingBottom: 6 }}>
             <Button size="sm" variant="primary" onPress={() => setShowAddTx(true)}>
-              ＋ 记一笔
+              <AppIcon name="add" size={13} />
+              记一笔
             </Button>
           </div>
         </div>

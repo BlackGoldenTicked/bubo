@@ -6,7 +6,7 @@
  */
 
 import type { ReactNode } from "react"
-import { Button } from "@bubo/ui"
+import { AppIcon, Button, type AppIconName } from "@bubo/ui"
 import { Link } from "@tanstack/react-router"
 
 interface EmptyAction {
@@ -20,6 +20,8 @@ interface EmptyStateProps {
   title: string
   hint?: ReactNode
   action?: EmptyAction
+  /** Optional glyph shown above the title; keep it decorative. */
+  icon?: AppIconName
   /** Compact variant for small panes and drawers. */
   compact?: boolean
   className?: string
@@ -29,6 +31,7 @@ export function EmptyState({
   title,
   hint,
   action,
+  icon,
   compact = false,
   className = "",
 }: EmptyStateProps) {
@@ -36,6 +39,15 @@ export function EmptyState({
     <div
       className={`flex flex-col items-center text-center ${compact ? "gap-1 py-8" : "gap-1.5 py-12"} ${className}`}
     >
+      {icon && (
+        <span
+          className={`mb-1 flex items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--ink-4)] ${
+            compact ? "size-7" : "size-9"
+          }`}
+        >
+          <AppIcon name={icon} size={compact ? 14 : 16} />
+        </span>
+      )}
       <div
         className={`${compact ? "text-[12px]" : "text-[12.5px]"} font-medium text-[var(--ink-3)]`}
       >

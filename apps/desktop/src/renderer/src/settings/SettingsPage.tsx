@@ -160,7 +160,7 @@ export function SettingsPage() {
       <ScrollArea className="h-full flex-1 min-h-0">
         <div className="mx-auto w-[540px] pb-[60px]">
           {/* 显示偏好 */}
-          <SettingsGroup title="显示偏好">
+          <SettingsGroup title="显示偏好" icon="eye">
             <Row first label="主显示货币" sub="所有资产、净资产汇总以此折算">
               <div className="w-[168px]">
                 <CurrencySelect
@@ -196,7 +196,7 @@ export function SettingsPage() {
           </SettingsGroup>
 
           {/* 分类 */}
-          <SettingsGroup title="分类">
+          <SettingsGroup title="分类" icon="cashflow">
             <LinkRow
               note={`${categories.length} 个`}
               onClick={() => void navigate({ to: "/settings-categories" })}
@@ -212,7 +212,7 @@ export function SettingsPage() {
           <AiVoiceSection />
 
           {/* 关于 */}
-          <SettingsGroup title="关于">
+          <SettingsGroup title="关于" icon="info">
             <Row first label="版本">
               <span className="font-display whitespace-nowrap text-[12.5px] text-[var(--ink-4)]">
                 {appVersion ? `v${appVersion}` : "—"}

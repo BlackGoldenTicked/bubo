@@ -529,6 +529,7 @@ export function SubscriptionsPage() {
                 ))}
                 {subs.length === 0 && (
                   <EmptyState
+                    icon="subscriptions"
                     title="暂无订阅"
                     hint="添加订阅后，这里会显示每月固定支出与扣费日历"
                     action={{ label: "＋ 添加订阅", onClick: () => setShowAdd(true) }}

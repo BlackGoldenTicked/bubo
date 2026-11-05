@@ -574,6 +574,7 @@ export function AssetsPage() {
                 )}
                 {assetSnapshots.length === 0 && (
                   <EmptyState
+                    icon="assets"
                     title="暂无资产快照"
                     hint="添加账户后，这里会显示最新余额和历史增长"
                     action={{ label: "＋ 添加账户", onClick: openAdd }}

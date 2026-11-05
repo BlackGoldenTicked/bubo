@@ -101,7 +101,7 @@ function LlmPoolSection() {
   }
 
   return (
-    <SettingsGroup title="模型池">
+    <SettingsGroup title="模型池" icon="investments">
       {models.length > 0 ? (
         groups.map((group) => (
           <div key={group.purpose}>
@@ -178,7 +178,7 @@ export function AiVoiceSection() {
 
   return (
     <>
-      <SettingsGroup title="语音记账">
+      <SettingsGroup title="语音记账" icon="voice">
         <Row first label="百炼 API Key" sub={`语音识别与大模型池 · ${asrLabel}`}>
           <Input
             variant="secondary"

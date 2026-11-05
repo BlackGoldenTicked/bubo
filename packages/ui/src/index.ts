@@ -5,6 +5,7 @@
  * @gotcha  Keep product-specific finance workflows in the desktop renderer.
  */
 
+export * from "./components/ui/app-icon"
 export * from "./components/ui/button"
 export * from "./components/ui/card"
 export * from "./components/ui/checkbox"

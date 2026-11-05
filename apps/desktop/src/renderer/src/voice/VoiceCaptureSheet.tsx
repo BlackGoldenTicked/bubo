@@ -13,6 +13,7 @@ import { Button, Modal } from "@heroui/react"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useAtom } from "jotai"
+import { AppIcon } from "@bubo/ui"
 import type { VoiceIntent } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
@@ -270,7 +271,12 @@ export function VoiceCaptureSheet() {
         <Modal.Dialog style={{ maxWidth: 460 }}>
           <Modal.CloseTrigger />
           <Modal.Header>
-            <Modal.Heading>语音录入</Modal.Heading>
+            <Modal.Heading>
+              <span className="flex items-center gap-2">
+                <AppIcon name="voice" size={16} />
+                语音录入
+              </span>
+            </Modal.Heading>
             <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 2 }}>
               说一句话，自动判断记到流水、资产、投资、订阅还是贷款
             </p>

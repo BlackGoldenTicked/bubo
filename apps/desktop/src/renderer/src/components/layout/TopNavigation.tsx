@@ -11,18 +11,26 @@
 
 import { Link, useRouterState } from "@tanstack/react-router"
 import { useAtom, useSetAtom } from "jotai"
+import { AppIcon, type AppIconName } from "@bubo/ui"
 import { buboPerfLog } from "@/lib/debug/perf"
 import { amountsHiddenAtom, voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
 
+interface NavItem {
+  label: string
+  href: "/" | "/assets" | "/investments" | "/imports" | "/subscriptions" | "/loans" | "/budget"
+  matches: readonly string[]
+  icon: AppIconName
+}
+
 const PRIMARY_NAV = [
-  { label: "看板", href: "/", matches: ["/", "/analysis"] },
-  { label: "资产", href: "/assets", matches: ["/assets"] },
-  { label: "投资", href: "/investments", matches: ["/investments"] },
-  { label: "流水", href: "/imports", matches: ["/imports"] },
-  { label: "订阅", href: "/subscriptions", matches: ["/subscriptions"] },
-  { label: "贷款", href: "/loans", matches: ["/loans"] },
-  { label: "预算", href: "/budget", matches: ["/budget"] },
-] as const
+  { label: "看板", href: "/", matches: ["/", "/analysis"], icon: "dashboard" },
+  { label: "资产", href: "/assets", matches: ["/assets"], icon: "assets" },
+  { label: "投资", href: "/investments", matches: ["/investments"], icon: "investments" },
+  { label: "流水", href: "/imports", matches: ["/imports"], icon: "cashflow" },
+  { label: "订阅", href: "/subscriptions", matches: ["/subscriptions"], icon: "subscriptions" },
+  { label: "贷款", href: "/loans", matches: ["/loans"], icon: "loans" },
+  { label: "预算", href: "/budget", matches: ["/budget"], icon: "budget" },
+] as const satisfies readonly NavItem[]
 
 function pathMatches(pathname: string, matches: readonly string[]): boolean {
   return matches.some((match) => (match === "/" ? pathname === "/" : pathname.startsWith(match)))
@@ -57,6 +65,7 @@ export function TopNavigation() {
               }
               className="no-drag-region bubo-nav__item"
             >
+              <AppIcon name={item.icon} size={13} />
               {item.label}
             </Link>
           )
@@ -70,6 +79,7 @@ export function TopNavigation() {
           onClick={() => setVoiceOpen(true)}
           className="no-drag-region bubo-nav__action"
         >
+          <AppIcon name="voice" size={13} />
           语音
         </button>
         <button
@@ -78,6 +88,7 @@ export function TopNavigation() {
           onClick={() => setHidden((value) => !value)}
           className="no-drag-region bubo-nav__action"
         >
+          <AppIcon name={hidden ? "eyeOff" : "eye"} size={13} />
           {hidden ? "显示金额" : "隐藏金额"}
         </button>
         <Link
@@ -85,6 +96,7 @@ export function TopNavigation() {
           aria-current={settingsActive ? "page" : undefined}
           className="no-drag-region bubo-nav__item"
         >
+          <AppIcon name="settings" size={13} />
           设置
         </Link>
       </div>
