@@ -723,7 +723,6 @@
 }
 .bubo-row[aria-selected="true"] {
   background: var(--row-selected);
-  box-shadow: inset 2px 0 0 var(--accent);
 }
 .bubo-row:focus-visible {
   outline: 2px solid var(--accent);

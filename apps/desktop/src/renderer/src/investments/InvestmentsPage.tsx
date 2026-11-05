@@ -81,7 +81,7 @@ const PositionRow = memo(function PositionRow({ position, selected, onSelect }: 
           outline: "none",
           textAlign: "left",
           justifyContent: "flex-start",
-          boxShadow: selected ? "inset 2px 0 0 var(--accent)" : "none",
+          boxShadow: "none",
           background: selected ? "var(--row-selected)" : "transparent",
         }}
       >

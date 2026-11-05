@@ -474,7 +474,7 @@ export function SubscriptionsPage() {
                         border: "none",
                         borderRadius: 6,
                         outline: "none",
-                        boxShadow: selectedId === s.id ? "inset 2px 0 0 var(--accent)" : "none",
+                        boxShadow: "none",
                         textAlign: "left",
                         justifyContent: "flex-start",
                         background: selectedId === s.id ? "var(--row-selected)" : "transparent",
