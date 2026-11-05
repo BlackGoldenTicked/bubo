@@ -32,3 +32,8 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0016   | Keep Contract Positions Display-Only               | Accepted | 2026-09-22 |
 | 0017   | Unify Renderer States, Failures, And Copy Language | Accepted | 2026-09-22 |
 | 0018   | Renderer Theme System With Dark Mode               | Accepted | 2026-09-22 |
+| 0019   | Dual Visual Languages And Hand-Drawn Primitives    | Accepted | 2026-09-22 |
+| 0020   | Voice Entry Through Local AI Providers             | Accepted | 2026-11-04 |
+| 0021   | Prefer macOS System Speech Recognition             | Accepted | 2026-11-05 |
+| 0022   | Bailian Free-Tier Model Pool Before DeepSeek       | Accepted | 2026-11-05 |
+| 0023   | System-Level Voice Entry Through Domain Intents    | Accepted | 2026-11-05 |

@@ -30,7 +30,8 @@
   },
   "dependencies": {
     "@bubo/db": "workspace:*",
-    "@bubo/shared": "workspace:*"
+    "@bubo/shared": "workspace:*",
+    "openai": "^7.50.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "pnpm dev:tauri",
     "dev:debug": "pnpm dev:tauri",
-    "dev:tauri": "tauri dev --config src-tauri/tauri.dev.conf.json",
+    "dev:tauri": "pnpm build:tauri-sidecar && tauri dev --config src-tauri/tauri.dev.conf.json",
     "build": "pnpm build:tauri-renderer && pnpm build:tauri-sidecar:js",
     "build:tauri-renderer": "vite build --config vite.config.ts",
     "build:tauri-sidecar:js": "vite build --config vite.sidecar.config.ts",

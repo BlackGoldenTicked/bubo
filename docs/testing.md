@@ -33,6 +33,21 @@ pnpm -F desktop rebuild better-sqlite3
 
 Do not rebuild the shared native module for another runtime.
 
+### Renderer tests on a modern Node
+
+On a Node release that ships the experimental Web Storage globals, a
+`window.localStorage` getter is installed on `globalThis` before Vitest can
+inject jsdom's, so renderer tests fail with
+`Cannot read properties of undefined (reading 'clear')`. Disable the feature for
+the run instead of changing test code:
+
+```bash
+env NODE_OPTIONS=--no-experimental-webstorage pnpm test
+```
+
+CI runs Node 22 and does not need the flag. Under fish, the `env` prefix is
+required — `VAR=value cmd` is not valid fish syntax.
+
 ## What To Test
 
 - Product facade/database behavior: package tests under `packages/*/tests`.

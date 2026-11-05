@@ -36,7 +36,8 @@ describe("top navigation drag region", () => {
     expect(source).toMatch(/<nav[\s\S]+?className="drag-region/)
     expect(source).not.toMatch(/<nav[^>]+no-drag-region/)
     expect(source).not.toMatch(/<div className="no-drag-region flex h-full items-center gap-1">/)
-    expect(source.match(/no-drag-region/g)).toHaveLength(3)
+    // Concrete controls only: voice capture, amount visibility, settings link.
+    expect(source.match(/no-drag-region/g)).toHaveLength(4)
   })
 
   it("makes the title bar the outermost CSS drag shell", () => {

@@ -7,6 +7,17 @@
 
 import { TRPCError } from "@trpc/server"
 import type { BuboApi } from "@bubo/api"
+import type {
+  ImportVoiceLlmModelsInput,
+  ParseVoiceIntentInput,
+  RemoveVoiceLlmModelInput,
+  SaveVoiceSettingsInput,
+  TranscribeVoiceInput,
+  TranscribeVoiceResult,
+  VoiceIntentParseResult,
+  VoiceLlmPoolEntryView,
+  VoiceSettingsSnapshot,
+} from "@bubo/shared/contracts"
 import type { Result } from "@bubo/shared"
 import { publicProcedure, router, type TrpcContext } from "./trpc"
 
@@ -554,6 +565,39 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         callApi(ctx, (api) => api.removeObjectLink(requiredInput<"removeObjectLink">(input))),
       ),
+  }),
+  voice: router({
+    settings: publicProcedure.query(({ ctx }): VoiceSettingsSnapshot => ctx.voice.getSettings()),
+    saveSettings: publicProcedure
+      .input((v) => v as SaveVoiceSettingsInput)
+      .mutation(
+        ({ ctx, input }): VoiceSettingsSnapshot => unwrap(ctx.voice.saveSettings(input ?? {})),
+      ),
+    parseIntent: publicProcedure
+      .input((v) => v as ParseVoiceIntentInput)
+      .mutation(
+        async ({ ctx, input }): Promise<VoiceIntentParseResult> =>
+          unwrap(await ctx.voice.parseIntent(input)),
+      ),
+    transcribe: publicProcedure
+      .input((v) => v as TranscribeVoiceInput)
+      .mutation(
+        async ({ ctx, input }): Promise<TranscribeVoiceResult> =>
+          unwrap(await ctx.voice.transcribeEntry(input)),
+      ),
+    models: router({
+      list: publicProcedure.query(({ ctx }): VoiceLlmPoolEntryView[] => ctx.voice.listLlmModels()),
+      import: publicProcedure
+        .input((v) => v as ImportVoiceLlmModelsInput)
+        .mutation(({ ctx, input }): VoiceLlmPoolEntryView[] =>
+          unwrap(ctx.voice.importLlmModels(input ?? { filePath: "" })),
+        ),
+      remove: publicProcedure
+        .input((v) => v as RemoveVoiceLlmModelInput)
+        .mutation(({ ctx, input }): VoiceLlmPoolEntryView[] =>
+          unwrap(ctx.voice.removeLlmModel(input ?? { model: "" })),
+        ),
+    }),
   }),
 })
 

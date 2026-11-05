@@ -8,10 +8,12 @@
 import { initTRPC } from "@trpc/server"
 import type { BuboApi } from "@bubo/api"
 import type { LedgerService } from "./ledger-service"
+import type { VoiceService } from "./voice-service"
 
 export interface TrpcContext {
   api: BuboApi
   ledgers: LedgerService
+  voice: VoiceService
 }
 
 const t = initTRPC.context<TrpcContext>().create({ isServer: true })

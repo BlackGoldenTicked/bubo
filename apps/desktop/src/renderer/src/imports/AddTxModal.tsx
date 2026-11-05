@@ -3,6 +3,8 @@
  * @role    Renderer feature surface for statement lines and cashflow details.
  * @deps    React, tRPC import/cashflow queries, and table/detail UI.
  * @gotcha  Imports describe past cashflow and must not update asset balances automatically.
+ *          Voice captures arrive as a prefilled `initial` form from the page-level handoff;
+ *          saving still goes through the page's manual cashflow mutation.
  */
 
 import { useEffect, useMemo } from "react"
@@ -39,6 +41,7 @@ export function emptyTxForm(): TxForm {
 interface Props {
   open: boolean
   categories: CategorySummary[]
+  /** Voice capture fills this form through the page-level intent handoff. */
   initial?: TxForm
   title?: string
   subtitle?: string

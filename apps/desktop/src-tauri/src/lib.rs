@@ -218,6 +218,25 @@ async fn ledger_path(state: State<'_, SidecarState>, id: String) -> Result<Strin
         .map_err(|error| format!("bubo sidecar returned an invalid ledger path: {error}"))
 }
 
+#[cfg(target_os = "macos")]
+mod speech;
+
+#[tauri::command]
+async fn speech_recognize(audio_base64: String) -> Result<String, String> {
+    #[cfg(target_os = "macos")]
+    match tauri::async_runtime::spawn_blocking(move || speech::recognize_wav_base64(&audio_base64))
+        .await
+    {
+        Ok(result) => result,
+        Err(error) => Err(format!("bubo speech task failed: {error}")),
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = audio_base64;
+        Err("系统语音识别仅在 macOS 上可用".into())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -239,7 +258,8 @@ pub fn run() {
             database_exists,
             drain_ledger_changes,
             import_ledger,
-            ledger_path
+            ledger_path,
+            speech_recognize
         ])
         .run(tauri::generate_context!())
         .expect("failed to run bubo Tauri application");

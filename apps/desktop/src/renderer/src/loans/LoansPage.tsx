@@ -5,7 +5,7 @@
  * @gotcha  Loan progress is date-derived and must not create cashflow or asset changes.
  */
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button, Input, Modal } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router"
@@ -15,6 +15,7 @@ import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { addDays, localDateKey } from "@/lib/dates"
 import { useMoney } from "@/lib/useMoney"
 import { LoanScheduleBar } from "./LoanScheduleBar"
@@ -47,10 +48,13 @@ const EMPTY_FORM: LoanForm = {
 
 function AddLoanModal({
   open,
+  initial,
   onClose,
   onSave,
 }: {
   open: boolean
+  /** Voice intents prefill the same fields the user would type. */
+  initial?: LoanForm
   onClose: () => void
   onSave: (form: LoanForm) => void
 }) {
@@ -60,7 +64,12 @@ function AddLoanModal({
     handleSubmit,
     register,
     reset,
-  } = useForm<LoanForm>({ defaultValues: EMPTY_FORM })
+  } = useForm<LoanForm>({ defaultValues: initial ?? EMPTY_FORM })
+
+  useEffect(() => {
+    if (open) reset(initial ?? EMPTY_FORM)
+  }, [initial, open, reset])
+
   function handleClose() {
     reset(EMPTY_FORM)
     onClose()
@@ -201,6 +210,21 @@ export function LoansPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
+  const [voiceLoanForm, setVoiceLoanForm] = useState<LoanForm | undefined>(undefined)
+
+  useVoiceIntent("loan", (intent) => {
+    setVoiceLoanForm({
+      name: intent.name,
+      bank: intent.lender ?? "",
+      principal: intent.principalAmount,
+      monthly: intent.paymentAmount,
+      rate: intent.annualRatePercent,
+      termTotal: intent.termMonths != null ? String(intent.termMonths) : "",
+      startDate: intent.startDate,
+      cur: intent.currency,
+    })
+    setShowAdd(true)
+  })
   const today = localDateKey()
   const futureThrough = localDateKey(addDays(new Date(), 60))
   const loansQuery = useQuery(trpc.loans.list.queryOptions({ status: "active" }))
@@ -303,6 +327,7 @@ export function LoansPage() {
       currency: form.cur,
     })
     setShowAdd(false)
+    setVoiceLoanForm(undefined)
   }
 
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -375,11 +400,7 @@ export function LoansPage() {
             </div>
           </div>
           <div style={{ marginLeft: "auto", paddingTop: 8 }}>
-            <Button
-              size="sm"
-              variant="primary"
-              onPress={() => setShowAdd(true)}
-            >
+            <Button size="sm" variant="primary" onPress={() => setShowAdd(true)}>
               ＋ 添加贷款
             </Button>
           </div>
@@ -564,7 +585,15 @@ export function LoansPage() {
         </div>
       </ScrollArea>
 
-      <AddLoanModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleSave} />
+      <AddLoanModal
+        open={showAdd}
+        initial={voiceLoanForm}
+        onClose={() => {
+          setShowAdd(false)
+          setVoiceLoanForm(undefined)
+        }}
+        onSave={handleSave}
+      />
     </div>
   )
 }

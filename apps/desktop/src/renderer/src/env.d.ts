@@ -33,6 +33,8 @@ declare global {
       getDatabasePath: () => Promise<string | null>
       databaseExists: () => Promise<boolean>
       trpcRequest: (request: { type: string; path: string; input: unknown }) => Promise<unknown>
+      /** macOS system speech recognition over recorded WAV audio; rejects when unavailable. */
+      speechRecognize: (audioBase64: string) => Promise<string>
       onLedgerChanged: (callback: (event: RendererLedgerChangeEvent) => void) => () => void
       getAppVersion: () => Promise<string>
       checkForUpdate: () => Promise<AppUpdateInfo | null>

@@ -8,6 +8,22 @@
 - Flutter stable for `apps/mobile`.
 - Production data identity: `com.chaordex.bubo`.
 
+### When the host default differs
+
+- **Node newer than 22.** The sidecar build (`pkg`, target node22) and the
+  `better-sqlite3` ABI are pinned to Node 22, and the sidecar packaging script
+  refuses other versions. Keep an isolated Node 22 instead of changing the
+  system runtime, and prefix workspace commands with its bin directory, for
+  example `PATH="$HOME/.local/node22/node_modules/.bin:$PATH" pnpm test`.
+- **Rust older than 1.88.** `Cargo.lock` pins crates that require 1.88 or
+  newer; an older stable toolchain fails at `cargo check` with a version
+  requirement error rather than a code error. Upgrade the toolchain before
+  diagnosing further.
+- **fish shell.** Assigning a temporary variable inline (`VAR=value cmd`) and
+  the `$'...'` quoting form are bash-only. Use `env VAR=value cmd`. A failed
+  command that reports `Expected a variable name after this $` means the shell
+  rejected the line, so the command never ran; it is not a build failure.
+
 ## Install
 
 ```bash
@@ -30,6 +46,13 @@ pnpm dev
 This builds the self-contained sidecar and launches `bubo Dev` through Tauri
 with identifier `com.chaordex.bubo.dev`. It serves the existing React renderer
 through Vite and keeps development ledgers separate from production.
+
+`dev` rebuilds the sidecar on every start and refreshes the copy Tauri spawns
+(`src-tauri/target/debug/bubo-sidecar`). That refresh matters: `tauri dev` only
+re-copies the external binary when the Rust build actually runs, so a TypeScript
+change on its own used to leave an old sidecar running and surface as
+`No procedure found on path "voice,parseIntent"` after a tRPC rename. If you see
+a procedure/route error that does not match the source, restart with `pnpm dev`.
 
 Equivalent direct command:
 
@@ -113,6 +136,19 @@ matching bubo updater key.
 
 Supported release flags include `--dry-run`, `--no-publish`, `--no-npm`,
 `--no-cask`, `--no-wait`, and `--no-checks`.
+
+## Voice Entry Keys
+
+Voice entry needs a Bailian (DashScope) key for ASR and a DeepSeek key for
+semantic parsing. Configure either way:
+
+- In the app: 设置 → 语音记账, paste both keys and save. Keys are stored in
+  `bubo-voice.json` inside the app-data directory with mode `0600`.
+- For headless or CLI runs: export `DASHSCOPE_API_KEY` and `DEEPSEEK_API_KEY`
+  before starting; they act as fallbacks when the settings file has no key.
+
+Region or model overrides live in the same JSON file (`baseUrl`, `model` per
+provider); see [docs/topics/voice-entry.md](topics/voice-entry.md).
 
 ## Typecheck, Lint, Format, And Test
 

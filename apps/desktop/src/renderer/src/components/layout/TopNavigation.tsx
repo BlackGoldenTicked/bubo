@@ -10,9 +10,9 @@
  */
 
 import { Link, useRouterState } from "@tanstack/react-router"
-import { useAtom } from "jotai"
+import { useAtom, useSetAtom } from "jotai"
 import { buboPerfLog } from "@/lib/debug/perf"
-import { amountsHiddenAtom } from "@/lib/state/uiAtoms"
+import { amountsHiddenAtom, voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
 
 const PRIMARY_NAV = [
   { label: "看板", href: "/", matches: ["/", "/analysis"] },
@@ -31,6 +31,7 @@ function pathMatches(pathname: string, matches: readonly string[]): boolean {
 export function TopNavigation() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [hidden, setHidden] = useAtom(amountsHiddenAtom)
+  const setVoiceOpen = useSetAtom(voiceCaptureOpenAtom)
   const settingsActive = pathname.startsWith("/settings")
 
   return (
@@ -62,6 +63,15 @@ export function TopNavigation() {
         })}
       </nav>
       <div data-tauri-drag-region className="drag-region flex h-full items-center gap-1">
+        <button
+          type="button"
+          title="语音录入（⇧⌘V）"
+          aria-keyshortcuts="Meta+Shift+V"
+          onClick={() => setVoiceOpen(true)}
+          className="no-drag-region bubo-nav__action"
+        >
+          语音
+        </button>
         <button
           type="button"
           aria-pressed={hidden}

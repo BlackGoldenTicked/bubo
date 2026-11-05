@@ -8,6 +8,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
 ## Key Files
 
 - `apps/desktop/src-tauri/src/lib.rs` - Tauri composition root, narrow commands, and managed sidecar lifecycle.
+- `apps/desktop/src-tauri/src/speech.rs` - Apple Speech framework bridge behind the `speech_recognize` command (macOS).
 - `apps/desktop/src-tauri/tauri.conf.json` - production identity, window, resource, external binary, and bundle configuration.
 - `apps/desktop/src-tauri/tauri.dev.conf.json` - isolated `bubo Dev` identity overlay.
 - `apps/desktop/src/tauri-sidecar/index.ts` - NDJSON process entry point.
@@ -16,6 +17,12 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `apps/desktop/src/main/trpc/router.ts` - tRPC router exposed through the private sidecar.
 - `apps/desktop/src/main/trpc/transport.ts` - compact sidecar request dispatcher.
 - `apps/desktop/src/main/trpc/ledger-service.ts` - runtime-neutral ledger lifecycle contract.
+- `apps/desktop/src/main/trpc/voice-service.ts` - runtime-neutral voice intent contract for the router.
+- `apps/desktop/src/tauri-sidecar/voice-service.ts` - sidecar implementation of the voice pipeline; gathers the active ledger's categories, accounts, loans, subscriptions, and positions as model context.
+- `apps/desktop/src/tauri-sidecar/voice-settings-store.ts` - local `0600` credential file for the Bailian and DeepSeek keys plus the imported model pool.
+- `apps/desktop/src/tauri-sidecar/xlsx-reader.ts` - zero-dependency first-sheet xlsx reader used by the model pool import.
+- `apps/desktop/src/tauri-sidecar/llm-models-import.ts` - fuzzy column mapping from the model-list workbook to pool entries.
+- `apps/desktop/src-tauri/Info.plist` - merged macOS bundle metadata, including the microphone usage description.
 - `apps/desktop/src/renderer/src` - React renderer routes, feature pages, providers, and app styles.
 - `apps/desktop/src/renderer/index.html` - renderer entry HTML carrying the pre-paint theme boot script.
 - `apps/desktop/src/renderer/src/env.d.ts` - typed `window.bubo` renderer contract.
@@ -40,7 +47,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
   widened left summary workbench beside a persistent recent-cashflow table. Its cashflow section
   uses one shared date-range selector above equal-weight expense, income, and savings totals, with
   clickable daily expense bars that open same-period cashflow detail drawers.
-- `imports/` - imported statement and cashflow event views.
+- `imports/` - imported statement and cashflow event views, including `AddTxModal` manual entry, which accepts a prefilled form from a voice cashflow intent.
 - `investments/` - trade-driven holdings with manual price quotes: open/closed position list,
   position detail with trade history, buy/sell and quote forms, and realized/unrealized P&L
   derived from the replayed position state. Linked accounts receive materialized system
@@ -49,7 +56,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
   open/closed/liquidated with create/update/close/delete forms whose P&L math mirrors
   `contract-rules.ts` and stays outside net worth.
 - `loans/` - future loan obligation views and schedule calculations.
-- `settings/` - ledger, category, and app configuration surfaces.
+- `settings/` - ledger, category, and app configuration surfaces, including `AiVoiceSection` for the Bailian ASR and DeepSeek keys used by voice entry.
 - `subscriptions/` - recurring future obligation views that project calendar/list dates from plans at
   read time and show explicitly linked cashflow as separate actual-deduction history.
 - `components/charts/` - renderer chart components.
@@ -57,6 +64,10 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `components/ui/` - renderer-local UI atoms that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `DateInput` (HeroUI date picker for ISO date form values), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
 - `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), `lib/theme.ts` resolves the stored `light | dark | system` preference into `<html data-theme>` and the native window appearance, and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
 - `lib/mouseHistoryNavigation.ts` maps side buttons, browser history keys, and macOS Command+[ / Command+] to TanStack Router history on Tauri.
+- `lib/voice/audioRecorder.ts` captures microphone audio and encodes 16 kHz mono PCM WAV base64 for the voice entry mutation.
+- `lib/voice/intentHandoff.ts` is the domain-scoped intent bus: it hands a parsed intent to a live page listener or queues it for the page about to mount.
+- `lib/voice/useVoiceIntent.ts` subscribes one feature page to its own domain and prefills that page's form.
+- `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V) that records, transcribes, parses the intent, then opens the matching page.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.
 
 ## Data Flow

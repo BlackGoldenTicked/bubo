@@ -9,6 +9,8 @@ import { createInterface } from "node:readline"
 
 import { createDesktopTrpcHandler, type DesktopTrpcRequest } from "../main/trpc/transport"
 import { TauriLedgerStore } from "./ledger-store"
+import { SidecarVoiceService } from "./voice-service"
+import { VoiceSettingsStore } from "./voice-settings-store"
 
 type SidecarRequest = {
   id: number
@@ -55,8 +57,13 @@ async function main(): Promise<void> {
   })
   await ledgerStore.init()
 
+  const voice = new SidecarVoiceService({
+    settings: new VoiceSettingsStore(requiredEnvironment("BUBO_SIDECAR_USER_DATA_DIR")),
+    getApi: () => ledgerStore.getApi(),
+  })
+
   const handleTrpc = createDesktopTrpcHandler(
-    () => ({ api: ledgerStore.getApi(), ledgers: ledgerStore }),
+    () => ({ api: ledgerStore.getApi(), ledgers: ledgerStore, voice }),
     "sidecar",
   )
   writeProtocol({ kind: "ready" })

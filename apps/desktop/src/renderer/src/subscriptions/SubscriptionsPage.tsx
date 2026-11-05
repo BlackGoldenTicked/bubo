@@ -5,7 +5,7 @@
  * @gotcha  Projected charges are ephemeral forecasts; actual deductions come only from linked cashflow.
  */
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button, Input, Label, Modal } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Outlet, useRouterState } from "@tanstack/react-router"
@@ -15,6 +15,7 @@ import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { localDateKey, monthCells } from "@/lib/dates"
 import { SUBSCRIPTION_CATEGORY_COLORS } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
@@ -56,10 +57,13 @@ const EMPTY: SubForm = {
 
 function AddSubModal({
   open,
+  initial,
   onClose,
   onSave,
 }: {
   open: boolean
+  /** Voice intents prefill the same fields the user would type. */
+  initial?: SubForm
   onClose: () => void
   onSave: (form: SubForm) => void | Promise<void>
 }) {
@@ -71,8 +75,13 @@ function AddSubModal({
     setValue,
     watch,
     control,
-  } = useForm<SubForm>({ defaultValues: EMPTY })
+  } = useForm<SubForm>({ defaultValues: initial ?? EMPTY })
   const form = watch()
+
+  useEffect(() => {
+    if (open) reset(initial ?? EMPTY)
+  }, [initial, open, reset])
+
   function handleClose() {
     reset(EMPTY)
     onClose()
@@ -238,7 +247,20 @@ function AddSubModal({
 export function SubscriptionsPage() {
   const queryClient = useQueryClient()
   const [showAdd, setShowAdd] = useState(false)
+  const [voiceSubForm, setVoiceSubForm] = useState<SubForm | undefined>(undefined)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  useVoiceIntent("subscription", (intent) => {
+    setVoiceSubForm({
+      name: intent.name,
+      cycle: intent.billingCycle === "yearly" ? "年" : "月",
+      amt: intent.amount,
+      next: intent.nextChargeDate,
+      auto: intent.autoRenew,
+      cur: intent.currency,
+    })
+    setShowAdd(true)
+  })
   const now = new Date()
   const year = now.getFullYear()
   const mon = now.getMonth() + 1
@@ -398,11 +420,7 @@ export function SubscriptionsPage() {
             </div>
           </div>
           <div style={{ marginLeft: "auto", paddingTop: 8 }}>
-            <Button
-              size="sm"
-              variant="primary"
-              onPress={() => setShowAdd(true)}
-            >
+            <Button size="sm" variant="primary" onPress={() => setShowAdd(true)}>
               ＋ 添加订阅
             </Button>
           </div>
@@ -671,7 +689,15 @@ export function SubscriptionsPage() {
         </ScrollArea>
       </div>
 
-      <AddSubModal open={showAdd} onClose={() => setShowAdd(false)} onSave={handleSave} />
+      <AddSubModal
+        open={showAdd}
+        initial={voiceSubForm}
+        onClose={() => {
+          setShowAdd(false)
+          setVoiceSubForm(undefined)
+        }}
+        onSave={handleSave}
+      />
     </div>
   )
 }

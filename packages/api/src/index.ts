@@ -1138,3 +1138,32 @@ export {
   createFrankfurterFxProvider,
   type FrankfurterProviderOptions,
 } from "./infrastructure/fx/frankfurter-provider"
+
+export { parseVoiceIntent, type ParseVoiceIntentOptions } from "./use-cases/voice/voice-intent-api"
+export {
+  transcribeVoiceEntry,
+  type TranscribeVoiceEntryOptions,
+} from "./use-cases/voice/voice-transcribe-api"
+export {
+  buildVoiceCategoryOptions,
+  normalizeVoiceEntryDraft,
+  type VoiceCategoryOption,
+} from "./domain/voice/voice-entry-rules"
+export {
+  VOICE_INTENT_SYSTEM_PROMPT,
+  buildVoiceIntentMessages,
+  normalizeVoiceIntent,
+  type VoiceAssetOption,
+  type VoiceIntentContext,
+  type VoiceIntentMessages,
+  type VoiceLoanOption,
+  type VoicePositionOption,
+  type VoiceSubscriptionOption,
+} from "./domain/voice/voice-intent-rules"
+export {
+  buildLlmAttemptChain,
+  excelSerialToDateKey,
+  selectLlmModelOrder,
+} from "./domain/voice/llm-pool-rules"
+export type { VoiceAsrConfig } from "./infrastructure/ai/bailian-asr-client"
+export type { VoiceLlmConfig } from "./infrastructure/ai/llm-entry-client"

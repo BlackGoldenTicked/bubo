@@ -159,6 +159,48 @@ Not all source material maps to cashflow. A document may instead produce:
 - object links, when it explains how a cashflow row relates to a subscription,
   loan, asset, or budget.
 
+## Known Source Formats
+
+Recording one source does not make it a built-in parser. It is here so the next
+agent starts from observed structure instead of re-deriving it.
+
+### 钱迹 (QianJi) workbook export
+
+- File: `QianJi_<ledger>_<yyyy-mm-dd>_<hhmmss>.xlsx`. One sheet, `账单`, with a
+  single header row and no totals or trailing notes.
+- Columns, in order: `ID`, `时间`, `账本`, `分类`, `二级分类`, `类型`, `金额`,
+  `币种`, `账户1`, `账户2`, `备注`, `已报销`, `手续费`, `优惠券`, `记账者`,
+  `账单标记`, `标签`, `账单图片`, `关联账单`. Most optional columns are empty.
+- Observed shapes: `ID` looks like `qj` plus a millisecond-scale digits string
+  and is stable across exports; `时间` is `YYYY-MM-DD HH:MM:SS`; `类型` carries
+  the direction (`支出`), while `金额` stays unsigned; `币种` is `CNY`;
+  `账户1` is a free-text account name such as `现金` or empty.
+
+Mapping into the import shape:
+
+| QianJi column       | Import field                                       |
+| ------------------- | -------------------------------------------------- |
+| `ID`                | `sourceRecordId` (preferred over any derived hash) |
+| `时间`              | `occurredAt` / `eventDate`                         |
+| `类型`              | `direction` + `flowKind`                           |
+| `分类` + `二级分类` | `categoryName` (second level as the finer name)    |
+| `金额` + `币种`     | `amount` + `currency`                              |
+| `账户1` / `账户2`   | `accountHint` / `paymentMethod`                    |
+| `备注`              | `title` or `description`                           |
+| `标签`              | `tags`                                             |
+| `账本`              | Not a bubo ledger switch; treat as source metadata |
+
+Gotchas:
+
+- Direction comes from `类型`, never from the amount sign.
+- `分类` values are 钱迹's own taxonomy (`日常`, `三餐`, `宠物`, `医疗健身`, …).
+  Create or reuse bubo categories deliberately and keep expense/income kinds
+  consistent; do not assume 钱迹's tree matches the existing one.
+- The workbook can be large; do not infer balance or asset state from it.
+  Cashflow only, per [Data Boundaries](#data-boundaries).
+- The renderer's Imports page displays imported rows; it does not parse files.
+  Read the workbook on the agent side and write through the ledger kit.
+
 ## Classification Rules
 
 Persist user-specific matching rules as readable scripts or JSON near the import

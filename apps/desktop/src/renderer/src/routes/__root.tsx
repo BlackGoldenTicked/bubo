@@ -14,6 +14,7 @@ import { TopNavigation } from "../components/layout/TopNavigation"
 import { DemoLedgerBanner } from "../components/layout/DemoLedgerBanner"
 import { AppUpdateTracker } from "../components/layout/AppUpdateTracker"
 import { GlobalConfirmModal } from "../components/ui/ConfirmModal"
+import { VoiceCaptureSheet } from "../voice/VoiceCaptureSheet"
 import { buboPerfLog, roundMs } from "../lib/debug/perf"
 import { useThemeEffect } from "../lib/theme"
 
@@ -50,6 +51,7 @@ function RootLayout() {
       <Toaster />
       <AppUpdateTracker />
       <GlobalConfirmModal />
+      <VoiceCaptureSheet />
     </TitleBar>
   )
 }

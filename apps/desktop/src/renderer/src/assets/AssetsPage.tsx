@@ -17,6 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { ASSET_GROUP_COLORS, ASSET_GROUPS, isInvestmentAssetType } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
 import { todayKey } from "@/lib/dates"
@@ -265,6 +266,23 @@ export function AssetsPage() {
   const [detailAsset, setDetailAsset] = useState<AssetSnapshotSummary | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
   const [showArchived, setShowArchived] = useState(false)
+
+  // Voice intents either append a balance reading to a matched account or open the new-account form.
+  useVoiceIntent("asset", (intent) => {
+    setForm({
+      assetItemId: intent.assetItemId ?? undefined,
+      accountName: intent.accountName,
+      assetType: intent.assetType,
+      valueNumber: intent.valueAmount,
+      valueCurrency: intent.currency,
+      snapshotAt: intent.snapshotAt,
+      note: intent.note ?? "",
+      quantityNumber: intent.quantity ?? "",
+      costBasisNumber: intent.costBasisAmount ?? "",
+    })
+    setFormMode(intent.assetItemId ? "balance" : "add")
+    setShowForm(true)
+  })
 
   const assetSnapshots = assetSnapshotsQuery.data ?? []
   const archivedItems = useMemo(

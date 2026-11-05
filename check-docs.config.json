@@ -48,6 +48,7 @@
     "preload": "desktop",
     "renderer": "desktop",
     "trpc": "desktop",
+    "tauri-sidecar": "desktop",
     "src": "db",
     "schema": "db",
     "infrastructure": "api",

@@ -12,6 +12,7 @@ import { useNavigate } from "@tanstack/react-router"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { LedgerSection } from "./LedgerSection"
+import { AiVoiceSection } from "./AiVoiceSection"
 import { LinkRow, Row, SegTabs, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
@@ -206,6 +207,9 @@ export function SettingsPage() {
 
           {/* 账本 */}
           <LedgerSection />
+
+          {/* 语音记账 */}
+          <AiVoiceSection />
 
           {/* 关于 */}
           <SettingsGroup title="关于">

@@ -27,6 +27,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import type { CashflowEventSummary } from "@bubo/api"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES } from "@/lib/domainDisplay"
 import { addDays, dateKey, monthStart } from "@/lib/dates"
 import { useMoney } from "@/lib/useMoney"
@@ -467,7 +468,22 @@ export function ImportsPage() {
   const [selectedTx, setSelectedTx] = useState<Tx | null>(null)
   const [hoveredId, setHoveredId] = useState<number | null>(null)
   const [showAddTx, setShowAddTx] = useState(false)
+  const [voiceTxForm, setVoiceTxForm] = useState<TxForm | undefined>(undefined)
   const [editingTx, setEditingTx] = useState<Tx | null>(null)
+
+  // The global voice sheet hands cashflow intents here; the form still saves manually.
+  useVoiceIntent("cashflow", (intent) => {
+    setVoiceTxForm({
+      flowKind: intent.flowKind,
+      amount: intent.amount,
+      counterparty: intent.title,
+      categoryId: intent.categoryId as TxForm["categoryId"],
+      source: intent.paymentMethod ?? "现金",
+      date: intent.eventDate,
+      note: intent.note ?? "",
+    })
+    setShowAddTx(true)
+  })
   const [urlFilters, setUrlFilters] = useQueryStates(IMPORTS_FILTER_PARSERS, {
     history: "replace",
     urlKeys: IMPORTS_FILTER_URL_KEYS,
@@ -877,11 +893,7 @@ export function ImportsPage() {
             </div>
           </div>
           <div style={{ marginLeft: "auto", paddingBottom: 6 }}>
-            <Button
-              size="sm"
-              variant="primary"
-              onPress={() => setShowAddTx(true)}
-            >
+            <Button size="sm" variant="primary" onPress={() => setShowAddTx(true)}>
               ＋ 记一笔
             </Button>
           </div>
@@ -1307,7 +1319,11 @@ export function ImportsPage() {
       <AddTxModal
         open={showAddTx}
         categories={categoriesQuery.data ?? []}
-        onClose={() => setShowAddTx(false)}
+        initial={voiceTxForm}
+        onClose={() => {
+          setShowAddTx(false)
+          setVoiceTxForm(undefined)
+        }}
         onSave={handleAddTx}
       />
       <AddTxModal

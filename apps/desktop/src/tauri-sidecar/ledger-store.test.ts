@@ -14,6 +14,8 @@ import type { LedgerChangeEvent } from "@bubo/shared/ipc"
 
 import { createDesktopTrpcHandler } from "../main/trpc/transport"
 import { TauriLedgerStore } from "./ledger-store"
+import { SidecarVoiceService } from "./voice-service"
+import { VoiceSettingsStore } from "./voice-settings-store"
 
 const temporaryDirectories: string[] = []
 
@@ -49,7 +51,14 @@ describe("TauriLedgerStore", () => {
       expect(store.getActive()).toMatchObject({ name: "我的账本", isDemo: false })
 
       const request = createDesktopTrpcHandler(
-        () => ({ api: store.getApi(), ledgers: store }),
+        () => ({
+          api: store.getApi(),
+          ledgers: store,
+          voice: new SidecarVoiceService({
+            settings: new VoiceSettingsStore(join(root, "user-data")),
+            getApi: () => store.getApi(),
+          }),
+        }),
         "test-sidecar",
       )
       const created = await request({

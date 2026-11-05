@@ -17,6 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { useMoney } from "@/lib/useMoney"
 import { useCurrentRates } from "@/lib/useCurrentRates"
 import { currencySymbol } from "@bubo/shared"
@@ -183,6 +184,42 @@ export function InvestmentsPage() {
         })),
     [accountsQuery.data],
   )
+
+  // Voice intents: a matched holding takes a buy/sell trade, otherwise a position is opened.
+  useVoiceIntent("investment", (intent) => {
+    const matched =
+      intent.action === "trade" && intent.positionId
+        ? positions.find((position) => String(position.id) === intent.positionId)
+        : undefined
+
+    if (matched) {
+      setSelectedId(String(matched.id))
+      setTradeTarget(matched)
+      setTradeForm({
+        side: intent.side,
+        quantity: intent.quantity,
+        price: intent.price,
+        feeAmount: intent.feeAmount ?? "",
+        executedAt: intent.executedAt,
+        note: intent.note ?? "",
+      })
+      return
+    }
+
+    setPositionForm({
+      ...emptyPositionForm(),
+      symbol: intent.symbol,
+      name: intent.name ?? "",
+      instrumentKind: intent.instrumentKind,
+      currency: intent.currency,
+      initialQuantity: intent.quantity,
+      initialPrice: intent.price,
+      initialFeeAmount: intent.feeAmount ?? "",
+      initialExecutedAt: intent.executedAt,
+      note: intent.note ?? "",
+    })
+    setShowAddPosition(true)
+  })
 
   const totals = useMemo(() => {
     let marketValue = 0
@@ -397,11 +434,7 @@ export function InvestmentsPage() {
                   }
                 />
                 <StatBlock label="持仓" value={openPositions.length} />
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onPress={openAddPosition}
-                >
+                <Button size="sm" variant="primary" onPress={openAddPosition}>
                   ＋ 新建持仓
                 </Button>
               </div>

@@ -17,6 +17,16 @@ presentation mappers.
 - `packages/api/src/sqlite/` - transitional compatibility re-exports for old internal import paths.
 - `packages/api/src/use-cases/agent-ledger/agent-ledger-api.ts` - guarded agent ledger patch facade.
 - `packages/api/src/infrastructure/db/repositories/agent-ledger-api.repository.ts` - rule-checked agent patch persistence.
+- `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, typed intent for one of five domains.
+- `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage so the renderer can log recognition and reasoning separately.
+- `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt, domain taxonomy, and per-domain normalization.
+- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization shared by the intent pipeline.
+- `packages/api/src/domain/voice/llm-pool-rules.ts` - pure Bailian free-tier pool ordering and attempt-chain rules.
+- `packages/api/src/infrastructure/ai/bailian-asr-client.ts` - Bailian (DashScope) ASR client over the OpenAI-compatible endpoint.
+- `packages/api/src/infrastructure/ai/llm-entry-client.ts` - OpenAI-compatible JSON completion client shared by pool models and DeepSeek.
+- `packages/api/tests/voice-entry-rules.test.ts` - unit tests for amount, category, and date normalization.
+- `packages/api/tests/voice-intent-rules.test.ts` - unit tests for domain routing, id safety, and prompt-cache stability.
+- `packages/api/tests/llm-pool-rules.test.ts` - unit tests for pool expiry filtering, ordering, and fallback chain.
 - `packages/api/src/domain/assets/asset-rules.ts` - pure asset normalization rules.
 - `packages/api/src/domain/investments/investment-rules.ts` - pure trade replay, weighted-average cost, and P&L rules.
 - `packages/api/src/domain/investments/contract-rules.ts` - pure leveraged-contract parsing, leverage bounds, and derived P&L rules.
@@ -49,6 +59,10 @@ presentation mappers.
 - `agent-ledger/agent-ledger-api.ts` - business-level patch operations for AI
   agents, including category ensure, cashflow creation, and cashflow
   classification.
+- `voice/voice-intent-api.ts` - turns one recorded utterance into a typed intent
+  for cashflow, asset, investment, subscription, or loan through pooled ASR and
+  reasoning, then DeepSeek as the floor. It never persists anything; each page
+  saves through its own mutation after the user confirms the prefilled form.
 - `links/links-api.ts` - relationships between imported records and explanatory domain objects.
 - `loans/loans-api.ts` - loan plans and projected payment occurrences; elapsed
   dates do not materialize cashflow.

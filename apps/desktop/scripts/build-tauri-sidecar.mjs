@@ -7,7 +7,7 @@
  */
 
 import { execFileSync } from "node:child_process"
-import { mkdirSync, readFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -30,6 +30,24 @@ function main() {
   execFileSync(process.execPath, pkgArgs, { cwd: desktopDir, stdio: "inherit" })
 
   console.log(`Built Tauri sidecar: ${output}`)
+  refreshDevCopy(output, targetTriple)
+}
+
+/**
+ * `tauri dev` spawns `src-tauri/target/debug/bubo-sidecar`, and tauri-build only
+ * copies it when the Rust build actually runs. Editing only TypeScript leaves that
+ * copy stale, so the app talks to an old sidecar ("No procedure found on path …").
+ * Refresh the dev copy here every time the packaged sidecar is rebuilt.
+ */
+function refreshDevCopy(output, targetTriple) {
+  const extension = targetTriple.includes("windows") ? ".exe" : ""
+  const debugDir = join(desktopDir, "src-tauri", "target", "debug")
+  if (!existsSync(debugDir)) return
+
+  const destination = join(debugDir, `bubo-sidecar${extension}`)
+  copyFileSync(output, destination)
+  chmodSync(destination, 0o755)
+  console.log(`Refreshed dev sidecar: ${destination}`)
 }
 
 export function sidecarBuildSpec(targetTriple, nodeVersion = process.versions.node) {

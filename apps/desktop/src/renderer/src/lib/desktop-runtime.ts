@@ -61,6 +61,21 @@ async function tauriTrpcRequest(request: DesktopTrpcRequest): Promise<unknown> {
     return { ok: true, data: null }
   }
 
+  if (request.type === "mutation" && request.path === "voice.models.import") {
+    const { open } = await import("@tauri-apps/plugin-dialog")
+    const path = await open({
+      title: "导入模型清单",
+      multiple: false,
+      directory: false,
+      fileAccessMode: "scoped",
+      filters: [{ name: "Excel", extensions: ["xlsx"] }],
+    })
+    if (path == null) return { ok: true, data: null }
+    return invokeTauri("trpc_request", {
+      request: { ...request, input: { filePath: path } },
+    })
+  }
+
   return invokeTauri("trpc_request", { request })
 }
 
@@ -76,6 +91,8 @@ export function installDesktopRuntimeBridge(): void {
     getDatabasePath: () => invokeTauri<string | null>("get_database_path"),
     databaseExists: () => invokeTauri<boolean>("database_exists"),
     trpcRequest: tauriTrpcRequest,
+    speechRecognize: async (audioBase64) =>
+      invokeTauri<string>("speech_recognize", { audioBase64 }),
     onLedgerChanged: (callback) => {
       let active = true
       let polling = false
