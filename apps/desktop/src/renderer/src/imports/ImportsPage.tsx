@@ -467,7 +467,6 @@ export function ImportsPage() {
   const fmt = useMoney()
   const queryClient = useQueryClient()
   const [selectedTx, setSelectedTx] = useState<Tx | null>(null)
-  const [hoveredId, setHoveredId] = useState<number | null>(null)
   const [showAddTx, setShowAddTx] = useState(false)
   const [voiceTxForm, setVoiceTxForm] = useState<TxForm | undefined>(undefined)
   const [editingTx, setEditingTx] = useState<Tx | null>(null)
@@ -1141,30 +1140,20 @@ export function ImportsPage() {
                     {items.map((vRow) => {
                       const row = rows[vRow.index]
                       const tx = row.original
-                      const isHovered = hoveredId === tx.id
                       const isSelected = selectedTx?.id === tx.id
                       return (
                         <tr
                           key={row.id}
                           onClick={() => setSelectedTx(tx)}
-                          onMouseEnter={() => setHoveredId(tx.id)}
-                          onMouseLeave={() => setHoveredId(null)}
-                          style={{
-                            borderBottom: "1px solid var(--hair-3)",
-                            background: isSelected
-                              ? "var(--surface-2)"
-                              : isHovered
-                                ? "var(--surface-3)"
-                                : "transparent",
-                            cursor: "pointer",
-                            transition: "background 0.1s",
-                          }}
+                          aria-selected={isSelected}
+                          className="bubo-row cursor-pointer border-b border-[var(--hair-3)]"
                         >
                           {row.getVisibleCells().map((cell) => (
                             <td
                               key={cell.id}
                               style={{
-                                padding: "9px 8px",
+                                height: 38,
+                                padding: "0 8px",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",

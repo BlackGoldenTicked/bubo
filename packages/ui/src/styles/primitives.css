@@ -695,6 +695,29 @@
 }
 
 /* =====================================================================
+   Interactive rows — one hover / selected / focus treatment shared by every
+   list row and table row. Height and dividers stay with the row itself; only
+   state comes from here, so a `<tr>` and a `<button>` row read the same.
+   ===================================================================== */
+.bubo-row {
+  position: relative;
+  transition:
+    background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+.bubo-row:hover {
+  background: var(--row-hover);
+}
+.bubo-row[aria-selected="true"] {
+  background: var(--row-selected);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.bubo-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* =====================================================================
    Card / panel — crx-ui `.l-feature-card` shell treatment
    ===================================================================== */
 .bubo-card {

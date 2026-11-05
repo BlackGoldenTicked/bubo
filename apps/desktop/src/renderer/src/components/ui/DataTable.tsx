@@ -26,7 +26,7 @@ export function DataTable({ columns, children }: DataTableProps) {
           {columns.map((col, i) => (
             <th
               key={i}
-              className="text-[10px] uppercase tracking-[0.08em] text-[var(--ink-4)] font-semibold py-1.5 border-b border-[var(--hair)] sticky top-0 bg-[var(--surface-1)]"
+              className="sticky top-0 z-[1] h-9 border-b border-[var(--hair)] bg-[var(--surface-1)] py-1.5 align-middle text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-4)]"
               style={{ width: col.width, textAlign: col.align ?? "left" }}
             >
               {col.label}
@@ -41,13 +41,22 @@ export function DataTable({ columns, children }: DataTableProps) {
 
 export function DataTableRow({
   children,
+  selected = false,
+  interactive = false,
   className = "",
 }: {
   children: ReactNode
+  selected?: boolean
+  /** Pointer rows get a cursor and keyboard affordance; static rows stay quiet. */
+  interactive?: boolean
   className?: string
 }) {
   return (
-    <tr className={`border-t border-[var(--hair)] hover:bg-[var(--surface-2)] ${className}`}>
+    <tr
+      aria-selected={interactive ? selected : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      className={`bubo-row border-t border-[var(--hair-3)] ${interactive ? "cursor-pointer" : ""} ${className}`}
+    >
       {children}
     </tr>
   )
@@ -66,7 +75,7 @@ export function DataTableCell({
 }) {
   return (
     <td
-      className={`py-2 text-[var(--ink-2)] ${truncate ? "max-w-0 truncate" : ""} ${className}`}
+      className={`h-[38px] py-2 align-middle text-[var(--ink-2)] ${truncate ? "max-w-0 truncate" : ""} ${className}`}
       style={{ textAlign: align }}
     >
       {children}

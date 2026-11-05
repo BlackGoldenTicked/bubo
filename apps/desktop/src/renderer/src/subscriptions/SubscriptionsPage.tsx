@@ -462,6 +462,7 @@ export function SubscriptionsPage() {
                   >
                     <Button
                       variant="ghost"
+                      aria-selected={selectedId === s.id}
                       onPress={() => setSelectedId(s.id)}
                       style={{
                         width: "100%",
@@ -469,14 +470,14 @@ export function SubscriptionsPage() {
                         alignItems: "center",
                         gap: 10,
                         height: "auto",
-                        padding: "8px 6px",
+                        padding: "10px 6px",
                         border: "none",
                         borderRadius: 6,
                         outline: "none",
-                        boxShadow: "none",
+                        boxShadow: selectedId === s.id ? "inset 2px 0 0 var(--accent)" : "none",
                         textAlign: "left",
                         justifyContent: "flex-start",
-                        background: selectedId === s.id ? "var(--surface-2)" : "transparent",
+                        background: selectedId === s.id ? "var(--row-selected)" : "transparent",
                       }}
                     >
                       <span

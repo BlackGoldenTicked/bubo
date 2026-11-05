@@ -58,6 +58,7 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
     <div style={{ borderBottom: "1px solid var(--hair-3)" }}>
       <Button
         variant="ghost"
+        aria-selected={selected}
         onPress={() => onSelect(contract)}
         style={{
           width: "100%",
@@ -71,8 +72,8 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
           outline: "none",
           textAlign: "left",
           justifyContent: "flex-start",
-          boxShadow: "none",
-          background: selected ? "var(--surface-2)" : "transparent",
+          boxShadow: selected ? "inset 2px 0 0 var(--accent)" : "none",
+          background: selected ? "var(--row-selected)" : "transparent",
         }}
       >
         <div style={{ width: 170, flexShrink: 0 }}>

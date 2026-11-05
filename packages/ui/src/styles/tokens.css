@@ -51,6 +51,9 @@
   --surface: #ffffff;
   --surface-soft: #f7f9f7;
   --surface-muted: #f1f4f1;
+  /* Interactive data rows: hover tint and selected tint. */
+  --row-hover: #f2f6f2;
+  --row-selected: color-mix(in srgb, var(--accent) 12%, transparent);
   --surface-border: #e6eae6;
 
   /* Ink scale */
@@ -77,8 +80,8 @@
   --inset-highlight: inset 0 1px 0 rgba(255, 255, 255, 0);
   --inset-shade: inset 0 -1px 0 rgba(0, 0, 0, 0);
 
-  --font-ui: "IBM Plex Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  --font-ui:
+    "IBM Plex Sans", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* Page and card titles. bubo sets them in the mono face; Lumno keeps the UI face. */
   --font-display: var(--mono);
@@ -112,6 +115,8 @@
   --surface: #111111;
   --surface-soft: #191919;
   --surface-muted: #202020;
+  --row-hover: #232323;
+  --row-selected: color-mix(in srgb, var(--accent) 18%, transparent);
   --surface-border: #2d2d2d;
 
   --ink: #f3f4f6;
@@ -152,6 +157,9 @@
   --surface: #ffffff;
   --surface-soft: #f8fafc;
   --surface-muted: #eef1f5;
+  /* Interactive data rows: hover tint and selected tint. */
+  --row-hover: #f3f6fb;
+  --row-selected: color-mix(in srgb, var(--accent) 10%, transparent);
   --surface-border: rgba(17, 24, 39, 0.1);
 
   --ink: #111827;
@@ -175,8 +183,8 @@
 
   /* crx-ui asks for Open Sans; on macOS that resolves to the system face, which
      is the reference look. Chinese glyphs fall back to Noto Sans SC. */
-  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans", "Noto Sans SC",
-    sans-serif;
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans", "Noto Sans SC", sans-serif;
 
   /* Lumno titles use the same face as body copy, only heavier — no mono display. */
   --font-display: var(--font-ui);
@@ -209,6 +217,8 @@
   --surface: #191919;
   --surface-soft: #202020;
   --surface-muted: #1d1d1d;
+  --row-hover: #242424;
+  --row-selected: color-mix(in srgb, var(--accent) 16%, transparent);
   --surface-border: rgba(255, 255, 255, 0.12);
 
   --ink: #f3f4f6;
