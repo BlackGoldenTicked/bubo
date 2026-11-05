@@ -258,7 +258,7 @@ export function AddTxModal({
                 >
                   <span
                     style={{
-                      fontFamily: "IBM Plex Mono, monospace",
+                      fontFamily: "var(--font-mono)",
                       fontSize: 28,
                       fontWeight: 700,
                       flex: 1,

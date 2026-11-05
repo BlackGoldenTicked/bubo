@@ -257,7 +257,7 @@ export function CashflowPickerModal({
                         </span>
                         <span
                           style={{
-                            fontFamily: "IBM Plex Mono, monospace",
+                            fontFamily: "var(--font-mono)",
                             fontSize: 12,
                             color: isOut ? "var(--red)" : "var(--accent)",
                             whiteSpace: "nowrap",

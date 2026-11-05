@@ -33,6 +33,7 @@ import { AddPositionModal, emptyPositionForm, type PositionForm } from "./AddPos
 import { ContractsPanel } from "./ContractsPanel"
 import { TradeModal, emptyTradeForm, type TradeForm } from "./TradeModal"
 import { QuoteModal, emptyQuoteForm, type QuoteForm } from "./QuoteModal"
+import { DeltaText } from "../components/ui/DeltaText"
 import {
   computePositionPnl,
   INSTRUMENT_LABELS,
@@ -103,7 +104,7 @@ const PositionRow = memo(function PositionRow({ position, selected, onSelect }: 
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 14,
               fontWeight: 500,
               color: "var(--ink)",
@@ -112,19 +113,15 @@ const PositionRow = memo(function PositionRow({ position, selected, onSelect }: 
             {symbol}
             {fmt(pnl.marketValue, 2)}
           </div>
-          <div
-            style={{
-              fontSize: 10.5,
-              marginTop: 1,
-              color: pnlValue >= 0 ? "var(--accent)" : "var(--red)",
-            }}
-          >
-            {pnlLabel} {pnlValue >= 0 ? "+" : "−"}
-            {symbol}
-            {fmt(Math.abs(pnlValue), 2)}
-            {open && pnl.unrealizedPnlPercent != null
-              ? ` · ${pnl.unrealizedPnlPercent >= 0 ? "+" : "−"}${Math.abs(pnl.unrealizedPnlPercent).toFixed(1)}%`
-              : ""}
+          <div style={{ fontSize: 10.5, marginTop: 1 }}>
+            <DeltaText value={pnlValue}>
+              {pnlLabel} {pnlValue >= 0 ? "+" : "−"}
+              {symbol}
+              {fmt(Math.abs(pnlValue), 2)}
+              {open && pnl.unrealizedPnlPercent != null
+                ? ` · ${pnl.unrealizedPnlPercent >= 0 ? "+" : "−"}${Math.abs(pnl.unrealizedPnlPercent).toFixed(1)}%`
+                : ""}
+            </DeltaText>
           </div>
         </div>
       </Button>
@@ -685,7 +682,7 @@ function PositionDetail({
             <Dim style={{ fontSize: 11.5 }}>{row.label}</Dim>
             <span
               style={{
-                fontFamily: "IBM Plex Mono, monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 12.5,
                 color: "var(--ink)",
               }}
@@ -744,7 +741,7 @@ function PositionDetail({
                 </span>
                 <span
                   style={{
-                    fontFamily: "IBM Plex Mono, monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: 11.5,
                     color: "var(--ink-2)",
                     flex: 1,

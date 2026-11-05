@@ -70,14 +70,14 @@ function HistoryRow({
         {h.date}
       </span>
       <span style={{ fontSize: 12, color: "var(--ink-3)", flex: 1 }}>{h.label}</span>
-      <span style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 12, color: "var(--ink)" }}>
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink)" }}>
         {symbol}
         {fmt(h.value)}
       </span>
       {delta !== null ? (
         <span
           style={{
-            fontFamily: "IBM Plex Mono, monospace",
+            fontFamily: "var(--font-mono)",
             fontSize: 11,
             width: 60,
             textAlign: "right",
@@ -115,7 +115,7 @@ function ChartTooltip({
       <div style={{ fontSize: 10, color: "var(--ink-4)", marginBottom: 2 }}>
         {payload[0].payload.date}
       </div>
-      <div style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink)" }}>
+      <div style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--ink)" }}>
         {fmt(payload[0].value)}
       </div>
     </div>
@@ -192,7 +192,7 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
         </div>
         <div
           style={{
-            fontFamily: "IBM Plex Mono, monospace",
+            fontFamily: "var(--font-mono)",
             fontSize: 24,
             fontWeight: 700,
             color: isLiability ? "var(--red)" : "var(--ink)",
@@ -222,7 +222,7 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
           <Dim style={{ fontSize: 11 }}>较上次更新 {prevEntry.date}</Dim>
           <span
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 15,
               fontWeight: 600,
               color: lastChange >= 0 ? "var(--accent)" : "var(--red)",
@@ -251,7 +251,7 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
           </Dim>
           <span
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 15,
               fontWeight: 600,
               color: pnl.pnlAmount >= 0 ? "var(--accent)" : "var(--red)",

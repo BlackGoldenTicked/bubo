@@ -103,7 +103,7 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 14,
               fontWeight: 500,
               color: "var(--ink)",
@@ -592,7 +592,7 @@ function ContractDetail({
             <Dim style={{ fontSize: 11.5 }}>{row.label}</Dim>
             <span
               style={{
-                fontFamily: "IBM Plex Mono, monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 12.5,
                 color:
                   row.tone === "pos"

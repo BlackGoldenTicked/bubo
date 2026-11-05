@@ -112,7 +112,7 @@ export function LinkedCashflowDrawer({ open, ownerType, ownerId, ownerLabel, onC
                         </div>
                         <div
                           style={{
-                            fontFamily: "IBM Plex Mono, monospace",
+                            fontFamily: "var(--font-mono)",
                             fontSize: 12,
                             color: isOut ? "var(--red)" : "var(--accent)",
                             whiteSpace: "nowrap",

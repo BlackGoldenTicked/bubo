@@ -87,6 +87,7 @@
   --font-display: var(--mono);
 
   /* Legacy aliases read by existing renderer files. */
+  --font-mono: var(--mono);
   --surface-1: var(--surface);
   --surface-2: var(--surface-soft);
   --surface-3: var(--surface-muted);

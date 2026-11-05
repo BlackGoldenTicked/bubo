@@ -121,7 +121,7 @@ export function TxDetailPanel({ tx, allTxs, onBack, onEdit, onDelete }: Props) {
         </div>
         <div
           style={{
-            fontFamily: "IBM Plex Mono, monospace",
+            fontFamily: "var(--font-mono)",
             fontSize: 26,
             fontWeight: 700,
             color: amtColor,
@@ -152,7 +152,7 @@ export function TxDetailPanel({ tx, allTxs, onBack, onEdit, onDelete }: Props) {
       </InfoRow>
       <InfoRow label="原始描述">{originalDesc ?? "暂无原始凭证"}</InfoRow>
       <InfoRow label="交易号">
-        <span style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 11 }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
           {tx.statementLineId ?? tx.rawId}
         </span>
       </InfoRow>
@@ -185,7 +185,7 @@ export function TxDetailPanel({ tx, allTxs, onBack, onEdit, onDelete }: Props) {
               <span style={{ fontSize: 12, color: "var(--ink-3)", flex: 1 }}>{t.counterparty}</span>
               <span
                 style={{
-                  fontFamily: "IBM Plex Mono, monospace",
+                  fontFamily: "var(--font-mono)",
                   fontSize: 12,
                   color: t.flowKind === "income" ? "var(--accent)" : "var(--red)",
                 }}

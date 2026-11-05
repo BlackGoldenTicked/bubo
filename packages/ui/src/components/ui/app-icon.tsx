@@ -70,6 +70,8 @@ const GLYPHS = {
   import: QiFolderOpen,
   calendar: QiCalendar,
   income: QiArrowDownRight,
+  trendUp: QiArrowUpRight,
+  trendDown: QiArrowDownRight,
   chevronRight: QiChevronRight,
   expense: QiArrowUpRight,
 } as const satisfies Record<string, Glyph>

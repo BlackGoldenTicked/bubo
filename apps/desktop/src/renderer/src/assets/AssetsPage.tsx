@@ -32,6 +32,7 @@ import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { AssetTreemap } from "../components/charts/AssetTreemap"
 import { AddAssetModal, TYPE_LABEL } from "./AddAssetModal"
+import { DeltaText } from "../components/ui/DeltaText"
 import type { AssetForm } from "./AddAssetModal"
 import { AssetDetailPanel } from "./AssetDetailPanel"
 import { computeAssetPnl } from "./assetPnl"
@@ -115,7 +116,7 @@ const AssetRow = memo(function AssetRow({ asset, change, onSelect }: AssetRowPro
         <div style={{ textAlign: "right", flexShrink: 0 }}>
           <div
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 14,
               fontWeight: 500,
               color: isLiability ? "var(--red)" : "var(--ink)",
@@ -125,14 +126,10 @@ const AssetRow = memo(function AssetRow({ asset, change, onSelect }: AssetRowPro
             {currencySymbol(asset.valueCurrency)}
             {fmt(Math.abs(val))}
           </div>
-          <div
-            style={{
-              fontSize: 10.5,
-              marginTop: 1,
-              color: subPositive ? "var(--accent)" : "var(--red)",
-            }}
-          >
-            {subText}
+          <div style={{ fontSize: 10.5, marginTop: 1 }}>
+            <DeltaText value={subPositive ? 1 : -1} arrow={false}>
+              {subText}
+            </DeltaText>
           </div>
         </div>
       </Button>
@@ -207,7 +204,7 @@ function ArchivedAssetsDrawer({
                       {latest && (
                         <div
                           style={{
-                            fontFamily: "IBM Plex Mono, monospace",
+                            fontFamily: "var(--font-mono)",
                             fontSize: 12,
                             color: item.assetType === "liability" ? "var(--red)" : "var(--ink-2)",
                             whiteSpace: "nowrap",
@@ -655,7 +652,7 @@ export function AssetsPage() {
                     {selectedGroup ? (
                       <span
                         style={{
-                          fontFamily: "IBM Plex Mono, monospace",
+                          fontFamily: "var(--font-mono)",
                           fontSize: 12,
                           color: "var(--ink-2)",
                         }}
@@ -706,7 +703,7 @@ export function AssetsPage() {
                       <span
                         style={{
                           marginLeft: "auto",
-                          fontFamily: "IBM Plex Mono, monospace",
+                          fontFamily: "var(--font-mono)",
                           fontSize: 12,
                           paddingRight: 8,
                         }}

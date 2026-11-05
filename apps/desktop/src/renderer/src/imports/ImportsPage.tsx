@@ -342,7 +342,7 @@ function DonutChart({
           </div>
           <div
             style={{
-              fontFamily: "IBM Plex Mono, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 13,
               color: "var(--ink)",
               fontWeight: 600,
@@ -368,7 +368,7 @@ function AmountCell({ value, flowKind }: { value: number; flowKind: string }) {
   return (
     <span
       style={{
-        fontFamily: "IBM Plex Mono, monospace",
+        fontFamily: "var(--font-mono)",
         fontSize: 12,
         fontWeight: 500,
         color: isIncome ? "var(--accent)" : isTransfer ? "var(--ink-3)" : "var(--red)",
@@ -385,7 +385,7 @@ const COLUMNS = [
     header: "日期",
     size: 62,
     cell: (c) => (
-      <span style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 11, color: "var(--ink-4)" }}>
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-4)" }}>
         {c.getValue().slice(5)}
       </span>
     ),
@@ -853,7 +853,7 @@ export function ImportsPage() {
             <Dim style={{ fontSize: 11, marginBottom: 4 }}>消费</Dim>
             <div
               style={{
-                fontFamily: "IBM Plex Mono, monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 36,
                 fontWeight: 700,
                 color: "var(--red)",
@@ -867,7 +867,7 @@ export function ImportsPage() {
             <Dim style={{ fontSize: 11, marginBottom: 4 }}>收入</Dim>
             <div
               style={{
-                fontFamily: "IBM Plex Mono, monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 36,
                 fontWeight: 700,
                 color: "var(--accent)",
@@ -881,7 +881,7 @@ export function ImportsPage() {
             <Dim style={{ fontSize: 11, marginBottom: 4 }}>净流入</Dim>
             <div
               style={{
-                fontFamily: "IBM Plex Mono, monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 36,
                 fontWeight: 700,
                 color: rangeNet >= 0 ? "var(--ink)" : "var(--red)",
@@ -1151,6 +1151,7 @@ export function ImportsPage() {
                           {row.getVisibleCells().map((cell) => (
                             <td
                               key={cell.id}
+                              className={cell.column.id === "amount" ? "bubo-num" : undefined}
                               style={{
                                 height: 38,
                                 padding: "0 8px",
@@ -1234,7 +1235,7 @@ export function ImportsPage() {
                       <Dim style={{ fontSize: 9.5 }}>{analysisLabel}</Dim>
                       <div
                         style={{
-                          fontFamily: "IBM Plex Mono, monospace",
+                          fontFamily: "var(--font-mono)",
                           fontWeight: 700,
                           fontSize: 15,
                           marginTop: 3,
@@ -1281,7 +1282,7 @@ export function ImportsPage() {
                       <span style={{ fontSize: 12, color: "var(--ink-2)", flex: 1 }}>{c.name}</span>
                       <span
                         style={{
-                          fontFamily: "IBM Plex Mono, monospace",
+                          fontFamily: "var(--font-mono)",
                           fontSize: 11.5,
                           color: "var(--ink-3)",
                           paddingRight: 4,

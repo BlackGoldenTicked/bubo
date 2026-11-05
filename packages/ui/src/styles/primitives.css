@@ -695,6 +695,19 @@
 }
 
 /* =====================================================================
+   Numeric text — tabular figures keep columns of amounts from jittering as
+   digits change. `--mono` is opt-in for dense ledger tables.
+   ===================================================================== */
+.bubo-num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.005em;
+}
+.bubo-num--mono {
+  font-family: var(--font-mono);
+}
+
+/* =====================================================================
    Interactive rows — one hover / selected / focus treatment shared by every
    list row and table row. Height and dividers stay with the row itself; only
    state comes from here, so a `<tr>` and a `<button>` row read the same.

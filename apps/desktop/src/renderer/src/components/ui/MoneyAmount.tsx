@@ -27,7 +27,7 @@ export function MoneyAmount({ amount, currency, base, decimals }: MoneyAmountPro
 
   if (isBase) {
     return (
-      <span style={{ whiteSpace: "nowrap" }}>
+      <span className="bubo-num whitespace-nowrap">
         {currencySymbol(base)}
         {fmt(amount, decimals ?? 0)}
       </span>
@@ -35,7 +35,7 @@ export function MoneyAmount({ amount, currency, base, decimals }: MoneyAmountPro
   }
 
   return (
-    <span style={{ whiteSpace: "nowrap" }}>
+    <span className="bubo-num whitespace-nowrap">
       {cur} {fmt(amount, decimals ?? 2)}
     </span>
   )

@@ -75,7 +75,7 @@ export function DataTableCell({
 }) {
   return (
     <td
-      className={`h-[38px] py-2 align-middle text-[var(--ink-2)] ${truncate ? "max-w-0 truncate" : ""} ${className}`}
+      className={`h-[38px] py-2 align-middle tabular-nums text-[var(--ink-2)] ${truncate ? "max-w-0 truncate" : ""} ${className}`}
       style={{ textAlign: align }}
     >
       {children}
