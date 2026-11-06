@@ -81,10 +81,111 @@ function normalizeCurrency(value: unknown, fallback: string): string {
   return /^[A-Z]{3}$/.test(text) ? text : fallback
 }
 
+/**
+ * Business keyword hints keyed by a fragment of a ledger category name.
+ * The model does the semantic work first; this table is the deterministic safety net for
+ * the common case where an utterance names a product ("饮料") but the ledger category is
+ * broader ("零食"). A hint only applies when the ledger actually has a category whose name
+ * contains the key, so renamed or custom categories are never hijacked.
+ */
+export const CATEGORY_KEYWORD_HINTS: Readonly<Record<string, readonly string[]>> = {
+  零食: [
+    "零食",
+    "饮料",
+    "奶茶",
+    "咖啡",
+    "可乐",
+    "雪糕",
+    "冰淇淋",
+    "薯片",
+    "坚果",
+    "小吃",
+    "矿泉水",
+    "面包",
+    "蛋糕",
+    "甜品",
+  ],
+  三餐: [
+    "早饭",
+    "早餐",
+    "午饭",
+    "午餐",
+    "晚饭",
+    "晚餐",
+    "夜宵",
+    "外卖",
+    "食堂",
+    "餐厅",
+    "米饭",
+    "面条",
+  ],
+  车相关: [
+    "打车",
+    "滴滴",
+    "地铁",
+    "公交",
+    "加油",
+    "停车",
+    "洗车",
+    "高速费",
+    "网约车",
+    "车费",
+    "高铁",
+    "机票",
+    "油费",
+  ],
+  水电煤: ["水费", "电费", "燃气费", "煤气", "取暖费", "物业费", "宽带费"],
+  住房: ["房租", "房贷", "中介费", "装修", "家具", "家电"],
+  医疗健身: ["买药", "药店", "医院", "看病", "体检", "挂号", "牙科", "健身", "瑜伽", "保险"],
+  话费数码软件: ["话费", "流量", "宽带", "手机", "电脑", "软件", "云盘", "数码", "充电器"],
+  书影音: ["书", "电影", "演出", "音乐会", "游戏", "视频会员", "剧集"],
+  宠物: ["猫粮", "狗粮", "宠物", "兽医", "猫砂", "宠物医院"],
+  彩票: ["彩票", "刮刮乐", "竞猜", "抽奖"],
+  日常: ["日用品", "纸巾", "洗发水", "洗衣液", "超市", "牙膏", "沐浴露"],
+}
+
+/**
+ * Deterministic fallback: score every category of the right direction by how much of the
+ * utterance its hints cover. Longer hits win, so "奶茶" beats a stray "饭". Returns null
+ * when nothing matches, which keeps the category empty instead of guessing.
+ */
+export function matchCategoryByKeywords(
+  text: string,
+  categories: readonly VoiceCategoryOption[],
+  kind: VoiceEntryFlowKind,
+): VoiceCategoryOption | null {
+  const haystack = text.toLowerCase()
+  if (haystack.trim().length === 0) return null
+
+  let best: VoiceCategoryOption | null = null
+  let bestScore = 0
+
+  for (const category of categories) {
+    if (category.kind !== kind) continue
+    const hints = Object.entries(CATEGORY_KEYWORD_HINTS).find(
+      ([key]) => category.name.includes(key) || key.includes(category.name),
+    )?.[1]
+    if (!hints) continue
+
+    let score = 0
+    for (const hint of hints) {
+      if (hint.length > 0 && haystack.includes(hint.toLowerCase())) score += hint.length
+    }
+    if (score > bestScore) {
+      best = category
+      bestScore = score
+    }
+  }
+
+  return best
+}
+
 function findCategory(
   raw: Record<string, unknown>,
   categories: VoiceCategoryOption[],
   flowKind: VoiceEntryFlowKind,
+  localText: string,
+  fallbackText: string,
 ): { category: VoiceCategoryOption | null; warnings: string[] } {
   const warnings: string[] = []
   const rawId =
@@ -97,7 +198,15 @@ function findCategory(
       categories.find((item) => item.name === rawName) ??
       categories.find((item) => item.name.includes(rawName) || rawName.includes(item.name))
   }
-  if (!byId) return { category: null, warnings }
+  // The model left the category empty: resolve it from product words instead of dropping it.
+  // Item-local text wins, so a batch of mixed records cannot borrow another item's products.
+  if (!byId) {
+    const byKeyword =
+      matchCategoryByKeywords(localText, categories, flowKind) ??
+      matchCategoryByKeywords(fallbackText, categories, flowKind)
+    if (byKeyword) return { category: byKeyword, warnings }
+    return { category: null, warnings }
+  }
 
   if (byId.kind !== flowKind) {
     warnings.push(
@@ -188,7 +297,13 @@ export function normalizeVoiceEntryDraft(
   const raw = asRecord(payload)
   const flowKind = normalizeFlowKind(raw)
   const { amount, unclear } = normalizeVoiceAmount(raw.amount)
-  const categoryResult = findCategory(raw, context.categories, flowKind)
+  const categoryResult = findCategory(
+    raw,
+    context.categories,
+    flowKind,
+    [asTrimmedString(raw.title), asTrimmedString(raw.note)].join(" "),
+    context.transcript,
+  )
   const timeResult = normalizeOccurredAt(raw, context.now)
 
   const warnings = [...categoryResult.warnings, ...timeResult.warnings]

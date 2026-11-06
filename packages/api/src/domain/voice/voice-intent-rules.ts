@@ -22,6 +22,7 @@ import type { AssetSnapshotType } from "@bubo/shared/contracts"
 import type { InstrumentKind } from "@bubo/shared/contracts"
 import {
   localDateKey,
+  matchCategoryByKeywords,
   normalizeVoiceAmount,
   normalizeVoiceEntryDraft,
   type VoiceCategoryOption,
@@ -194,6 +195,19 @@ export const VOICE_INTENT_SYSTEM_PROMPT = [
   "4. 年份推断：原文只给月日（如 12/31、1/1、10月3日）时，以“当前时间”为基准取最近的一次；若该日期比今天晚很多（例如今天 1 月 2 日而原文是 12 月 31 日），视为去年的同一天。",
   "5. 跨类别混排：同一段文本可以同时包含支出、收入、账户余额、买入/卖出、订阅、贷款。逐条判断各自类别并分别输出，保持原文顺序；不要因为出现了不同类别就只输出其中一类。",
   "6. 时间与日期分离时（如首行“10月3日 星期六”，明细行只写“12:30 午饭 38”），把日期行与明细行的时间组合成完整时刻。",
+  "",
+  "## 六、字段与分类的语义映射",
+  "1. 分类必须先按语义归类，再回落到字面：用户说的是具体商品/商户（饮料、奶茶、薯片、雪糕、可乐），而账本分类是较宽的概念（如「零食」），就应当归入语义最接近的那一个，不要因为字面不同就留空。",
+  "   常见归类：饮料/奶茶/咖啡/薯片/坚果/甜品 → 零食类；早饭/午饭/晚饭/外卖/食堂 → 三餐类；打车/地铁/公交/加油/停车 → 交通或车相关类；药/体检/挂号/健身 → 医疗健身类；话费/流量/宽带/软件 → 通讯数码类；书/电影/演出/游戏 → 书影音类；猫粮/狗粮/兽医 → 宠物类。",
+  "2. 只能从用户消息给出的分类列表中选；列表里的名字和示例不同，就选语义最接近的那个，绝不新造分类。",
+  "3. 具体优先：列表里同时有更具体的分类（如「零食」）和更宽泛的（如「其它」「日常」）时，优先具体的；只有确实没有对应概念时才选宽泛分类，实在没有就留空并在 warnings 说明。",
+  "4. categoryName 要写列表中那个分类的**原名**，categoryId 写它的 id，两者必须指向同一个分类；flowKind=income 时只能选收入类分类，expense 只能选支出类分类。",
+  "5. title 要保留原文里的商品名或商户名（如“可乐”“星巴克”“Netflix”），它既是用户核对时的依据，也是分类兜底匹配的线索。",
+  "6. 其它域同样按语义映射枚举值：",
+  '   - asset：银行/储蓄卡/借记卡 → "bank"；支付宝/微信/现金 → "wallet"/"cash"；券商/股票账户 → "brokerage"；交易所/钱包/币 → "crypto"；房/公寓 → "real_estate"；车 → "vehicle"；信用卡欠款/花呗待还 → "liability"。',
+  '   - investment：六位代码或沪深/美股代码 → "stock"；指数/ETF/标普/沪深300 → "etf"；场外基金 → "fund"；债券/国债 → "bond"；BTC/ETH/币 → "crypto"。"买了/买入/加仓" → side="buy" 且 action="open"；"卖了/卖出/减仓/清仓" → side="sell"。',
+  '   - subscription：每周/一周 → "weekly"；每月/月度 → "monthly"；每年/年度/包年 → "yearly"；"每季度/自定义" → "custom"，并在 intervalCount 记录间隔。',
+  '   - loan：出现"月供/分期/还款/房贷/车贷/信用卡分期"即归 loan，不要归入 cashflow。',
 ].join("\n")
 
 function formatLocalDateTime(date: Date): string {
@@ -408,11 +422,16 @@ function normalizeSubscription(
   context: VoiceIntentContext,
   warnings: string[],
 ): VoiceSubscriptionIntent {
-  const category = findByIdOrName(
-    context.categories.filter((item) => item.kind === "expense"),
-    raw.categoryId,
-    asTrimmedString(raw.categoryName),
-  )
+  const expenseCategories = context.categories.filter((item) => item.kind === "expense")
+  const category =
+    findByIdOrName(expenseCategories, raw.categoryId, asTrimmedString(raw.categoryName)) ??
+    // Same product-word fallback as cashflow: "Netflix 会员" still lands in a media category.
+    matchCategoryByKeywords(
+      [asTrimmedString(raw.name), asTrimmedString(raw.merchant)].join(" "),
+      expenseCategories,
+      "expense",
+    ) ??
+    matchCategoryByKeywords(context.transcript, expenseCategories, "expense")
   if (!category && (asTrimmedString(raw.categoryId) || asTrimmedString(raw.categoryName))) {
     warnings.push("订阅分类未匹配到账本中的支出分类，已留空")
   }

@@ -349,6 +349,103 @@ describe("multi-date batches", () => {
   })
 })
 
+describe("semantic category mapping", () => {
+  const ledger = context({
+    categories: [
+      { id: "cat-snack", name: "零食", kind: "expense" },
+      { id: "cat-food", name: "三餐", kind: "expense" },
+      { id: "cat-car", name: "车相关", kind: "expense" },
+      { id: "cat-other", name: "其它", kind: "expense" },
+      { id: "cat-salary", name: "工资", kind: "income" },
+    ],
+  })
+
+  it("maps a product word onto the broader category when the model leaves it empty", () => {
+    const [intent] = normalizeVoiceIntents(
+      {
+        intents: [{ domain: "cashflow", flowKind: "expense", amount: "12.5", title: "可乐 薯片" }],
+      },
+      { ...ledger, transcript: "便利店买了瓶可乐和薯片花了十二块五" },
+    )
+
+    expect(intent?.domain).toBe("cashflow")
+    if (intent?.domain !== "cashflow") return
+    expect(intent.categoryName).toBe("零食")
+    expect(intent.categoryId).toBe("cat-snack")
+  })
+
+  it("maps transport words onto the transport category", () => {
+    const [intent] = normalizeVoiceIntents(
+      {
+        intents: [{ domain: "cashflow", flowKind: "expense", amount: "46", title: "打车去机场" }],
+      },
+      { ...ledger, transcript: "打车去机场 46" },
+    )
+
+    if (intent?.domain !== "cashflow") throw new Error("expected cashflow")
+    expect(intent.categoryName).toBe("车相关")
+  })
+
+  it("does not let one item's products pick another item's category", () => {
+    const intents = normalizeVoiceIntents(
+      {
+        intents: [
+          { domain: "cashflow", flowKind: "expense", amount: "12.5", title: "可乐 薯片" },
+          { domain: "cashflow", flowKind: "expense", amount: "46", title: "打车去机场" },
+        ],
+      },
+      { ...ledger, transcript: "便利店买了可乐和薯片 12.5；打车去机场 46" },
+    )
+
+    expect(
+      intents.map((intent) => (intent.domain === "cashflow" ? intent.categoryName : null)),
+    ).toEqual(["零食", "车相关"])
+  })
+
+  it("leaves the category empty when the ledger has no semantically matching name", () => {
+    const renamed = context({
+      categories: [
+        { id: "cat-snack", name: "零嘴儿", kind: "expense" },
+        { id: "cat-food", name: "三餐", kind: "expense" },
+      ],
+    })
+    const [intent] = normalizeVoiceIntents(
+      { intents: [{ domain: "cashflow", flowKind: "expense", amount: "12.5", title: "可乐" }] },
+      { ...renamed, transcript: "买了瓶可乐" },
+    )
+
+    if (intent?.domain !== "cashflow") throw new Error("expected cashflow")
+    expect(intent.categoryName).toBeNull()
+  })
+
+  it("never borrows an income category for an expense", () => {
+    const [intent] = normalizeVoiceIntents(
+      {
+        intents: [
+          {
+            domain: "cashflow",
+            flowKind: "expense",
+            amount: "30",
+            title: "理发",
+            categoryName: "工资",
+          },
+        ],
+      },
+      { ...ledger, transcript: "理发 30" },
+    )
+
+    if (intent?.domain !== "cashflow") throw new Error("expected cashflow")
+    expect(intent.categoryName).toBeNull()
+    expect(intent.warnings.join("")).toContain("方向不一致")
+  })
+
+  it("documents the semantic mapping rules in the frozen prompt", () => {
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("字段与分类的语义映射")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("饮料/奶茶/咖啡")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("具体优先")
+  })
+})
+
 describe("buildVoiceIntentMessages", () => {
   it("keeps the system prompt byte-identical so the provider prefix cache keeps hitting", () => {
     const first = buildVoiceIntentMessages(context())

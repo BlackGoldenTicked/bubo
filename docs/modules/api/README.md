@@ -20,7 +20,7 @@ presentation mappers.
 - `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, and a typed intent array (one element per record, capped at 20).
 - `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage so the renderer can log recognition and reasoning separately.
 - `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt (domain taxonomy, per-record dates with date-line inheritance, cross-domain batches), per-domain normalization, and the batch parser (`normalizeVoiceIntents`).
-- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization shared by the intent pipeline.
+- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization, plus `CATEGORY_KEYWORD_HINTS` / `matchCategoryByKeywords` (product-word → ledger category fallback guarded on the category name).
 - `packages/api/src/domain/voice/llm-pool-rules.ts` - pure Bailian free-tier pool ordering and attempt-chain rules.
 - `packages/api/src/infrastructure/ai/bailian-asr-client.ts` - Bailian (DashScope) ASR client over the OpenAI-compatible endpoint.
 - `packages/api/src/infrastructure/ai/llm-entry-client.ts` - OpenAI-compatible JSON completion client shared by pool models and DeepSeek.

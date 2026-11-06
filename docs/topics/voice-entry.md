@@ -63,6 +63,24 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
   behind the top-bar badge. Hand-opened forms never advance the batch.
 - A single-record input keeps the fast path: parse → deliver → navigate, no review step.
 
+## Semantic Category Mapping
+
+Category selection is two-layered, because "饮料" must land on a ledger category
+literally named "零食":
+
+1. **Prompt layer** (section 六 of the frozen prompt): classify by meaning before
+   spelling. Product words map onto the broader ledger concept (饮料/奶茶/咖啡/薯片/
+   雪糕 → 零食类), specific categories beat broad ones ("其它"), the direction must
+   match `flowKind`, and `categoryName`/`categoryId` must name the same list entry.
+   The same section maps enums for the other domains: 银行/支付宝/交易所 → `assetType`,
+   代码/指数/基金 → `instrumentKind`, 每周/每月/包年 → `billingCycle`, 月供/分期 → `loan`.
+2. **Deterministic fallback** (`CATEGORY_KEYWORD_HINTS` in `voice-entry-rules.ts`):
+   only runs when the model returned no category. It scores categories of the right
+   direction by product words found in the title, note, and transcript, and picks the
+   best. A hint applies only when the ledger has a category whose name contains the
+   hint key, so renamed categories ("零嘴儿") are never hijacked — they stay empty
+   instead of guessing.
+
 ## Domains
 
 | domain         | Page             | Prefilled fields                                                      |
