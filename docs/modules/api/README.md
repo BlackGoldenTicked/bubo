@@ -23,7 +23,7 @@ presentation mappers.
 - `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization, plus `CATEGORY_KEYWORD_HINTS` / `matchCategoryByKeywords` (product-word → ledger category fallback guarded on the category name).
 - `packages/api/src/domain/voice/llm-pool-rules.ts` - pure Bailian free-tier pool ordering and attempt-chain rules.
 - `packages/api/src/infrastructure/ai/bailian-asr-client.ts` - Bailian (DashScope) ASR client over the OpenAI-compatible endpoint.
-- `packages/api/src/infrastructure/ai/llm-entry-client.ts` - OpenAI-compatible JSON completion client shared by pool models and DeepSeek.
+- `packages/api/src/infrastructure/ai/llm-entry-client.ts` - OpenAI-compatible JSON completion client shared by pool models and DeepSeek; it forwards a provider's `extraBody` verbatim so vendor-specific switches (thinking mode, cache hints) stay at the settings boundary.
 - `packages/api/tests/voice-entry-rules.test.ts` - unit tests for amount, category, and date normalization.
 - `packages/api/tests/voice-intent-rules.test.ts` - unit tests for domain routing, id safety, and prompt-cache stability.
 - `packages/api/tests/llm-pool-rules.test.ts` - unit tests for pool expiry filtering, ordering, and fallback chain.

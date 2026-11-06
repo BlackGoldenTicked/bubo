@@ -13,7 +13,7 @@ import type { CashflowEventSummary } from "@bubo/api"
 import type { AssetSnapshotSummary } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { addDays, dateKey, localDateKey, monthStart } from "@/lib/dates"
+import { localDateKey } from "@/lib/dates"
 import { useMoney, useSignedMoney } from "@/lib/useMoney"
 import { Kicker } from "../components/ui/Kicker"
 import { BigNumber } from "../components/ui/BigNumber"
@@ -34,17 +34,20 @@ import { useBudgetRolloverPrompt } from "../budget/useBudgetRolloverPrompt"
 import { buildNetWorthTrend } from "./netWorthTrend"
 import { buildUpcomingCharges } from "./upcoming"
 import { buildLoanSchedule } from "../loans/loanSchedule"
+import {
+  RANGE_PRESET_MENU,
+  formatRangeText,
+  resolveRangePreset,
+  type RangePresetKey,
+} from "@/lib/dateRanges"
 
-type CashflowRangeKey = "this_month" | "last_month" | "last_30" | "last_90" | "year" | "all"
+type CashflowRangeKey = RangePresetKey
 const DEFAULT_CASHFLOW_RANGE_KEY: CashflowRangeKey = "this_month"
 const CASHFLOW_RANGE_STORAGE_KEY = "bubo:overview:cashflow-range"
 
+/** Same Chinese quick ranges as every other filter, plus 全部 for the full history. */
 const CASHFLOW_RANGE_OPTIONS: Array<{ key: CashflowRangeKey; label: string }> = [
-  { key: "this_month", label: "本月" },
-  { key: "last_month", label: "上月" },
-  { key: "last_30", label: "最近 30 天" },
-  { key: "last_90", label: "最近 90 天" },
-  { key: "year", label: "今年" },
+  ...RANGE_PRESET_MENU,
   { key: "all", label: "全部" },
 ]
 
@@ -76,74 +79,22 @@ function writeCashflowRangeKey(value: CashflowRangeKey): void {
   }
 }
 
-function addMonths(date: Date, months: number): Date {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + months)
-  return next
-}
-
-function monthEnd(date: Date): string {
-  return dateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0))
-}
-
 function cashflowDateLabel(dateFrom: string | undefined, dateTo: string): string {
-  const compactDate = (value: string, includeYear = false) => {
-    const [year, month, day] = value.split("-").map(Number)
-    return `${includeYear ? `${year}年` : ""}${month}月${day}日`
-  }
-  if (!dateFrom) return `截至 ${compactDate(dateTo, true)}`
-  const crossesYear = dateFrom.slice(0, 4) !== dateTo.slice(0, 4)
-  return `${compactDate(dateFrom, crossesYear)}—${compactDate(dateTo, crossesYear)}`
+  return formatRangeText({ from: dateFrom ?? "", to: dateTo })
 }
 
 function cashflowRange(key: CashflowRangeKey, now = new Date()) {
-  const today = dateKey(now)
-  if (key === "this_month") {
-    return {
-      dateFrom: monthStart(now),
-      dateTo: today,
-      axisStart: "月初",
-      axisEnd: "今天",
-    }
-  }
-  if (key === "last_month") {
-    const previous = addMonths(now, -1)
-    return {
-      dateFrom: monthStart(previous),
-      dateTo: monthEnd(previous),
-      axisStart: "月初",
-      axisEnd: "月末",
-    }
-  }
-  if (key === "last_30") {
-    return {
-      dateFrom: dateKey(addDays(now, -29)),
-      dateTo: today,
-      axisStart: "30 天前",
-      axisEnd: "今天",
-    }
-  }
-  if (key === "last_90") {
-    return {
-      dateFrom: dateKey(addDays(now, -89)),
-      dateTo: today,
-      axisStart: "90 天前",
-      axisEnd: "今天",
-    }
-  }
-  if (key === "year") {
-    return {
-      dateFrom: `${now.getFullYear()}-01-01`,
-      dateTo: today,
-      axisStart: "年初",
-      axisEnd: "今天",
-    }
+  const bounds = resolveRangePreset(key, now)
+  const today = localDateKey(now)
+  const short = (value: string) => {
+    const [, month, day] = value.split("-").map(Number)
+    return `${month}/${day}`
   }
   return {
-    dateFrom: undefined,
-    dateTo: today,
-    axisStart: "最早",
-    axisEnd: "今天",
+    dateFrom: bounds.from || undefined,
+    dateTo: bounds.to || today,
+    axisStart: bounds.from ? short(bounds.from) : "最早",
+    axisEnd: bounds.to === today ? "今天" : short(bounds.to || today),
   }
 }
 

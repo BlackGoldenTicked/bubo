@@ -72,6 +72,9 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `lib/voice/voiceQueueControl.ts` continues a batch after a save: same-domain next record first, otherwise it reopens the capture sheet so mixed-domain batches keep the one-by-one flow (hand-opened forms never advance it).
 - `lib/voice/useVoiceIntent.ts` subscribes one feature page to its own domain and prefills that page's form.
 - `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V): recorder, batch textarea (parses text without ASR), and a one-by-one review card for multi-record results.
+- `components/ui/DateInput.tsx` / `DateRangeField.tsx` are the only date controls: every modal, filter, and loan form routes through them, so no surface re-declares a calendar.
+- `lib/dateRanges.ts` owns the Chinese quick ranges (本周 / 本月 / 上个月 / 最近一个季度 / 上个季度 / 半年 / 全年 / 自定义), their boundaries, the range text, and the preset a hand-picked range matches. The imports toolbar, the overview chart, and the cashflow picker all read from it.
+- `main.tsx` mounts `I18nProvider locale="zh-CN"`, which is what makes every react-aria surface Chinese and Monday-first; removing it silently reverts the whole app to en-US.
 - `components/ui/DeltaText.tsx` - signed delta atom: one colour and arrow rule for P&L and change, using the product's accent/green-up and red-down semantics.
 - `routes/__root.tsx` replays `.bubo-route-enter` on every navigation without remounting the subtree, so page transitions animate while queries and scroll state survive.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.

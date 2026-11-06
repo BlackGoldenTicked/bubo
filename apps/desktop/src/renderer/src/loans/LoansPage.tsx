@@ -22,6 +22,7 @@ import { useMoney } from "@/lib/useMoney"
 import { LoanScheduleBar } from "./LoanScheduleBar"
 import { buildLoanSchedule } from "./loanSchedule"
 import { FormField } from "../components/ui/FormField"
+import { DateInput } from "../components/ui/DateInput"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { useCurrentRates } from "@/lib/useCurrentRates"
 import { currencySymbol } from "@bubo/shared"
@@ -175,10 +176,13 @@ function AddLoanModal({
                 />
               </FormField>
               <FormField label="起始日期" required error={errors.startDate?.message}>
-                <Input
-                  variant="secondary"
-                  type="date"
-                  {...register("startDate", { required: "请选择起始日期" })}
+                <Controller
+                  control={control}
+                  name="startDate"
+                  rules={{ required: "请选择起始日期" }}
+                  render={({ field }) => (
+                    <DateInput value={field.value} onChange={field.onChange} />
+                  )}
                 />
               </FormField>
             </form>

@@ -5,10 +5,10 @@
  * @gotcha  Stateless controls only — callers own filter state; no URL/nuqs sync lives here.
  */
 
-import { DateField, DateRangePicker, ListBox, RangeCalendar, Select } from "@heroui/react"
-import type { DateValue } from "@internationalized/date"
-import { parseDate } from "@internationalized/date"
+import { ListBox, Select } from "@heroui/react"
+import { DateRangeField } from "../components/ui/DateRangeField"
 import { FormField } from "../components/ui/FormField"
+import type { RangePresetKey } from "@/lib/dateRanges"
 
 export const FILTER_LABEL_CLASS = "mb-1 block text-[10.5px] leading-[1.2] text-[var(--ink-3)]"
 
@@ -57,69 +57,23 @@ export function FilterSelectField({
   )
 }
 
-type DateRangeValue = { start: DateValue; end: DateValue }
-
 export function DateRangeFilter({
   value,
   onChange,
+  onPresetChange,
+  allowAll = false,
 }: {
   value: { from: string; to: string }
   onChange: (next: { from: string; to: string }) => void
+  onPresetChange?: (key: RangePresetKey) => void
+  allowAll?: boolean
 }) {
-  const rangeValue: DateRangeValue | null =
-    value.from && value.to ? { start: parseDate(value.from), end: parseDate(value.to) } : null
-
   return (
-    <DateRangePicker
-      className="w-full"
-      value={rangeValue}
-      onChange={(next: DateRangeValue | null) => {
-        onChange({
-          from: next?.start.toString() ?? "",
-          to: next?.end.toString() ?? "",
-        })
-      }}
-    >
-      <DateField.Group
-        fullWidth
-        variant="secondary"
-        className="h-[30px] min-h-[30px] px-2 text-[11.5px]"
-      >
-        <DateField.Input slot="start">
-          {(segment) => <DateField.Segment segment={segment} />}
-        </DateField.Input>
-        <DateRangePicker.RangeSeparator className="px-1 text-[var(--ink-4)]">
-          至
-        </DateRangePicker.RangeSeparator>
-        <DateField.Input slot="end">
-          {(segment) => <DateField.Segment segment={segment} />}
-        </DateField.Input>
-        <DateField.Suffix>
-          <DateRangePicker.Trigger>
-            <DateRangePicker.TriggerIndicator />
-          </DateRangePicker.Trigger>
-        </DateField.Suffix>
-      </DateField.Group>
-      <DateRangePicker.Popover placement="bottom" style={{ maxWidth: "none" }}>
-        <RangeCalendar>
-          <RangeCalendar.Header>
-            <RangeCalendar.YearPickerTrigger>
-              <RangeCalendar.YearPickerTriggerHeading />
-              <RangeCalendar.YearPickerTriggerIndicator />
-            </RangeCalendar.YearPickerTrigger>
-            <RangeCalendar.NavButton slot="previous" />
-            <RangeCalendar.NavButton slot="next" />
-          </RangeCalendar.Header>
-          <RangeCalendar.Grid>
-            <RangeCalendar.GridHeader>
-              {(day) => <RangeCalendar.HeaderCell>{day}</RangeCalendar.HeaderCell>}
-            </RangeCalendar.GridHeader>
-            <RangeCalendar.GridBody>
-              {(date) => <RangeCalendar.Cell date={date} />}
-            </RangeCalendar.GridBody>
-          </RangeCalendar.Grid>
-        </RangeCalendar>
-      </DateRangePicker.Popover>
-    </DateRangePicker>
+    <DateRangeField
+      value={value}
+      onChange={onChange}
+      onPresetChange={onPresetChange}
+      allowAll={allowAll}
+    />
   )
 }

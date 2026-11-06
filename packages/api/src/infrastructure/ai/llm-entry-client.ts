@@ -74,7 +74,7 @@ export async function parseEntryJson(
       { role: "system", content: request.system },
       { role: "user", content: request.user },
     ],
-    ...(config.extraBody ?? {}),
+    ...config.extraBody,
   } as never)
 
   const content = completion.choices?.[0]?.message?.content

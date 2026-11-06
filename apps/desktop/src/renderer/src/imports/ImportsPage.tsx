@@ -31,7 +31,8 @@ import { usePagePerf } from "@/lib/debug/perf"
 import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES } from "@/lib/domainDisplay"
-import { addDays, dateKey, monthStart } from "@/lib/dates"
+import { dateKey } from "@/lib/dates"
+import { RANGE_PRESETS, resolveRangePreset, type RangePresetKey } from "@/lib/dateRanges"
 import { useMoney } from "@/lib/useMoney"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { TxDetailPanel, type Tx } from "./TxDetailPanel"
@@ -43,11 +44,13 @@ import { DailyBars } from "../components/charts/DailyBars"
 import { FormField } from "../components/ui/FormField"
 
 const TIME_FILTER_KEYS = [
+  "this_week",
   "this_month",
   "last_month",
-  "last_30",
-  "last_90",
-  "year",
+  "last_quarter",
+  "prev_quarter",
+  "half_year",
+  "this_year",
   "all",
   "custom",
 ] as const
@@ -75,14 +78,10 @@ const DEFAULT_FILTERS: TxFilterForm = {
   keyword: "",
 }
 
+/** Chinese quick ranges, in the order a ledger user scans them. */
 const TIME_FILTERS: Array<{ key: TimeFilterKey; label: string }> = [
-  { key: "this_month", label: "本月" },
-  { key: "last_month", label: "上月" },
-  { key: "last_30", label: "最近 30 天" },
-  { key: "last_90", label: "最近 90 天" },
-  { key: "year", label: "今年" },
+  ...RANGE_PRESETS,
   { key: "all", label: "全部" },
-  { key: "custom", label: "自定义" },
 ]
 
 const KIND_FILTERS: Array<{ key: KindFilterKey; label: string }> = [
@@ -143,27 +142,8 @@ function categoryFilterIncludes(value: string, categoryFilterValue: string): boo
   return categoryFilterSet(value)?.has(categoryFilterValue) ?? false
 }
 
-function addMonths(date: Date, months: number): Date {
-  const next = new Date(date)
-  next.setMonth(next.getMonth() + months)
-  return next
-}
-
-function monthEnd(date: Date): string {
-  return dateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0))
-}
-
 function timeFilterBounds(key: TimeFilterKey, now = new Date()): { from: string; to: string } {
-  if (key === "this_month") return { from: monthStart(now), to: monthEnd(now) }
-  if (key === "last_month") {
-    const previous = addMonths(now, -1)
-    return { from: monthStart(previous), to: monthEnd(previous) }
-  }
-  if (key === "last_30") return { from: dateKey(addDays(now, -29)), to: dateKey(now) }
-  if (key === "last_90") return { from: dateKey(addDays(now, -89)), to: dateKey(now) }
-  if (key === "year")
-    return { from: `${now.getFullYear()}-01-01`, to: `${now.getFullYear()}-12-31` }
-  return { from: "", to: "" }
+  return resolveRangePreset(key as RangePresetKey, now)
 }
 
 function dateKeyToUtc(value: string): Date {
@@ -987,7 +967,13 @@ export function ImportsPage() {
                 <FormField label="日期范围" labelClassName={FILTER_LABEL_CLASS}>
                   <DateRangeFilter
                     value={{ from: dateFrom, to: dateTo }}
+                    allowAll
                     onChange={(next) => applyCustomDateRange(next.from, next.to)}
+                    onPresetChange={(key) => {
+                      if (key === "custom") return
+                      setValue("timeFilter", key as TimeFilterKey)
+                      updateUrlFilters({ timeFilter: key })
+                    }}
                   />
                 </FormField>
               </div>

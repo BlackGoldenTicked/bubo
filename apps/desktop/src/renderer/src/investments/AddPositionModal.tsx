@@ -5,23 +5,13 @@
  * @gotcha  Positions start from a buy; currency must match the linked account.
  */
 
-import {
-  Button,
-  DateField,
-  DatePicker,
-  Input,
-  ListBox,
-  Modal,
-  Select,
-  Calendar,
-} from "@heroui/react"
+import { Button, Input, ListBox, Modal, Select } from "@heroui/react"
 import { useEffect } from "react"
 import { Controller, useForm } from "react-hook-form"
-import type { DateValue } from "@internationalized/date"
-import { parseDate } from "@internationalized/date"
 import type { BuboId, InstrumentKind } from "@bubo/shared/contracts"
 import { todayKey } from "@/lib/dates"
 import { FormField } from "../components/ui/FormField"
+import { DateInput } from "../components/ui/DateInput"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { Dim } from "../components/ui/Dim"
 import { INSTRUMENT_KIND_OPTIONS, INSTRUMENT_LABELS } from "./investmentDisplay"
@@ -284,43 +274,7 @@ export function AddPositionModal({ open, form, accounts, saving, onSave, onClose
                   name="initialExecutedAt"
                   rules={{ validate: (value) => Boolean(value) || "请选择日期" }}
                   render={({ field }) => (
-                    <DatePicker
-                      value={parseDate(field.value)}
-                      onChange={(v: DateValue | null) => {
-                        if (v) field.onChange(v.toString())
-                      }}
-                    >
-                      <DateField.Group fullWidth variant="secondary">
-                        <DateField.Input>
-                          {(segment) => <DateField.Segment segment={segment} />}
-                        </DateField.Input>
-                        <DateField.Suffix>
-                          <DatePicker.Trigger>
-                            <DatePicker.TriggerIndicator />
-                          </DatePicker.Trigger>
-                        </DateField.Suffix>
-                      </DateField.Group>
-                      <DatePicker.Popover placement="top" style={{ maxWidth: "none" }}>
-                        <Calendar>
-                          <Calendar.Header>
-                            <Calendar.YearPickerTrigger>
-                              <Calendar.YearPickerTriggerHeading />
-                              <Calendar.YearPickerTriggerIndicator />
-                            </Calendar.YearPickerTrigger>
-                            <Calendar.NavButton slot="previous" />
-                            <Calendar.NavButton slot="next" />
-                          </Calendar.Header>
-                          <Calendar.Grid>
-                            <Calendar.GridHeader>
-                              {(day) => <Calendar.HeaderCell>{day}</Calendar.HeaderCell>}
-                            </Calendar.GridHeader>
-                            <Calendar.GridBody>
-                              {(date) => <Calendar.Cell date={date} />}
-                            </Calendar.GridBody>
-                          </Calendar.Grid>
-                        </Calendar>
-                      </DatePicker.Popover>
-                    </DatePicker>
+                    <DateInput value={field.value} onChange={field.onChange} />
                   )}
                 />
               </FormField>

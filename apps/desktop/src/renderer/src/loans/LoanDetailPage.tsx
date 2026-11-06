@@ -22,6 +22,7 @@ import { Route } from "../routes/loans.$id"
 import { LoanScheduleBar } from "./LoanScheduleBar"
 import { buildLoanSchedule } from "./loanSchedule"
 import { FormField } from "../components/ui/FormField"
+import { DateInput } from "../components/ui/DateInput"
 import { LinkedCashflowDrawer } from "../cashflow-links/LinkedCashflowDrawer"
 import { QuerySkeleton, QueryErrorState } from "../components/ui/QueryState"
 
@@ -355,25 +356,13 @@ export function LoanDetailPage() {
 
                 {/* Actions */}
                 <div style={{ display: "flex", gap: 8, marginTop: 28, alignItems: "center" }}>
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    onPress={() => setPrepaying(true)}
-                  >
+                  <Button size="sm" variant="primary" onPress={() => setPrepaying(true)}>
                     提前还款
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onPress={() => setEditing(true)}
-                  >
+                  <Button size="sm" variant="outline" onPress={() => setEditing(true)}>
                     编辑
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onPress={() => setLinkOpen(true)}
-                  >
+                  <Button size="sm" variant="outline" onPress={() => setLinkOpen(true)}>
                     扣款流水
                   </Button>
                   <div style={{ flex: 1 }} />
@@ -531,10 +520,13 @@ export function LoanDetailPage() {
                   required
                   error={editForm.formState.errors.startDate?.message}
                 >
-                  <Input
-                    variant="secondary"
-                    type="date"
-                    {...editForm.register("startDate", { required: "请选择起始日期" })}
+                  <Controller
+                    control={editForm.control}
+                    name="startDate"
+                    rules={{ required: "请选择起始日期" }}
+                    render={({ field }) => (
+                      <DateInput value={field.value} onChange={field.onChange} />
+                    )}
                   />
                 </FormField>
                 <FormField label="备注">
