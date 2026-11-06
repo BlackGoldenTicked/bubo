@@ -37,3 +37,4 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0021   | Prefer macOS System Speech Recognition             | Accepted | 2026-11-05 |
 | 0022   | Bailian Free-Tier Model Pool Before DeepSeek       | Accepted | 2026-11-05 |
 | 0023   | System-Level Voice Entry Through Domain Intents    | Accepted | 2026-11-05 |
+| 0024   | Batch Voice Intents With One-By-One Confirmation   | Accepted | 2026-11-06 |

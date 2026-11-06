@@ -17,6 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { ASSET_GROUP_COLORS, ASSET_GROUPS, isInvestmentAssetType } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
@@ -736,7 +737,10 @@ export function AssetsPage() {
         mode={formMode}
         saving={saving}
         onSave={(values) => void save(values)}
-        onClose={() => setShowForm(false)}
+        onClose={() => {
+          setShowForm(false)
+          deliverNextQueuedFor("asset")
+        }}
       />
       <ArchivedAssetsDrawer
         open={showArchived}

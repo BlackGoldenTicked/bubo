@@ -14,6 +14,7 @@ import { useAtom, useSetAtom } from "jotai"
 import { AppIcon, type AppIconName } from "@bubo/ui"
 import { buboPerfLog } from "@/lib/debug/perf"
 import { amountsHiddenAtom, voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
+import { useVoiceIntentQueue } from "@/lib/voice/useVoiceIntent"
 
 interface NavItem {
   label: string
@@ -40,6 +41,7 @@ export function TopNavigation() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
   const [hidden, setHidden] = useAtom(amountsHiddenAtom)
   const setVoiceOpen = useSetAtom(voiceCaptureOpenAtom)
+  const pendingIntents = useVoiceIntentQueue().length
   const settingsActive = pathname.startsWith("/settings")
 
   return (
@@ -81,6 +83,14 @@ export function TopNavigation() {
         >
           <AppIcon name="voice" size={13} />
           语音
+          {pendingIntents > 0 && (
+            <span
+              aria-label={`${pendingIntents} 笔待确认`}
+              className="ml-0.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9.5px] font-semibold leading-none text-[var(--accent-foreground)]"
+            >
+              {pendingIntents}
+            </span>
+          )}
         </button>
         <button
           type="button"

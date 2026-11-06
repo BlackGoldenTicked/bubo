@@ -1151,8 +1151,10 @@ export {
 } from "./domain/voice/voice-entry-rules"
 export {
   VOICE_INTENT_SYSTEM_PROMPT,
+  MAX_VOICE_INTENTS,
   buildVoiceIntentMessages,
   normalizeVoiceIntent,
+  normalizeVoiceIntents,
   type VoiceAssetOption,
   type VoiceIntentContext,
   type VoiceIntentMessages,

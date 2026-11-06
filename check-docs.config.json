@@ -62,6 +62,7 @@
     "components": "ui",
     "lib": "ui",
     "styles": "ui",
-    "hooks": "hooks"
+    "hooks": "hooks",
+    "domain": "api"
   }
 }

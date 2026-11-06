@@ -28,6 +28,7 @@ import type { CashflowEventSummary } from "@bubo/api"
 import { AppIcon } from "@bubo/ui"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES } from "@/lib/domainDisplay"
 import { addDays, dateKey, monthStart } from "@/lib/dates"
@@ -1315,6 +1316,7 @@ export function ImportsPage() {
         onClose={() => {
           setShowAddTx(false)
           setVoiceTxForm(undefined)
+          deliverNextQueuedFor("cashflow")
         }}
         onSave={handleAddTx}
       />

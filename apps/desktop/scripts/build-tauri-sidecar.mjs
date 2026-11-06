@@ -7,7 +7,7 @@
  */
 
 import { execFileSync } from "node:child_process"
-import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync } from "node:fs"
+import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, renameSync } from "node:fs"
 import { createRequire } from "node:module"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -45,8 +45,13 @@ function refreshDevCopy(output, targetTriple) {
   if (!existsSync(debugDir)) return
 
   const destination = join(debugDir, `bubo-sidecar${extension}`)
-  copyFileSync(output, destination)
-  chmodSync(destination, 0o755)
+  // Write-then-rename: overwriting the inode that a running dev sidecar was spawned
+  // from leaves the kernel's code-signature cache stale, and the next exec dies with
+  // SIGKILL (exit 137) without printing anything. A rename swaps in a fresh inode.
+  const staging = `${destination}.new`
+  copyFileSync(output, staging)
+  chmodSync(staging, 0o755)
+  renameSync(staging, destination)
   console.log(`Refreshed dev sidecar: ${destination}`)
 }
 

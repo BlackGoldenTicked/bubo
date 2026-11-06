@@ -23,8 +23,9 @@
   manual price-quote DTOs and inputs shared by renderer and API.
 - `contracts/investments/contract.contract.ts` - leveraged contract-position DTOs
   and inputs for the display-only derivatives layer.
-- `contracts/voice/voice.contract.ts` - voice entry draft, parse result, and
-  masked provider settings contracts; keys never cross this boundary.
+- `contracts/voice/voice.contract.ts` - the five-domain `VoiceIntent` union, the
+  batch parse result (`intents: VoiceIntent[]`, one element per record), and masked
+  provider settings; keys never cross this boundary.
 - `ipc/index.ts` - ledger-change events emitted by the CLI or desktop background
   maintenance and the local socket path helper used for CLI commit refresh
   notifications.

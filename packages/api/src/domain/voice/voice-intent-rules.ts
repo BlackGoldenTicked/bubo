@@ -109,8 +109,9 @@ const BILLING_CYCLES: readonly VoiceBillingCycle[] = ["weekly", "monthly", "year
  * Keep this string free of per-call values so the provider's prefix cache keeps hitting.
  */
 export const VOICE_INTENT_SYSTEM_PROMPT = [
-  "你是 bubo 财务应用的系统级语音入口解析器。用户会说一句中文口语，你要判断它在描述哪一类对象，并抽取该类别的结构化字段。",
-  "只输出一个 JSON 对象，不要输出解释、Markdown 或代码块。",
+  "你是 bubo 财务应用的系统级语音入口解析器。用户会输入一句话，或一整段账单/聊天记录；你要把其中**每一笔**独立的记录都识别出来，判断各自属于哪一类对象，并抽取该类别的结构化字段。",
+  '只输出一个 JSON 对象，形如 {"intents":[ {...}, {...} ]}，不要输出解释、Markdown 或代码块。',
+  "intents 是数组：输入里有几笔互相独立的记录就输出几个元素，顺序与原文一致；只有一笔时数组长度为 1。",
   "",
   "## 一、领域判定（domain）",
   '- "cashflow"：一笔已经发生的收入或支出，例如“中午吃饭花了三十八块五”“发工资了”。',
@@ -179,9 +180,11 @@ export const VOICE_INTENT_SYSTEM_PROMPT = [
   "## 四、硬规则",
   '1. 金额、数量、价格只能来自用户原话；口语数量词要换算（“三十八块五” → "38.50"，“一万二” → "12000.00"）。',
   "2. 绝不虚构分类、账户、持仓的 id；给定列表里没有就输出 null，并在 warnings 说明。",
-  "3. 一句话里有多件事时，只保留最主要的一件，并在 warnings 里说明其余被忽略。",
-  "4. 只输出字段名对应 JSON，不输出多余字段；不确定的字段用 null 或空字符串。",
-  '5. 无法归类时输出 {"domain":"unknown","confidence":0,"warnings":[],"reason":"..."}。',
+  "3. 必须逐笔输出：一句话或一段文本里有几笔钱进出，就输出几个元素，绝不合并金额、绝不只保留最大的一笔、绝不因为“同一类”而折叠。",
+  "   例如“早饭 8 块，打车 26，中午麻辣烫 38.5”要输出 3 个 cashflow 元素；最多输出 20 条，超出部分在 warnings 里说明。",
+  "4. 解析多行文本时，一行通常是一笔；“合计/总计/小计/余额”这类行不是新的收支，不要单独成条。",
+  "5. 只输出字段名对应 JSON，不输出多余字段；不确定的字段用 null 或空字符串。",
+  '6. 单条无法归类时，该条输出 {"domain":"unknown","confidence":0,"warnings":[],"reason":"..."}，不要因此丢弃其它可识别的条目。',
 ].join("\n")
 
 function formatLocalDateTime(date: Date): string {
@@ -537,4 +540,56 @@ export function normalizeVoiceIntent(payload: unknown, context: VoiceIntentConte
         reason: asTrimmedString(raw.reason) || "没有听清要记录的对象",
       }
   }
+}
+
+/** Hard cap: a pasted bill dump must not turn into an unbounded confirmation queue. */
+export const MAX_VOICE_INTENTS = 20
+
+function collectRawIntents(payload: unknown): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object" && !Array.isArray(item),
+    )
+  }
+  if (!payload || typeof payload !== "object") {
+    throw new Error("大模型未返回 JSON 对象，无法判断语音意图")
+  }
+  const record = payload as Record<string, unknown>
+  for (const key of ["intents", "items", "records", "entries"]) {
+    const value = record[key]
+    if (Array.isArray(value)) {
+      return value.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      )
+    }
+  }
+  // Tolerate a model that answered with a single bare intent object.
+  if (typeof record.domain === "string") return [record]
+  throw new Error("大模型未返回 intents 数组，无法解析批量记录")
+}
+
+/**
+ * Convert the model's JSON into a list of typed intents, preserving source order.
+ * A malformed array throws; a single malformed item is skipped and logged so one bad
+ * record cannot discard the whole batch.
+ */
+export function normalizeVoiceIntents(
+  payload: unknown,
+  context: VoiceIntentContext,
+): VoiceIntent[] {
+  const rawItems = collectRawIntents(payload)
+  const intents: VoiceIntent[] = []
+
+  for (const raw of rawItems.slice(0, MAX_VOICE_INTENTS)) {
+    try {
+      intents.push(normalizeVoiceIntent(raw, context))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`[voice] skipped one intent: ${message}`)
+    }
+  }
+
+  return intents
 }

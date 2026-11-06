@@ -4,9 +4,11 @@
 
 Voice entry lets a user hold one thought out loud instead of typing a form:
 "中午吃麻辣烫花了三十八块五", "招行卡里现在有八万", "买十股苹果每股一百八",
-"新办了房贷月供五千八", "Netflix 每月六十". One utterance is mapped onto exactly
-one business domain — cashflow, asset, investment, subscription, or loan — and
-**prefills that page's own form**. Nothing is written until the user confirms.
+"新办了房贷月供五千八", "Netflix 每月六十". Each input — one sentence or a pasted
+block — is decomposed into **one intent per record**, each mapped onto a business
+domain (cashflow, asset, investment, subscription, or loan), and each **prefills its
+page's own form** after the user confirms it in the capture sheet. Nothing is written
+until the user saves.
 
 This keeps the asymmetric finance model intact. Each page keeps its existing
 mutation: cashflow still goes through `createCashflowEvent`, an asset value
@@ -34,6 +36,24 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
   -> user confirms through that page's existing mutation
 ```
 
+## Batch And Text Input
+
+- **Text path**: the sheet carries a textarea. Submitting it sends `transcript`
+  straight to `voice.parseIntent`, so ASR is skipped entirely (requirement: paste a
+  bill or chat log and parse immediately). `⌘↵` submits.
+- **Multi-record extraction**: the model answers with `{"intents":[...]}` and is
+  instructed to emit one element per record — never to merge amounts or keep only the
+  largest. `normalizeVoiceIntents` preserves source order, drops malformed items with
+  a logged error, and caps the batch at `MAX_VOICE_INTENTS` (20).
+- **One-by-one confirmation**: a batch is queued and the sheet reviews the head only
+  ("第 1 / N 笔待确认") with 确认并填入 / 跳过 / 全部跳过. Confirming hands that one
+  record to its page and keeps the rest queued; the top-bar 语音 button shows the
+  pending count, and reopening the sheet resumes the queue.
+- **Auto-advance**: closing a voice-prefilled form calls `deliverNextQueuedFor(domain)`,
+  so saving one expense immediately opens the next one from the same batch — the queue
+  drains without returning to the sheet.
+- A single-record input keeps the fast path: parse → deliver → navigate, no review step.
+
 ## Domains
 
 | domain         | Page             | Prefilled fields                                                      |
@@ -53,7 +73,8 @@ The precedence lives in the frozen prompt, not in renderer heuristics.
 ## Prompt Caching
 
 The system prompt is a single **frozen constant** (`VOICE_INTENT_SYSTEM_PROMPT`)
-holding the domain taxonomy, every domain's field list, and the hard rules. All
+holding the domain taxonomy, every domain's field list, the multi-record rules, and
+the hard rules. All
 per-call data — current time, display currency, categories, accounts, loans,
 subscriptions, positions, the utterance — goes into the **user turn as JSON**.
 
@@ -192,9 +213,9 @@ The model output is untrusted input. `voice-intent-rules.ts` (all domains) and
 - `apps/desktop/src/tauri-sidecar/voice-service.ts` - sidecar implementation; assembles ledger context.
 - `apps/desktop/src/tauri-sidecar/xlsx-reader.ts` - zero-dependency first-sheet xlsx reader.
 - `apps/desktop/src/tauri-sidecar/llm-models-import.ts` - workbook column mapping to pool entries.
-- `apps/desktop/src/renderer/src/voice/VoiceCaptureSheet.tsx` - global capture overlay.
+- `apps/desktop/src/renderer/src/voice/VoiceCaptureSheet.tsx` - global capture overlay: recorder, batch textarea, and the one-by-one review card.
 - `apps/desktop/src/renderer/src/lib/voice/audioRecorder.ts` - microphone to WAV.
-- `apps/desktop/src/renderer/src/lib/voice/intentHandoff.ts` - domain-scoped intent bus.
+- `apps/desktop/src/renderer/src/lib/voice/intentHandoff.ts` - domain-scoped intent bus plus the ordered confirmation queue.
 - `apps/desktop/src/renderer/src/lib/voice/useVoiceIntent.ts` - per-page intent hook.
 
 ## Platform Notes
@@ -210,8 +231,8 @@ The model output is untrusted input. `voice-intent-rules.ts` (all domains) and
 
 ## Limits
 
-- One intent per utterance. A sentence mixing two domains keeps the primary one
-  and warns about the rest.
+- One record per intent; a sentence mixing domains yields one intent per record, and
+  the batch cap (20) applies per input.
 - Currencies other than the ledger display currency rely on the model naming
   them explicitly in the utterance.
 - System speech runs fully offline only when the on-device model exists;

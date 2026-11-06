@@ -17,6 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { useMoney } from "@/lib/useMoney"
 import { useCurrentRates } from "@/lib/useCurrentRates"
@@ -577,7 +578,10 @@ export function InvestmentsPage() {
             accounts={accounts}
             saving={saving}
             onSave={savePosition}
-            onClose={() => setShowAddPosition(false)}
+            onClose={() => {
+              setShowAddPosition(false)
+              deliverNextQueuedFor("investment")
+            }}
           />
           <TradeModal
             open={tradeTarget != null}

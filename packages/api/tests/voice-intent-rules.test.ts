@@ -7,9 +7,11 @@
 
 import { describe, expect, it } from "vitest"
 import {
+  MAX_VOICE_INTENTS,
   VOICE_INTENT_SYSTEM_PROMPT,
   buildVoiceIntentMessages,
   normalizeVoiceIntent,
+  normalizeVoiceIntents,
   type VoiceIntentContext,
 } from "../src/domain/voice/voice-intent-rules"
 
@@ -225,6 +227,81 @@ describe("normalizeVoiceIntent", () => {
 
   it("rejects non-object payloads", () => {
     expect(() => normalizeVoiceIntent("not json", context())).toThrow(/JSON 对象/)
+  })
+})
+
+describe("normalizeVoiceIntents", () => {
+  it("keeps every record of a multi-expense sentence, in order", () => {
+    const intents = normalizeVoiceIntents(
+      {
+        intents: [
+          { domain: "cashflow", flowKind: "expense", amount: "8", title: "早饭" },
+          { domain: "cashflow", flowKind: "expense", amount: "26", title: "打车" },
+          { domain: "cashflow", flowKind: "expense", amount: "38.5", title: "麻辣烫" },
+        ],
+      },
+      context({ transcript: "早饭 8 块，打车 26，中午麻辣烫 38.5" }),
+    )
+
+    expect(intents).toHaveLength(3)
+    expect(intents.map((intent) => (intent.domain === "cashflow" ? intent.amount : null))).toEqual([
+      "8.00",
+      "26.00",
+      "38.50",
+    ])
+    expect(intents.map((intent) => (intent.domain === "cashflow" ? intent.title : ""))).toEqual([
+      "早饭",
+      "打车",
+      "麻辣烫",
+    ])
+  })
+
+  it("accepts a bare array and mixed domains", () => {
+    const intents = normalizeVoiceIntents(
+      [
+        { domain: "cashflow", flowKind: "expense", amount: "38.5", title: "午饭" },
+        { domain: "asset", accountName: "招商银行", valueAmount: "80000" },
+        { domain: "loan", name: "房贷", paymentAmount: "5800", principalAmount: "1200000" },
+      ],
+      context({ transcript: "午饭 38.5；招行卡里八万；房贷月供五千八" }),
+    )
+
+    expect(intents.map((intent) => intent.domain)).toEqual(["cashflow", "asset", "loan"])
+  })
+
+  it("still accepts the legacy single-intent object", () => {
+    const intents = normalizeVoiceIntents(
+      { domain: "cashflow", flowKind: "expense", amount: "12", title: "咖啡" },
+      context({ transcript: "咖啡 12" }),
+    )
+
+    expect(intents).toHaveLength(1)
+    expect(intents[0]?.domain).toBe("cashflow")
+  })
+
+  it("drops malformed items without discarding the batch", () => {
+    const intents = normalizeVoiceIntents(
+      { intents: [null, "nope", { domain: "cashflow", amount: "9", title: "水" }] },
+      context({ transcript: "水 9 块" }),
+    )
+
+    expect(intents).toHaveLength(1)
+    expect(intents[0]?.domain).toBe("cashflow")
+  })
+
+  it("caps a pasted bill dump at the supported queue length", () => {
+    const items = Array.from({ length: MAX_VOICE_INTENTS + 5 }, (_, index) => ({
+      domain: "cashflow",
+      flowKind: "expense",
+      amount: String(index + 1),
+      title: `第${index + 1}笔`,
+    }))
+
+    expect(normalizeVoiceIntents({ intents: items }, context())).toHaveLength(MAX_VOICE_INTENTS)
+  })
+
+  it("throws when the payload carries no intent list at all", () => {
+    expect(() => normalizeVoiceIntents({ answer: "ok" }, context())).toThrow(/intents 数组/)
   })
 })
 

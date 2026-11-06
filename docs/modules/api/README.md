@@ -17,9 +17,9 @@ presentation mappers.
 - `packages/api/src/sqlite/` - transitional compatibility re-exports for old internal import paths.
 - `packages/api/src/use-cases/agent-ledger/agent-ledger-api.ts` - guarded agent ledger patch facade.
 - `packages/api/src/infrastructure/db/repositories/agent-ledger-api.repository.ts` - rule-checked agent patch persistence.
-- `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, typed intent for one of five domains.
+- `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, and a typed intent array (one element per record, capped at 20).
 - `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage so the renderer can log recognition and reasoning separately.
-- `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt, domain taxonomy, and per-domain normalization.
+- `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt, domain taxonomy, per-domain normalization, and the batch parser (`normalizeVoiceIntents`).
 - `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization shared by the intent pipeline.
 - `packages/api/src/domain/voice/llm-pool-rules.ts` - pure Bailian free-tier pool ordering and attempt-chain rules.
 - `packages/api/src/infrastructure/ai/bailian-asr-client.ts` - Bailian (DashScope) ASR client over the OpenAI-compatible endpoint.

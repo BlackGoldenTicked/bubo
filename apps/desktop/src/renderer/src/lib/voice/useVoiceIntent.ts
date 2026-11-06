@@ -6,9 +6,13 @@
  *          (set state / open a modal). Heavy work belongs in the page's own save path.
  */
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useSyncExternalStore } from "react"
 import type { VoiceIntent, VoiceIntentDomain } from "@bubo/shared/contracts"
-import { subscribeVoiceIntent } from "./intentHandoff"
+import {
+  getVoiceIntentQueueSnapshot,
+  subscribeVoiceIntent,
+  subscribeVoiceIntentQueue,
+} from "./intentHandoff"
 
 type IntentOf<D extends VoiceIntentDomain> = Extract<VoiceIntent, { domain: D }>
 
@@ -26,5 +30,14 @@ export function useVoiceIntent<D extends VoiceIntentDomain>(
         handlerRef.current(intent as IntentOf<D>)
       }),
     [domain],
+  )
+}
+
+/** Pending batch waiting for confirmation; drives the badge and the resume view. */
+export function useVoiceIntentQueue(): VoiceIntent[] {
+  return useSyncExternalStore(
+    subscribeVoiceIntentQueue,
+    getVoiceIntentQueueSnapshot,
+    getVoiceIntentQueueSnapshot,
   )
 }

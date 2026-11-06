@@ -136,7 +136,12 @@ export type VoiceIntent =
 
 export interface VoiceIntentParseResult {
   transcript: string
-  intent: VoiceIntent
+  /**
+   * Every record found in the utterance, in the order it was spoken or pasted.
+   * One sentence may contain several expenses; each becomes its own intent so the
+   * renderer can confirm them one by one instead of silently keeping the largest.
+   */
+  intents: VoiceIntent[]
   models: {
     asr: string
     llm: string

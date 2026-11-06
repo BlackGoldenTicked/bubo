@@ -17,7 +17,7 @@ import {
 } from "../../domain/voice/voice-entry-rules"
 import {
   buildVoiceIntentMessages,
-  normalizeVoiceIntent,
+  normalizeVoiceIntents,
   type VoiceAssetOption,
   type VoiceIntentContext,
   type VoiceLoanOption,
@@ -133,11 +133,11 @@ export async function parseVoiceIntent(
       )
     }
 
-    const intent = normalizeVoiceIntent(llmResult.payload, context)
+    const intents = normalizeVoiceIntents(llmResult.payload, context)
 
     return ok({
       transcript,
-      intent,
+      intents,
       models: { asr: asrModel, llm: llmResult.model },
       timings: { asrMs, llmMs },
       usage: llmResult.usage,
