@@ -51,7 +51,7 @@
 
 - 品牌集中在 `apps/desktop/src-tauri/tauri.conf.json`（`productName`、`identifier`、`version`、`icon[]`、updater `endpoints`/`pubkey`、窗口 `title`）。
 - 图标资源：`apps/desktop/resources/icons/bubo.iconset/*.png`、`bubo.icns`、`src-tauri/icons/icon.ico`。
-- 主题走 CSS 变量（`--ink`、`--hair`、`--accent`、`--red`、`--surface-2` 等），设计系统见 [design.md](../../design.md)。
+- 主题走 CSS 变量（`--ink`、`--hair`、`--accent`、`--red`、`--surface-2` 等），设计系统见 `packages/ui` 的 token 与 primitive 契约。
 - 文案绝大多数是**硬编码中文**；i18next 已接入（`renderer/src/i18n.ts`，支持 en-US/zh-CN）但只覆盖极少数 key。
 
 ---
@@ -66,7 +66,7 @@
    - ⚠️ `identifier` 决定 app-data 目录（`~/Library/Application Support/<identifier>`）。改了会读不到旧 `bubo.sqlite3`。若要保留旧数据，需迁移目录或保持 `identifier` 不变只改 `productName`。
    - 同步 `tauri.dev.conf.json`（dev 用 `<identifier>.dev`）。
 2. **换图标**：替换 `resources/icons/bubo.iconset/*` 与 `bubo.icns`、`src-tauri/icons/icon.ico`（保持文件名，避免改 `tauri.conf.json` 的 `icon[]` 路径）。
-3. **主题色**：改全局 CSS 变量定义（renderer 全局样式 + `packages/ui`），集中在 `--accent` 等 token；对照 [design.md](../../design.md) 保持「仪器感、数字为主角」的克制风格。
+3. **主题色**：改全局 CSS 变量定义（renderer 全局样式 + `packages/ui`），集中在 `--accent` 等 token；对照设计系统 token 保持「仪器感、数字为主角」的克制风格。
 4. **更新源**：`plugins.updater.endpoints` 指向自己的 Release 仓库；`pubkey` 换成自己的签名公钥（私钥入 CI secrets，见 ADR 0012）。
 5. **文案本地化（可选，工作量大）**：若要真正双语，需把硬编码中文逐步抽成 i18n key。建议新写的投资模块直接用 i18n，存量文案按需迁移。
 
@@ -262,5 +262,5 @@ export const contractPositions = sqliteTable("contract_positions", {
 
 ## 实施前置
 
-- 本项目有**强制 Plane 工作流**（见 [AGENTS.md](../../AGENTS.md)）：每个阶段开工前需在 Plane `bubo` 项目建工作项、写范围与验收标准、置为 In Progress。
+- 本项目有**强制 Plane 工作流**（见仓库协作约定）：每个阶段开工前需在 Plane `bubo` 项目建工作项、写范围与验收标准、置为 In Progress。
 - 阶段 2/3 属于durable 架构变更，建议在 `docs/decisions/` 补一份 ADR（如「投资层与净资产的单一来源策略」）。

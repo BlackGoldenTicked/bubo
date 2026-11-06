@@ -71,6 +71,6 @@ Consumers import from `@bubo/ui`.
 ## Watchouts
 
 - Keep product-specific finance logic out of this package.
-- Match [design.md](../../../design.md) and the surrounding renderer style before adding new primitives.
+- Match the surrounding renderer style and the token contract below before adding new primitives.
 - Do not create duplicate primitives when an existing component can be extended safely.
 - Shared UI source files carry AI headers; keep header `@gotcha` notes about package-level reuse, not one-off page behavior.
