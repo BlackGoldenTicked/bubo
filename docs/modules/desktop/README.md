@@ -68,7 +68,8 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `lib/` - browser-safe renderer helpers, tRPC client wiring, command parsing, and UI state atoms; `lib/reportError.ts` is the single toast path for mutation/action failures (deduped by error identity), `lib/theme.ts` resolves the stored `light | dark | system` preference into `<html data-theme>` and the native window appearance, and `lib/useCurrentRates.ts` exposes the base currency and a `toDisplay` conversion helper used by cross-currency totals.
 - `lib/mouseHistoryNavigation.ts` maps side buttons, browser history keys, and macOS Command+[ / Command+] to TanStack Router history on Tauri.
 - `lib/voice/audioRecorder.ts` captures microphone audio and encodes 16 kHz mono PCM WAV base64 for the voice entry mutation.
-- `lib/voice/intentHandoff.ts` is the domain-scoped intent bus plus the ordered confirmation queue; `deliverNextQueuedFor` drains a batch by saving one prefilled form after another.
+- `lib/voice/intentHandoff.ts` is the domain-scoped intent bus plus the ordered confirmation queue.
+- `lib/voice/voiceQueueControl.ts` continues a batch after a save: same-domain next record first, otherwise it reopens the capture sheet so mixed-domain batches keep the one-by-one flow (hand-opened forms never advance it).
 - `lib/voice/useVoiceIntent.ts` subscribes one feature page to its own domain and prefills that page's form.
 - `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V): recorder, batch textarea (parses text without ASR), and a one-by-one review card for multi-record results.
 - `components/ui/DeltaText.tsx` - signed delta atom: one colour and arrow rule for P&L and change, using the product's accent/green-up and red-down semantics.

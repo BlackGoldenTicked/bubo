@@ -15,7 +15,7 @@ import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
+import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { localDateKey, monthCells } from "@/lib/dates"
 import { SUBSCRIPTION_CATEGORY_COLORS } from "@/lib/domainDisplay"
@@ -696,9 +696,10 @@ export function SubscriptionsPage() {
         open={showAdd}
         initial={voiceSubForm}
         onClose={() => {
+          const wasVoice = voiceSubForm != null
           setShowAdd(false)
           setVoiceSubForm(undefined)
-          deliverNextQueuedFor("subscription")
+          continueVoiceQueue("subscription", wasVoice)
         }}
         onSave={handleSave}
       />

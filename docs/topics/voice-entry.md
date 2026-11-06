@@ -49,9 +49,18 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
   ("第 1 / N 笔待确认") with 确认并填入 / 跳过 / 全部跳过. Confirming hands that one
   record to its page and keeps the rest queued; the top-bar 语音 button shows the
   pending count, and reopening the sheet resumes the queue.
-- **Auto-advance**: closing a voice-prefilled form calls `deliverNextQueuedFor(domain)`,
-  so saving one expense immediately opens the next one from the same batch — the queue
-  drains without returning to the sheet.
+- **Multi-date batches**: every record carries its own date. The prompt states that a
+  standalone date line ("10月3日", "2026/10/03 周六", "昨天") is inherited by the detail
+  lines below it until a new date line appears; a row with its own date wins. Only rows
+  with no date in scope fall back to "now" (with a warning), and month/day-only values
+  are resolved against the current year nearest to today.
+- **Cross-domain batches**: records keep source order across domains. Confirming one
+  hands only that record to its page; a mixed batch (three expenses plus a balance
+  update plus a trade) drains domain by domain.
+- **Auto-advance**: closing a voice-prefilled form calls `continueVoiceQueue(domain, wasVoicePrefilled)`.
+  It first feeds the next record of the same domain into that page; when only other
+  domains remain it reopens the sheet on the next review card instead of leaving it
+  behind the top-bar badge. Hand-opened forms never advance the batch.
 - A single-record input keeps the fast path: parse → deliver → navigate, no review step.
 
 ## Domains

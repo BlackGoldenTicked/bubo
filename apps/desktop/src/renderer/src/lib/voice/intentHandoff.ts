@@ -76,10 +76,15 @@ export function takeQueuedIntent(domain: VoiceIntentDomain): VoiceIntent | null 
   return intent
 }
 
-/** After a save, feed the next intent of the same domain into the page that just closed. */
-export function deliverNextQueuedFor(domain: VoiceIntentDomain): void {
+/**
+ * After a save, feed the next intent of the same domain into the page that just closed.
+ * Returns whether one was delivered, so the caller can resume the sheet for other domains.
+ */
+export function deliverNextQueuedFor(domain: VoiceIntentDomain): boolean {
   const next = takeQueuedIntent(domain)
-  if (next) deliverVoiceIntent(next)
+  if (!next) return false
+  deliverVoiceIntent(next)
+  return true
 }
 
 /** Subscribe a page for one domain; returns an unsubscribe function. */

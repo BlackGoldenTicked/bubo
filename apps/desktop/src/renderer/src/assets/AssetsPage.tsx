@@ -17,7 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
+import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { ASSET_GROUP_COLORS, ASSET_GROUPS, isInvestmentAssetType } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
@@ -264,6 +264,7 @@ export function AssetsPage() {
   const [detailAsset, setDetailAsset] = useState<AssetSnapshotSummary | null>(null)
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null)
   const [showArchived, setShowArchived] = useState(false)
+  const [voicePrefilled, setVoicePrefilled] = useState(false)
 
   // Voice intents either append a balance reading to a matched account or open the new-account form.
   useVoiceIntent("asset", (intent) => {
@@ -279,6 +280,7 @@ export function AssetsPage() {
       costBasisNumber: intent.costBasisAmount ?? "",
     })
     setFormMode(intent.assetItemId ? "balance" : "add")
+    setVoicePrefilled(true)
     setShowForm(true)
   })
 
@@ -738,8 +740,10 @@ export function AssetsPage() {
         saving={saving}
         onSave={(values) => void save(values)}
         onClose={() => {
+          const wasVoice = voicePrefilled
           setShowForm(false)
-          deliverNextQueuedFor("asset")
+          setVoicePrefilled(false)
+          continueVoiceQueue("asset", wasVoice)
         }}
       />
       <ArchivedAssetsDrawer

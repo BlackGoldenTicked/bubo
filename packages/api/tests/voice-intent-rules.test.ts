@@ -305,6 +305,50 @@ describe("normalizeVoiceIntents", () => {
   })
 })
 
+describe("multi-date batches", () => {
+  it("keeps each record's own date instead of collapsing the batch onto today", () => {
+    const intents = normalizeVoiceIntents(
+      {
+        intents: [
+          {
+            domain: "cashflow",
+            flowKind: "expense",
+            amount: "8",
+            title: "早饭",
+            occurredAt: "2026-10-01T08:00:00",
+          },
+          {
+            domain: "cashflow",
+            flowKind: "expense",
+            amount: "26",
+            title: "打车",
+            occurredAt: "2026-10-02T09:30:00",
+          },
+          {
+            domain: "cashflow",
+            flowKind: "expense",
+            amount: "38.5",
+            title: "麻辣烫",
+            occurredAt: "2026-10-03T12:10:00",
+          },
+        ],
+      },
+      context({ transcript: "10月1日 早饭8；10月2日 打车26；10月3日 麻辣烫38.5" }),
+    )
+
+    expect(
+      intents.map((intent) => (intent.domain === "cashflow" ? intent.eventDate : "x")),
+    ).toEqual(["2026-10-01", "2026-10-02", "2026-10-03"])
+  })
+
+  it("documents the date-inheritance and cross-domain rules in the frozen prompt", () => {
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("多日期与跨类别")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("日期行继承")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("跨类别混排")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("每个元素只填")
+  })
+})
+
 describe("buildVoiceIntentMessages", () => {
   it("keeps the system prompt byte-identical so the provider prefix cache keeps hitting", () => {
     const first = buildVoiceIntentMessages(context())

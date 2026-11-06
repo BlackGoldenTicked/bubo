@@ -28,7 +28,7 @@ import type { CashflowEventSummary } from "@bubo/api"
 import { AppIcon } from "@bubo/ui"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
+import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES } from "@/lib/domainDisplay"
 import { addDays, dateKey, monthStart } from "@/lib/dates"
@@ -1314,9 +1314,10 @@ export function ImportsPage() {
         categories={categoriesQuery.data ?? []}
         initial={voiceTxForm}
         onClose={() => {
+          const wasVoice = voiceTxForm != null
           setShowAddTx(false)
           setVoiceTxForm(undefined)
-          deliverNextQueuedFor("cashflow")
+          continueVoiceQueue("cashflow", wasVoice)
         }}
         onSave={handleAddTx}
       />

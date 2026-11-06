@@ -17,7 +17,7 @@ import type {
 } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
+import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { useMoney } from "@/lib/useMoney"
 import { useCurrentRates } from "@/lib/useCurrentRates"
@@ -160,6 +160,7 @@ export function InvestmentsPage() {
 
   const [positionForm, setPositionForm] = useState<PositionForm>(emptyPositionForm())
   const [showAddPosition, setShowAddPosition] = useState(false)
+  const [voicePrefilled, setVoicePrefilled] = useState(false)
   const [tradeForm, setTradeForm] = useState<TradeForm>(emptyTradeForm(null))
   const [tradeTarget, setTradeTarget] = useState<InvestmentPositionSummary | null>(null)
   const [quoteForm, setQuoteForm] = useState<QuoteForm>(emptyQuoteForm(null))
@@ -222,6 +223,7 @@ export function InvestmentsPage() {
       initialExecutedAt: intent.executedAt,
       note: intent.note ?? "",
     })
+    setVoicePrefilled(true)
     setShowAddPosition(true)
   })
 
@@ -579,8 +581,10 @@ export function InvestmentsPage() {
             saving={saving}
             onSave={savePosition}
             onClose={() => {
+              const wasVoice = voicePrefilled
               setShowAddPosition(false)
-              deliverNextQueuedFor("investment")
+              setVoicePrefilled(false)
+              continueVoiceQueue("investment", wasVoice)
             }}
           />
           <TradeModal

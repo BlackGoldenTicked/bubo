@@ -15,7 +15,7 @@ import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { deliverNextQueuedFor } from "@/lib/voice/intentHandoff"
+import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { addDays, localDateKey } from "@/lib/dates"
 import { useMoney } from "@/lib/useMoney"
@@ -591,9 +591,10 @@ export function LoansPage() {
         open={showAdd}
         initial={voiceLoanForm}
         onClose={() => {
+          const wasVoice = voiceLoanForm != null
           setShowAdd(false)
           setVoiceLoanForm(undefined)
-          deliverNextQueuedFor("loan")
+          continueVoiceQueue("loan", wasVoice)
         }}
         onSave={handleSave}
       />
