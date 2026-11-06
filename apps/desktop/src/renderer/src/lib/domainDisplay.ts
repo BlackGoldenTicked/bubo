@@ -40,6 +40,21 @@ export const SOURCE_BADGES: Record<string, { bg: string; char: string }> = {
   中国移动: { bg: "#e60012", char: "移" },
 }
 
+/**
+ * Imported ledgers carry the exporting app's name as their source. Those names are data,
+ * not branding: the UI shows a neutral label, while filtering still keys on the stored value.
+ */
+const SOURCE_LABEL_OVERRIDES: Record<string, string> = {
+  钱迹: "历史导入",
+}
+
+/** Display name for a stored source value; falls back to 手动 for empty rows. */
+export function sourceLabel(source: string | null | undefined): string {
+  const value = source?.trim() ?? ""
+  if (value.length === 0) return "手动"
+  return SOURCE_LABEL_OVERRIDES[value] ?? value
+}
+
 export const ASSET_TYPE_LABELS: Record<AssetSnapshotType, string> = {
   cash: "现金",
   bank: "银行",

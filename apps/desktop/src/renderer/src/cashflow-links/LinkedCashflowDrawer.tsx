@@ -14,6 +14,7 @@ import type { CashflowLinkOwnerType } from "@bubo/api"
 import { trpc } from "@/lib/trpc"
 import { reportActionError } from "@/lib/reportError"
 import { useMoney } from "@/lib/useMoney"
+import { sourceLabel } from "@/lib/domainDisplay"
 import { CashflowPickerModal } from "./CashflowPickerModal"
 
 interface Props {
@@ -69,11 +70,7 @@ export function LinkedCashflowDrawer({ open, ownerType, ownerId, ownerLabel, onC
             </Drawer.Header>
             <Drawer.Body>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onPress={() => setPickerOpen(true)}
-                >
+                <Button size="sm" variant="primary" onPress={() => setPickerOpen(true)}>
                   手动添加
                 </Button>
               </div>
@@ -107,7 +104,7 @@ export function LinkedCashflowDrawer({ open, ownerType, ownerId, ownerLabel, onC
                           </div>
                           <div style={{ fontSize: 10.5, marginTop: 2, color: "var(--ink-4)" }}>
                             {event.date} · {event.categoryName ?? "未分类"} ·{" "}
-                            {event.source ?? "未知"}
+                            {sourceLabel(event.source)}
                           </div>
                         </div>
                         <div

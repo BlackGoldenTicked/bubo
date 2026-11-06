@@ -9,7 +9,7 @@ import React from "react"
 import { Button } from "@heroui/react"
 import { useConfirm } from "../components/ui/ConfirmModal"
 import { BackButton } from "../components/ui/BackButton"
-import { CATEGORY_COLORS } from "@/lib/domainDisplay"
+import { CATEGORY_COLORS, sourceLabel } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
 import { Dim } from "../components/ui/Dim"
 import { ColorDot } from "../components/ui/ColorDot"
@@ -79,8 +79,9 @@ export function TxDetailPanel({ tx, allTxs, onBack, onEdit, onDelete }: Props) {
   const dayLabel = Number.isNaN(dt.getTime()) ? "" : DAYS[dt.getDay()]
   const timeStr = tx.occurredAt?.slice(11, 16) ?? null
   const originalDesc = tx.description ?? tx.title ?? null
+  const sourceText = sourceLabel(tx.source)
   const sourceDetail =
-    tx.createdAt == null ? tx.source : `${tx.source} · ${tx.createdAt.slice(0, 10)}`
+    tx.createdAt == null ? sourceText : `${sourceText} · ${tx.createdAt.slice(0, 10)}`
 
   const recent = allTxs
     .filter((t) => t.counterparty === tx.counterparty && t.id !== tx.id)

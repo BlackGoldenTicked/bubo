@@ -13,6 +13,7 @@ import { notify } from "@bubo/ui"
 import type { CashflowEventSummary, CashflowLinkOwnerType } from "@bubo/api"
 import { trpc } from "@/lib/trpc"
 import { useMoney } from "@/lib/useMoney"
+import { sourceLabel } from "@/lib/domainDisplay"
 import { DateRangeFilter, FilterSelectField } from "../imports/filterControls"
 
 interface Props {
@@ -79,7 +80,7 @@ export function CashflowPickerModal({
     )
     return [
       { key: "all", label: "全部来源" },
-      ...sources.map((source) => ({ key: source, label: source })),
+      ...sources.map((source) => ({ key: source, label: sourceLabel(source) })),
     ]
   }, [events])
 
@@ -250,7 +251,7 @@ export function CashflowPickerModal({
                             </span>
                             <span style={{ fontSize: 10.5, color: "var(--ink-4)", marginTop: 2 }}>
                               {event.date} · {event.categoryName ?? "未分类"} ·{" "}
-                              {event.source ?? "未知"}
+                              {sourceLabel(event.source)}
                               {linked ? " · 已绑定" : ""}
                             </span>
                           </Checkbox.Content>

@@ -34,6 +34,7 @@ import { useBudgetRolloverPrompt } from "../budget/useBudgetRolloverPrompt"
 import { buildNetWorthTrend } from "./netWorthTrend"
 import { buildUpcomingCharges } from "./upcoming"
 import { buildLoanSchedule } from "../loans/loanSchedule"
+import { sourceLabel } from "@/lib/domainDisplay"
 import {
   RANGE_PRESET_MENU,
   formatRangeText,
@@ -195,7 +196,7 @@ function toTransactionRow(t: CashflowEventSummary) {
     currency: t.currency,
     categoryName: t.categoryName ?? undefined,
     tag: t.tags[0]?.name,
-    source: t.sourceName ?? t.source ?? "手动",
+    source: sourceLabel(t.sourceName ?? t.source),
   }
 }
 

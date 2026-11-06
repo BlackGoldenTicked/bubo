@@ -30,7 +30,7 @@ import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
 import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
-import { CATEGORY_COLORS, SOURCE_BADGES } from "@/lib/domainDisplay"
+import { CATEGORY_COLORS, SOURCE_BADGES, sourceLabel } from "@/lib/domainDisplay"
 import { dateKey } from "@/lib/dates"
 import { RANGE_PRESETS, resolveRangePreset, type RangePresetKey } from "@/lib/dateRanges"
 import { useMoney } from "@/lib/useMoney"
@@ -198,7 +198,9 @@ function SourceBadge({ source }: { source: string }) {
           {s.char}
         </span>
       )}
-      <span style={{ fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap" }}>{source}</span>
+      <span style={{ fontSize: 11.5, color: "var(--ink-3)", whiteSpace: "nowrap" }}>
+        {sourceLabel(source)}
+      </span>
     </div>
   )
 }
@@ -559,7 +561,7 @@ export function ImportsPage() {
   const sourceFilterOptions = useMemo(
     () => [
       { key: "all", label: "全部来源" },
-      ...sourceOptions.map((source) => ({ key: source, label: source })),
+      ...sourceOptions.map((source) => ({ key: source, label: sourceLabel(source) })),
     ],
     [sourceOptions],
   )

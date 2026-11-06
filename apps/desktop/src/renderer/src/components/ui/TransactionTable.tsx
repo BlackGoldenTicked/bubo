@@ -7,7 +7,7 @@
 
 import { DataTable, DataTableRow, DataTableCell } from "./DataTable"
 import { ColorDot } from "./ColorDot"
-import { SOURCE_BADGES, categoryColor } from "@/lib/domainDisplay"
+import { SOURCE_BADGES, categoryColor, sourceLabel } from "@/lib/domainDisplay"
 import { useMoney } from "@/lib/useMoney"
 import { currencySymbol } from "@bubo/shared"
 
@@ -29,8 +29,8 @@ interface Props {
 }
 
 function SourceBadge({ source }: { source?: string }) {
-  const sourceName = source || "手动"
-  const badge = SOURCE_BADGES[sourceName]
+  const sourceName = sourceLabel(source)
+  const badge = SOURCE_BADGES[source ?? ""]
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap">
       {badge && (
