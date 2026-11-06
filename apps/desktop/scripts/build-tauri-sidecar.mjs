@@ -52,6 +52,15 @@ function refreshDevCopy(output, targetTriple) {
   copyFileSync(output, staging)
   chmodSync(staging, 0o755)
   renameSync(staging, destination)
+  // macOS validates the embedded signature of every exec; re-sign ad-hoc so a fresh
+  // copy can never be rejected by taskgated ("Code Signature Invalid" → SIGKILL).
+  if (targetTriple.includes("darwin")) {
+    try {
+      execFileSync("codesign", ["--force", "--sign", "-", destination], { stdio: "ignore" })
+    } catch (error) {
+      console.warn(`codesign skipped: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
   console.log(`Refreshed dev sidecar: ${destination}`)
 }
 
