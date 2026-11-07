@@ -87,7 +87,7 @@ function main() {
   const shouldRestart = args.has("--restart")
   const shouldOpen = shouldRestart || args.has("--open")
 
-  run("pnpm", ["package"])
+  run("pnpm", ["package:app"])
   const builtApp = findBuiltApp()
 
   quitAppIfRequested(shouldRestart)

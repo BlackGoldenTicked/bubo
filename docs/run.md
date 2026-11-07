@@ -77,7 +77,15 @@ Build every workspace package without creating installers:
 pnpm build
 ```
 
-Build the native Tauri app bundle:
+Build the native Tauri app bundle for local use:
+
+```bash
+pnpm package:app
+```
+
+`package:app` skips updater artifacts, so it needs no signing key and is the command the
+delivery gate in [AGENTS.md](../AGENTS.md) expects. Build the release bundle instead
+(updater archive + signature) when publishing:
 
 ```bash
 pnpm package

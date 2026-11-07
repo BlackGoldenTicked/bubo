@@ -63,8 +63,10 @@ Development is not complete until the desktop app itself is built. A green `pnpm
 produces dist assets, not a runnable app, so every change that ships to the app ends with a
 bundle build — run it automatically, do not wait to be asked.
 
-1. `pnpm package` builds the renderer, the Node sidecar, and the Rust shell, then writes
-   `apps/desktop/src-tauri/target/release/bundle/macos/bubo.app`.
+1. `pnpm package:app` builds the renderer, the Node sidecar, and the Rust shell, then writes
+   `apps/desktop/src-tauri/target/release/bundle/macos/bubo.app`. It skips updater artifacts,
+   so it needs no signing key — `pnpm package` is the release variant and fails without
+   `TAURI_SIGNING_PRIVATE_KEY`.
 2. `pnpm install:local [--open]` performs the same build and installs to
    `/Applications/bubo.app`; use it when the result must run outside the dev session.
 3. `pnpm dev` stays the inner loop (it rebuilds the sidecar and hot-reloads the renderer).

@@ -26,6 +26,7 @@
     "bubo-cli": "pnpm -F @barrysongdev4real/bubo-cli bubo-cli --",
     "seed:demo": "pnpm -F desktop seed:demo",
     "package": "pnpm -F desktop package",
+    "package:app": "pnpm -F desktop package:app",
     "install:local": "node scripts/install-local-app.mjs",
     "release": "node scripts/release.mjs",
     "dist": "pnpm -F desktop dist"

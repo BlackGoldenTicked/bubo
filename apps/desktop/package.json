@@ -23,6 +23,7 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "build:demo": "tsx scripts/build-demo-ledger.ts",
     "package": "tauri build --bundles app",
+    "package:app": "tauri build --bundles app --config src-tauri/tauri.local.conf.json",
     "dist": "tauri build"
   },
   "dependencies": {
