@@ -31,7 +31,7 @@ export const queryClient = new QueryClient({
 
 installQueryClientPerfLogger(queryClient)
 
-const trpcClient = createTRPCClient<AppRouter>({
+export const trpcClient = createTRPCClient<AppRouter>({
   links: [ipcTRPCLink()],
 })
 

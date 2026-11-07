@@ -24,7 +24,7 @@ import type {
   UpdateDashboardViewInput,
   UpsertAssetSnapshotInput,
 } from "../../index"
-import { AgentLedgerApi } from "../agent-ledger/agent-ledger-api"
+import { CardsApi } from "../cards/cards-api"
 import { upsertAssetSnapshotFacade } from "../assets/assets-api"
 import {
   DEFAULT_CURRENCY,
@@ -36,7 +36,7 @@ import {
   ok,
 } from "../../shared/api-helpers"
 
-export class BuboSqliteApi extends AgentLedgerApi implements BuboApi {
+export class BuboSqliteApi extends CardsApi implements BuboApi {
   private dashboardViews: DashboardView[] = [
     { id: "overview", slug: "overview", name: "Overview", position: 0, isDefault: true },
   ]

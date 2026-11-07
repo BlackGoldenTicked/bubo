@@ -39,3 +39,4 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0023   | System-Level Voice Entry Through Domain Intents    | Accepted | 2026-11-05 |
 | 0024   | Batch Voice Intents With One-By-One Confirmation   | Accepted | 2026-11-06 |
 | 0025   | Chinese-First Date Surfaces                        | Accepted | 2026-11-06 |
+| 0026   | Cards Are Identity, Not Balances                   | Accepted | 2026-11-07 |

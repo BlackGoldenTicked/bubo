@@ -27,6 +27,12 @@ handle used by the Tauri Node sidecar, CLI, and API package.
   contract P&L is derived from mark/exit prices at read time and never materialized
   into snapshots or cashflow
   (see [ADR 0016](../../decisions/0016-keep-contract-positions-display-only.md)).
+- `cards` and `card_images` describe the physical cards a person holds: bank, type
+  (debit/credit/prepaid/virtual), brand, last four digits, credit limit, billing and
+  repayment days, expiry, and a display colour. A card is identity data — it never
+  changes net worth. Scans are one row per face (`front` / `back`, unique per card) and
+  store only a generated file name under the sidecar's `card-images` folder, never bytes
+  (see [ADR 0026](../../decisions/0026-cards-are-identity-not-balances.md)).
 - Budgets, categories, subscriptions, and loans support planning and review workflows.
 - Subscription forecasts are derived from `subscriptions` at read time and are not persisted.
   `subscription_occurrences` remains temporarily in the schema only as an ignored compatibility

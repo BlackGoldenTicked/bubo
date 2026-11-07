@@ -37,6 +37,9 @@ presentation mappers.
 - `packages/api/src/infrastructure/db/repositories/investments.repository.ts` - Drizzle-backed position, trade, and quote persistence.
 - `packages/api/src/infrastructure/db/repositories/investments-api.repository.ts` - investment facade implementation, including system snapshot materialization for linked accounts.
 - `packages/api/src/infrastructure/db/repositories/contracts-api.repository.ts` - contract-position facade implementation over `contract_positions`; P&L stays derived display math.
+- `packages/api/src/use-cases/cards/cards-api.ts` - card wallet facade: list/get/create/update/archive plus scan metadata upserts.
+- `packages/api/src/infrastructure/db/repositories/cards-api.repository.ts` - Drizzle-backed `cards`/`card_images` persistence; stores scan metadata only and normalizes the last four digits.
+- `packages/api/tests/cards.test.ts` - card CRUD, archive/restore, and scan upsert/removal tests against an isolated SQLite database.
 - `packages/api/src/presentation/mappers/sqlite-row-mappers.ts` - SQLite row to renderer contract mappers.
 - `packages/api/src/default-seed.ts` - default categories and lightweight personal starter data.
 - `packages/api/src/demo-seed.ts` - full deterministic demo ledger data.

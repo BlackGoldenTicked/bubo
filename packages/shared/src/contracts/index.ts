@@ -7,6 +7,7 @@
 
 export * from "./common/bubo-primitives.contract"
 export * from "./assets/asset.contract"
+export * from "./cards/card.contract"
 export * from "./investments/investment.contract"
 export * from "./investments/contract.contract"
 export * from "./voice/voice.contract"

@@ -61,6 +61,21 @@ async function tauriTrpcRequest(request: DesktopTrpcRequest): Promise<unknown> {
     return { ok: true, data: null }
   }
 
+  if (request.type === "mutation" && request.path === "cards.attachImage") {
+    const { open } = await import("@tauri-apps/plugin-dialog")
+    const path = await open({
+      title: "选择卡片图片",
+      multiple: false,
+      directory: false,
+      fileAccessMode: "scoped",
+      filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }],
+    })
+    if (path == null) return { ok: true, data: null }
+    return invokeTauri("trpc_request", {
+      request: { ...request, input: { ...(request.input as object), filePath: path } },
+    })
+  }
+
   if (request.type === "mutation" && request.path === "voice.models.import") {
     const { open } = await import("@tauri-apps/plugin-dialog")
     const path = await open({

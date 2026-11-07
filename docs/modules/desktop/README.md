@@ -18,6 +18,9 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `apps/desktop/src/main/trpc/transport.ts` - compact sidecar request dispatcher.
 - `apps/desktop/src/main/trpc/ledger-service.ts` - runtime-neutral ledger lifecycle contract.
 - `apps/desktop/src/main/trpc/voice-service.ts` - runtime-neutral voice intent contract for the router.
+- `apps/desktop/src/main/trpc/card-service.ts` - runtime-neutral card service contract for the router.
+- `apps/desktop/src/tauri-sidecar/card-image-store.ts` - owns `<user data>/card-images`: extension allow-list (PNG/JPG/WebP), 20MB cap, generated file names, and data-URL reads.
+- `apps/desktop/src/tauri-sidecar/card-service.ts` - copies a picked scan, persists its metadata, and removes the copy if the row write fails.
 - `apps/desktop/src/tauri-sidecar/voice-service.ts` - sidecar implementation of the voice pipeline; gathers the active ledger's categories, accounts, loans, subscriptions, and positions as model context.
 - `apps/desktop/src/tauri-sidecar/voice-settings-store.ts` - local `0600` credential file for the Bailian and DeepSeek keys plus the imported model pool.
 - `apps/desktop/src/tauri-sidecar/xlsx-reader.ts` - zero-dependency first-sheet xlsx reader used by the model pool import.
@@ -76,6 +79,9 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `lib/domainDisplay.ts` also owns `sourceLabel`: an imported ledger's source value is data (filters and writes key on it), but the UI shows a neutral label instead of the exporting app's name.
 - `lib/dateRanges.ts` owns the Chinese quick ranges (本周 / 本月 / 上个月 / 最近一个季度 / 上个季度 / 半年 / 全年 / 自定义), their boundaries, the range text, and the preset a hand-picked range matches. The imports toolbar, the overview chart, and the cashflow picker all read from it.
 - `main.tsx` mounts `I18nProvider locale="zh-CN"`, which is what makes every react-aria surface Chinese and Monday-first; removing it silently reverts the whole app to en-US.
+- `cards/CardsPage.tsx` - the card wallet route: bank-grouped list, detail pane, archive/restore, and scan upload. Faces are rendered by `CardVisual.tsx` as one flippable card surface; `CardFormModal.tsx` captures identity fields and never asks for a full card number.
+- `lib/desktop-runtime.ts` intercepts `cards.attachImage` to open the native image dialog (PNG/JPG/WebP) and forwards only the chosen path; the sidecar copies it, so no image bytes cross IPC from the renderer.
+- `components/layout/TopNavigation.tsx` carries the 卡片 entry as the last primary tab, using the semantic `cards` glyph.
 - `components/ui/DeltaText.tsx` - signed delta atom: one colour and arrow rule for P&L and change, using the product's accent/green-up and red-down semantics.
 - `routes/__root.tsx` replays `.bubo-route-enter` on every navigation without remounting the subtree, so page transitions animate while queries and scroll state survive.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.

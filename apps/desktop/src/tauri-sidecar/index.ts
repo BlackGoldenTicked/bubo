@@ -8,6 +8,8 @@
 import { createInterface } from "node:readline"
 
 import { createDesktopTrpcHandler, type DesktopTrpcRequest } from "../main/trpc/transport"
+import { CardImageStore } from "./card-image-store"
+import { SidecarCardService } from "./card-service"
 import { TauriLedgerStore } from "./ledger-store"
 import { SidecarVoiceService } from "./voice-service"
 import { VoiceSettingsStore } from "./voice-settings-store"
@@ -62,8 +64,13 @@ async function main(): Promise<void> {
     getApi: () => ledgerStore.getApi(),
   })
 
+  const cards = new SidecarCardService({
+    images: new CardImageStore({ userDataDir: requiredEnvironment("BUBO_SIDECAR_USER_DATA_DIR") }),
+    getApi: () => ledgerStore.getApi(),
+  })
+
   const handleTrpc = createDesktopTrpcHandler(
-    () => ({ api: ledgerStore.getApi(), ledgers: ledgerStore, voice }),
+    () => ({ api: ledgerStore.getApi(), ledgers: ledgerStore, voice, cards }),
     "sidecar",
   )
   writeProtocol({ kind: "ready" })

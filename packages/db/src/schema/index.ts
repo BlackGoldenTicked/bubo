@@ -589,6 +589,70 @@ export const exchangeRates = sqliteTable(
   }),
 )
 
+/**
+ * Physical payment cards (debit, credit, prepaid, virtual). A card is an identity object,
+ * not a balance: it never moves net worth on its own. Scans live in `cardImages`; the row
+ * only records the file name under the sidecar's card-images directory.
+ */
+export const cards = sqliteTable(
+  "cards",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    bank: text("bank").notNull(),
+    cardType: text("card_type", { enum: ["debit", "credit", "prepaid", "virtual", "other"] })
+      .notNull()
+      .default("debit"),
+    brand: text("brand", { enum: ["unionpay", "visa", "mastercard", "amex", "jcb", "other"] })
+      .notNull()
+      .default("unionpay"),
+    numberLast4: text("number_last4"),
+    holderName: text("holder_name"),
+    currency: text("currency").notNull().default("CNY"),
+    creditLimit: text("credit_limit"),
+    billingDay: integer("billing_day"),
+    repaymentDay: integer("repayment_day"),
+    expiryMonth: integer("expiry_month"),
+    expiryYear: integer("expiry_year"),
+    colorHex: text("color_hex"),
+    note: text("note"),
+    status: text("status", { enum: ["active", "archived"] })
+      .notNull()
+      .default("active"),
+    displayOrder: integer("display_order").notNull().default(0),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => ({
+    statusIdx: index("idx_cards_status").on(t.status),
+    bankIdx: index("idx_cards_bank").on(t.bank),
+    orderIdx: index("idx_cards_order").on(t.displayOrder),
+  }),
+)
+
+/** Front and back scans, at most one row per side per card. */
+export const cardImages = sqliteTable(
+  "card_images",
+  {
+    id: text("id").primaryKey(),
+    cardId: text("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    side: text("side", { enum: ["front", "back"] }).notNull(),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    byteSize: integer("byte_size").notNull().default(0),
+    width: integer("width"),
+    height: integer("height"),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (t) => ({
+    cardSideUnique: uniqueIndex("card_images_card_side_unique").on(t.cardId, t.side),
+    cardIdx: index("idx_card_images_card").on(t.cardId),
+  }),
+)
+
 export type CategoryRow = typeof categories.$inferSelect
 export type CategoryInsert = typeof categories.$inferInsert
 export type TagRow = typeof tags.$inferSelect
@@ -633,5 +697,9 @@ export type ObjectLinkRow = typeof objectLinks.$inferSelect
 export type ObjectLinkInsert = typeof objectLinks.$inferInsert
 export type CurrencySettingsRow = typeof currencySettings.$inferSelect
 export type CurrencySettingsInsert = typeof currencySettings.$inferInsert
+export type CardRow = typeof cards.$inferSelect
+export type CardInsert = typeof cards.$inferInsert
+export type CardImageRow = typeof cardImages.$inferSelect
+export type CardImageInsert = typeof cardImages.$inferInsert
 export type ExchangeRateRow = typeof exchangeRates.$inferSelect
 export type ExchangeRateInsert = typeof exchangeRates.$inferInsert

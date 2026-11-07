@@ -14,6 +14,8 @@ import type { LedgerChangeEvent } from "@bubo/shared/ipc"
 
 import { createDesktopTrpcHandler } from "../main/trpc/transport"
 import { TauriLedgerStore } from "./ledger-store"
+import { SidecarCardService } from "./card-service"
+import { CardImageStore } from "./card-image-store"
 import { SidecarVoiceService } from "./voice-service"
 import { VoiceSettingsStore } from "./voice-settings-store"
 
@@ -56,6 +58,10 @@ describe("TauriLedgerStore", () => {
           ledgers: store,
           voice: new SidecarVoiceService({
             settings: new VoiceSettingsStore(join(root, "user-data")),
+            getApi: () => store.getApi(),
+          }),
+          cards: new SidecarCardService({
+            images: new CardImageStore({ userDataDir: join(root, "user-data") }),
             getApi: () => store.getApi(),
           }),
         }),

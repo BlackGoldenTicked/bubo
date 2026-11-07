@@ -8,6 +8,9 @@
 import { TRPCError } from "@trpc/server"
 import type { BuboApi } from "@bubo/api"
 import type {
+  CardImageData,
+  CardImageRefInput,
+  CardSummary,
   ImportVoiceLlmModelsInput,
   ParseVoiceIntentInput,
   RemoveVoiceLlmModelInput,
@@ -19,6 +22,7 @@ import type {
   VoiceSettingsSnapshot,
 } from "@bubo/shared/contracts"
 import type { Result } from "@bubo/shared"
+import type { AttachCardScanInput } from "./card-service"
 import { publicProcedure, router, type TrpcContext } from "./trpc"
 
 type ApiMethod<Key extends keyof BuboApi> = BuboApi[Key] extends (...args: never[]) => unknown
@@ -388,6 +392,45 @@ export const appRouter = router({
       .input(apiInput<"archiveSubscription">())
       .mutation(({ ctx, input }) =>
         callApi(ctx, (api) => api.archiveSubscription(requiredInput<"archiveSubscription">(input))),
+      ),
+  }),
+  cards: router({
+    list: publicProcedure
+      .input(apiInput<"listCards">())
+      .query(({ ctx, input }) =>
+        callApi(ctx, (api) => api.listCards(inputOrEmpty<"listCards">(input))),
+      ),
+    get: publicProcedure
+      .input(apiInput<"getCard">())
+      .query(({ ctx, input }) => callApi(ctx, (api) => api.getCard(requiredInput<"getCard">(input)))),
+    create: publicProcedure
+      .input(apiInput<"createCard">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) => api.createCard(requiredInput<"createCard">(input))),
+      ),
+    update: publicProcedure
+      .input(apiInput<"updateCard">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) => api.updateCard(requiredInput<"updateCard">(input))),
+      ),
+    archive: publicProcedure
+      .input(apiInput<"archiveCard">())
+      .mutation(({ ctx, input }) =>
+        callApi(ctx, (api) => api.archiveCard(requiredInput<"archiveCard">(input))),
+      ),
+    /** The renderer bridge opens the native picker and injects `filePath` before this runs. */
+    attachImage: publicProcedure
+      .input((v) => v as AttachCardScanInput)
+      .mutation(
+        async ({ ctx, input }): Promise<CardSummary> => unwrap(await ctx.cards.attachScan(input)),
+      ),
+    image: publicProcedure
+      .input((v) => v as CardImageRefInput)
+      .query(async ({ ctx, input }): Promise<CardImageData> => unwrap(await ctx.cards.readScan(input))),
+    removeImage: publicProcedure
+      .input((v) => v as CardImageRefInput)
+      .mutation(
+        async ({ ctx, input }): Promise<CardSummary> => unwrap(await ctx.cards.removeScan(input)),
       ),
   }),
   loans: router({

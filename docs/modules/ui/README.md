@@ -60,6 +60,15 @@
   navigation, `.bubo-rec-dot` / `.bubo-busy-dot` animate live capture states, and the
   `prefers-reduced-motion` block at the end of `primitives.css` disables all of them.
 
+## Card Surfaces
+
+- `.bubo-flipcard` / `.bubo-flipcard__inner` / `.bubo-flipcard__face` in `primitives.css`
+  render the physical card used by the wallet: two faces on one 3D plane, rotated by
+  `[data-flipped]`. Face radius and elevation branch per visual style (bubo 4px flat,
+  Lumno 18px with a soft shadow) and the flip is disabled under `prefers-reduced-motion`.
+- Do not stack two images to fake a card. The flip is the interaction, and each face must
+  still read as a card (bank, last four, brand) when no scan has been uploaded.
+
 ## Data Flow
 
 The renderer imports primitives from `@bubo/ui` and composes them into product-specific pages and panels under `apps/desktop/src/renderer/src`.

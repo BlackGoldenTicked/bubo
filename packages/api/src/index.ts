@@ -16,8 +16,12 @@ import type {
   AssetItemSummary,
   AssetSnapshotSummary,
   AssetSparklinePoint,
+  ArchiveCardInput,
+  CardImageRefInput,
+  CardSummary,
   CashflowKind,
   CloseContractPositionInput,
+  CreateCardInput,
   ContractPositionSummary,
   CreateAssetItemInput,
   CreateContractPositionInput,
@@ -33,6 +37,7 @@ import type {
   ListAssetItemsInput,
   ListAssetSnapshotsInput,
   ListAssetSparklinesInput,
+  ListCardsInput,
   ListContractPositionsInput,
   ListInvestmentPositionsInput,
   ListPriceQuotesInput,
@@ -41,13 +46,17 @@ import type {
   NetWorthSnapshot,
   PriceQuoteSummary,
   RecordPriceQuoteInput,
+  SaveCardImageInput,
   UpdateAssetItemInput,
+  UpdateCardInput,
   UpdateAssetSnapshotInput,
   UpdateContractPositionInput,
   UpdateInvestmentPositionInput,
   UpsertAssetSnapshotInput,
 } from "@bubo/shared/contracts"
 import { BuboSqliteApi } from "./use-cases/dashboard/dashboard-api"
+
+export { CardsApi } from "./use-cases/cards/cards-api"
 
 export type {
   ActiveStatus,
@@ -60,8 +69,18 @@ export type {
   AssetSnapshotType,
   AssetSparklinePoint,
   AssetType,
+  ArchiveCardInput,
+  CardBrand,
+  CardImageData,
+  CardImageRefInput,
+  CardImageSummary,
+  CardSide,
+  CardStatus,
+  CardSummary,
+  CardType,
   CashflowKind,
   CloseContractPositionInput,
+  CreateCardInput,
   ContractMarginMode,
   ContractPositionStatus,
   ContractPositionSummary,
@@ -84,6 +103,7 @@ export type {
   ListAssetItemsInput,
   ListAssetSnapshotsInput,
   ListAssetSparklinesInput,
+  ListCardsInput,
   ListContractPositionsInput,
   ListInvestmentPositionsInput,
   ListPriceQuotesInput,
@@ -92,7 +112,9 @@ export type {
   NetWorthSnapshot,
   PriceQuoteSummary,
   RecordPriceQuoteInput,
+  SaveCardImageInput,
   UpdateAssetItemInput,
+  UpdateCardInput,
   UpdateAssetSnapshotInput,
   UpdateContractPositionInput,
   UpdateInvestmentPositionInput,
@@ -262,6 +284,14 @@ export interface BuboApi {
   removeDashboardCard(input: { id: string }): Promise<Result<void>>
   saveDashboardLayouts(input: SaveDashboardLayoutsInput): Promise<Result<void>>
   resetDashboardLayout(): Promise<Result<void>>
+
+  listCards(input?: ListCardsInput): Promise<Result<CardSummary[]>>
+  getCard(input: { id: BuboId }): Promise<Result<CardSummary | null>>
+  createCard(input: CreateCardInput): Promise<Result<CardSummary>>
+  updateCard(input: UpdateCardInput): Promise<Result<CardSummary>>
+  archiveCard(input: ArchiveCardInput): Promise<Result<CardSummary>>
+  saveCardImage(input: SaveCardImageInput): Promise<Result<CardSummary>>
+  removeCardImage(input: CardImageRefInput): Promise<Result<CardSummary>>
 }
 
 export interface DashboardSnapshot {

@@ -18,7 +18,15 @@ import { useVoiceIntentQueue } from "@/lib/voice/useVoiceIntent"
 
 interface NavItem {
   label: string
-  href: "/" | "/assets" | "/investments" | "/imports" | "/subscriptions" | "/loans" | "/budget"
+  href:
+    | "/"
+    | "/assets"
+    | "/investments"
+    | "/imports"
+    | "/subscriptions"
+    | "/loans"
+    | "/budget"
+    | "/cards"
   matches: readonly string[]
   icon: AppIconName
 }
@@ -31,6 +39,7 @@ const PRIMARY_NAV = [
   { label: "订阅", href: "/subscriptions", matches: ["/subscriptions"], icon: "subscriptions" },
   { label: "贷款", href: "/loans", matches: ["/loans"], icon: "loans" },
   { label: "预算", href: "/budget", matches: ["/budget"], icon: "budget" },
+  { label: "卡片", href: "/cards", matches: ["/cards"], icon: "cards" },
 ] as const satisfies readonly NavItem[]
 
 function pathMatches(pathname: string, matches: readonly string[]): boolean {
