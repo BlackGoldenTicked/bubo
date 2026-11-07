@@ -46,7 +46,18 @@ export function ColorPickerField({
   const color = safeColor(value)
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "nowrap" }}>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        // Wrap instead of overflowing: a narrow modal column must push swatches onto a
+        // second line rather than clip them or squeeze the trigger into vertical text.
+        flexWrap: "wrap",
+        columnGap: 10,
+        rowGap: 8,
+        minWidth: 0,
+      }}
+    >
       <ColorPicker value={color} onChange={(next) => onChange(next.toString("hex"))}>
         <ColorPicker.Trigger>
           <span
@@ -62,6 +73,8 @@ export function ColorPickerField({
               color: "var(--ink-2)",
               fontSize: 12,
               fontWeight: 500,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
             <span
@@ -71,6 +84,7 @@ export function ColorPickerField({
                 borderRadius: 4,
                 background: value,
                 border: "1px solid rgba(0,0,0,.12)",
+                flexShrink: 0,
               }}
             />
             自定义
@@ -97,7 +111,7 @@ export function ColorPickerField({
       <ColorSwatchPicker
         value={color}
         onChange={(next) => onChange(next.toString("hex"))}
-        style={{ display: "flex", flexWrap: "nowrap", gap: 8 }}
+        style={{ display: "flex", flexWrap: "wrap", gap: 8, minWidth: 0 }}
       >
         {swatches.map((swatch) => (
           <ColorSwatchPicker.Item key={swatch} color={safeColor(swatch)}>

@@ -126,12 +126,19 @@ export function CardsPage() {
     return [...map.entries()]
   }, [cards])
 
-  function handleSave(values: CardFormValues) {
+  function openCreate() {
+    setEditing(null)
+    setFormOpen(true)
+  }
+
+  async function handleSave(values: CardFormValues) {
     const input = formToInput(values)
+    // Rethrow so the dialog stays open with the reason instead of closing silently.
     if (editing) {
-      return updateCard.mutateAsync({ id: editing.id, ...input }).then(() => undefined)
+      await updateCard.mutateAsync({ id: editing.id, ...input })
+      return
     }
-    return createCard.mutateAsync(input).then(() => undefined)
+    await createCard.mutateAsync(input)
   }
 
   function handlePick(side: CardSide) {
@@ -193,14 +200,7 @@ export function CardsPage() {
               label="已上传卡面"
               value={`${totals.withScans} / ${totals.count}`}
             />
-            <Button
-              size="sm"
-              variant="primary"
-              onPress={() => {
-                setEditing(null)
-                setFormOpen(true)
-              }}
-            >
+            <Button size="sm" variant="primary" onPress={openCreate}>
               <AppIcon name="add" size={13} />
               添加卡片
             </Button>
@@ -229,13 +229,7 @@ export function CardsPage() {
                   icon="cards"
                   title="还没有卡片"
                   hint="添加第一张卡，再上传正反面扫描件"
-                  action={{
-                    label: "添加卡片",
-                    onClick: () => {
-                      setEditing(null)
-                      setFormOpen(true)
-                    },
-                  }}
+                  action={{ label: "添加卡片", onClick: openCreate }}
                 />
               ) : (
                 <div className="px-3 pb-6">
@@ -286,6 +280,14 @@ export function CardsPage() {
               )}
             </QueryState>
           </ScrollArea>
+          {/* Always-visible add action: the list header is easy to miss when the pane is
+              empty, and this keeps the affordance anchored to the list itself. */}
+          <div className="shrink-0 border-t border-[var(--hair-2)] px-4 py-3">
+            <Button size="sm" variant="secondary" className="w-full" onPress={openCreate}>
+              <AppIcon name="add" size={12} />
+              添加卡片
+            </Button>
+          </div>
         </div>
 
         <ScrollArea className="min-h-0 flex-1">
@@ -320,16 +322,18 @@ export function CardsPage() {
         </ScrollArea>
       </div>
 
-      <CardFormModal
-        open={formOpen}
-        card={editing}
-        defaultCurrency={base}
-        onClose={() => {
-          setFormOpen(false)
-          setEditing(null)
-        }}
-        onSave={handleSave}
-      />
+      {formOpen && (
+        <CardFormModal
+          open
+          card={editing}
+          defaultCurrency={base}
+          onClose={() => {
+            setFormOpen(false)
+            setEditing(null)
+          }}
+          onSave={handleSave}
+        />
+      )}
     </div>
   )
 }
