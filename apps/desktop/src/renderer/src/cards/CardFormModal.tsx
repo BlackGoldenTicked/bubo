@@ -11,7 +11,7 @@
  */
 
 import { Button, Input, Label, Modal, Select, ListBox } from "@heroui/react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Controller, useForm } from "react-hook-form"
 import type { CardBrand, CardSummary, CardType, CreateCardInput } from "@bubo/shared/contracts"
 import { FormField } from "../components/ui/FormField"
@@ -131,21 +131,8 @@ export function formToInput(values: CardFormValues): Omit<CreateCardInput, "disp
 }
 
 /** One label + control pair; the grid keeps every column at least half the dialog wide. */
-function FieldGrid({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode
-  className?: string
-}) {
-  return (
-    <div
-      className={`grid grid-cols-2 gap-x-3 gap-y-4 ${className}`}
-      style={{ gridAutoFlow: "row" }}
-    >
-      {children}
-    </div>
-  )
+function FieldGrid({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-2 gap-x-3 gap-y-4">{children}</div>
 }
 
 function SelectField<T extends string>({
