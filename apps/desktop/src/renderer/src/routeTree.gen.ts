@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
 import { Route as SettingsCategoriesRouteImport } from './routes/settings-categories'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as QuickCaptureRouteImport } from './routes/quick-capture'
 import { Route as LoansRouteImport } from './routes/loans'
 import { Route as InvestmentsRouteImport } from './routes/investments'
 import { Route as ImportsRouteImport } from './routes/imports'
@@ -37,6 +38,11 @@ const SettingsCategoriesRoute = SettingsCategoriesRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuickCaptureRoute = QuickCaptureRouteImport.update({
+  id: '/quick-capture',
+  path: '/quick-capture',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoansRoute = LoansRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/imports': typeof ImportsRoute
   '/investments': typeof InvestmentsRoute
   '/loans': typeof LoansRouteWithChildren
+  '/quick-capture': typeof QuickCaptureRoute
   '/settings': typeof SettingsRoute
   '/settings-categories': typeof SettingsCategoriesRoute
   '/subscriptions': typeof SubscriptionsRouteWithChildren
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/imports': typeof ImportsRoute
   '/investments': typeof InvestmentsRoute
   '/loans': typeof LoansRouteWithChildren
+  '/quick-capture': typeof QuickCaptureRoute
   '/settings': typeof SettingsRoute
   '/settings-categories': typeof SettingsCategoriesRoute
   '/subscriptions': typeof SubscriptionsRouteWithChildren
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/imports': typeof ImportsRoute
   '/investments': typeof InvestmentsRoute
   '/loans': typeof LoansRouteWithChildren
+  '/quick-capture': typeof QuickCaptureRoute
   '/settings': typeof SettingsRoute
   '/settings-categories': typeof SettingsCategoriesRoute
   '/subscriptions': typeof SubscriptionsRouteWithChildren
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/investments'
     | '/loans'
+    | '/quick-capture'
     | '/settings'
     | '/settings-categories'
     | '/subscriptions'
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/investments'
     | '/loans'
+    | '/quick-capture'
     | '/settings'
     | '/settings-categories'
     | '/subscriptions'
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/imports'
     | '/investments'
     | '/loans'
+    | '/quick-capture'
     | '/settings'
     | '/settings-categories'
     | '/subscriptions'
@@ -204,6 +216,7 @@ export interface RootRouteChildren {
   ImportsRoute: typeof ImportsRoute
   InvestmentsRoute: typeof InvestmentsRoute
   LoansRoute: typeof LoansRouteWithChildren
+  QuickCaptureRoute: typeof QuickCaptureRoute
   SettingsRoute: typeof SettingsRoute
   SettingsCategoriesRoute: typeof SettingsCategoriesRoute
   SubscriptionsRoute: typeof SubscriptionsRouteWithChildren
@@ -230,6 +243,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quick-capture': {
+      id: '/quick-capture'
+      path: '/quick-capture'
+      fullPath: '/quick-capture'
+      preLoaderRoute: typeof QuickCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/loans': {
@@ -354,6 +374,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImportsRoute: ImportsRoute,
   InvestmentsRoute: InvestmentsRoute,
   LoansRoute: LoansRouteWithChildren,
+  QuickCaptureRoute: QuickCaptureRoute,
   SettingsRoute: SettingsRoute,
   SettingsCategoriesRoute: SettingsCategoriesRoute,
   SubscriptionsRoute: SubscriptionsRouteWithChildren,

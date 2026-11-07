@@ -16,6 +16,12 @@ type AppUpdateInfo = {
   body: string | null
 }
 
+type VoiceShortcutState = {
+  requested: string
+  registered: string
+  defaultShortcut: string
+}
+
 type AppUpdateProgress =
   | { event: "started"; contentLength: number | null }
   | { event: "progress"; chunkLength: number }
@@ -40,6 +46,14 @@ declare global {
       checkForUpdate: () => Promise<AppUpdateInfo | null>
       installUpdate: (onProgress: (progress: AppUpdateProgress) => void) => Promise<void>
       openDownloadPage: () => Promise<void>
+      /** Menu-bar capture shortcut: what the user asked for vs what the OS accepted. */
+      voiceShortcut: {
+        get: () => Promise<VoiceShortcutState>
+        set: (shortcut: string) => Promise<VoiceShortcutState>
+      }
+      openQuickCapture: () => Promise<void>
+      hideQuickCapture: () => Promise<void>
+      showMainWindow: () => Promise<void>
     }
   }
 }

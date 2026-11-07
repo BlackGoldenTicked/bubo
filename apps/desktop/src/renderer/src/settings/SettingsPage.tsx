@@ -13,6 +13,7 @@ import { ScrollArea } from "../components/ui/ScrollArea"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { LedgerSection } from "./LedgerSection"
 import { AiVoiceSection } from "./AiVoiceSection"
+import { ShortcutSection } from "./ShortcutSection"
 import { LinkRow, Row, SegTabs, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
@@ -209,6 +210,8 @@ export function SettingsPage() {
           <LedgerSection />
 
           {/* 语音记账 */}
+          <ShortcutSection />
+
           <AiVoiceSection />
 
           {/* 关于 */}

@@ -172,6 +172,17 @@ export function installDesktopRuntimeBridge(): void {
       const { relaunch } = await import("@tauri-apps/plugin-process")
       await relaunch()
     },
+    voiceShortcut: {
+      get: () => invokeTauri<Awaited<ReturnType<Window["bubo"]["voiceShortcut"]["get"]>>>("get_voice_shortcut"),
+      set: (shortcut) =>
+        invokeTauri<Awaited<ReturnType<Window["bubo"]["voiceShortcut"]["set"]>>>(
+          "set_voice_shortcut",
+          { shortcut },
+        ),
+    },
+    openQuickCapture: () => invokeTauri<void>("open_voice_capture"),
+    hideQuickCapture: () => invokeTauri<void>("hide_quick_capture"),
+    showMainWindow: () => invokeTauri<void>("show_main_window"),
     openDownloadPage: async () => {
       const { openUrl } = await import("@tauri-apps/plugin-opener")
       await openUrl("https://github.com/BarrySong97/bubo-desktop/releases/latest")

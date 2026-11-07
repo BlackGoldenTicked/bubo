@@ -83,6 +83,7 @@ Ratchet rule: when an agent mistake reveals a repeatable risk, add a test, lint 
 - Product model: [docs/topics/asymmetric-finance-model.md](docs/topics/asymmetric-finance-model.md)
 - Voice entry: [docs/topics/voice-entry.md](docs/topics/voice-entry.md)
 - Card wallet: [docs/topics/cards.md](docs/topics/cards.md)
+- Menu bar and quick capture: [docs/topics/menu-bar-capture.md](docs/topics/menu-bar-capture.md)
 - Runtime and IPC: [docs/architecture.md](docs/architecture.md), [docs/topics/tauri-sidecar-trpc.md](docs/topics/tauri-sidecar-trpc.md)
 - Native sidecar and ABI: [docs/topics/tauri-node-sidecar.md](docs/topics/tauri-node-sidecar.md)
 - Modules: [desktop](docs/modules/desktop/), [api](docs/modules/api/), [db](docs/modules/db/), [shared](docs/modules/shared/), [ui](docs/modules/ui/), [hooks](docs/modules/hooks/)

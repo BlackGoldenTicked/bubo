@@ -79,6 +79,10 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `lib/domainDisplay.ts` also owns `sourceLabel`: an imported ledger's source value is data (filters and writes key on it), but the UI shows a neutral label instead of the exporting app's name.
 - `lib/dateRanges.ts` owns the Chinese quick ranges (本周 / 本月 / 上个月 / 最近一个季度 / 上个季度 / 半年 / 全年 / 自定义), their boundaries, the range text, and the preset a hand-picked range matches. The imports toolbar, the overview chart, and the cashflow picker all read from it.
 - `main.tsx` mounts `I18nProvider locale="zh-CN"`, which is what makes every react-aria surface Chinese and Monday-first; removing it silently reverts the whole app to en-US.
+- `quick/QuickCapturePage.tsx` - the menu-bar capture window: auto-records, parses through `voice.parseIntent`, shows a save card, writes through the domain mutation, then hides. Asset/investment intents are handed to the main window over `bubo://voice-intent`.
+- `routes/__root.tsx` short-circuits `#/quick-capture` to that page, so the capture window never mounts the shell, navigation, or the in-app voice sheet.
+- `settings/ShortcutSection.tsx` edits the global capture shortcut and always displays the combination the OS actually registered (Fn+P falls back on macOS).
+- `apps/desktop/src-tauri/src/shell.rs` - tray icon and menu, close-to-tray behaviour, the reused `quick-capture` window, and global-shortcut registration with fallbacks.
 - `cards/CardsPage.tsx` - the card wallet route: bank-grouped list, detail pane, archive/restore, and scan upload. Faces are rendered by `CardVisual.tsx` as one flippable card surface; `CardFormModal.tsx` captures identity fields and never asks for a full card number.
 - `lib/desktop-runtime.ts` intercepts `cards.attachImage` to open the native image dialog (PNG/JPG/WebP) and forwards only the chosen path; the sidecar copies it, so no image bytes cross IPC from the renderer.
 - `components/layout/TopNavigation.tsx` carries the 卡片 entry as the last primary tab, using the semantic `cards` glyph.

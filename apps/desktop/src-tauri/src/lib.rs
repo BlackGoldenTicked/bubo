@@ -12,7 +12,7 @@ use std::{
         Arc, Mutex,
     },
 };
-use tauri::{Manager, State};
+use tauri::{Manager, State, WindowEvent};
 use tauri_plugin_shell::{
     process::{CommandChild, CommandEvent},
     ShellExt,
@@ -161,6 +161,45 @@ impl Drop for SidecarProcess {
     }
 }
 
+/// The combination the OS actually accepted (Fn+P falls back on macOS).
+struct ShortcutState(std::sync::Mutex<String>);
+
+#[tauri::command]
+fn get_voice_shortcut(app: tauri::AppHandle, state: State<'_, ShortcutState>) -> Value {
+    let registered = state.0.lock().map(|value| value.clone()).unwrap_or_default();
+    shell::shortcut_state(&app, &registered)
+}
+
+#[tauri::command]
+fn set_voice_shortcut(
+    app: tauri::AppHandle,
+    state: State<'_, ShortcutState>,
+    shortcut: String,
+) -> Result<Value, String> {
+    let value = shell::apply_shortcut(&app, &shortcut)?;
+    if let Ok(mut guard) = state.0.lock() {
+        if let Some(registered) = value.get("registered").and_then(Value::as_str) {
+            *guard = registered.to_string();
+        }
+    }
+    Ok(value)
+}
+
+#[tauri::command]
+fn open_voice_capture(app: tauri::AppHandle) -> Result<(), String> {
+    shell::open_quick_capture(&app)
+}
+
+#[tauri::command]
+fn hide_quick_capture(app: tauri::AppHandle) {
+    shell::hide_quick_capture(&app);
+}
+
+#[tauri::command]
+fn show_main_window(app: tauri::AppHandle) {
+    shell::show_main(&app);
+}
+
 #[derive(Clone)]
 struct SidecarState {
     process: Arc<Mutex<SidecarProcess>>,
@@ -218,6 +257,8 @@ async fn ledger_path(state: State<'_, SidecarState>, id: String) -> Result<Strin
         .map_err(|error| format!("bubo sidecar returned an invalid ledger path: {error}"))
 }
 
+mod shell;
+
 #[cfg(target_os = "macos")]
 mod speech;
 
@@ -240,6 +281,15 @@ async fn speech_recognize(audio_base64: String) -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if shell::is_pressed(&event) {
+                        shell::on_shortcut(app);
+                    }
+                })
+                .build(),
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
@@ -250,7 +300,26 @@ pub fn run() {
             app.manage(SidecarState {
                 process: Arc::new(Mutex::new(process)),
             });
+
+            let handle = app.handle().clone();
+            shell::setup_tray(&handle)?;
+            match shell::setup_shortcut(&handle) {
+                Ok(registered) => {
+                    app.manage(ShortcutState(Mutex::new(registered)));
+                }
+                Err(error) => {
+                    eprintln!("[bubo] voice shortcut unavailable: {error}");
+                    app.manage(ShortcutState(Mutex::new(String::new())));
+                }
+            }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                // Closing hides to the menu bar; 退出 from the tray is the only real exit.
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .invoke_handler(tauri::generate_handler![
             trpc_request,
@@ -259,7 +328,12 @@ pub fn run() {
             drain_ledger_changes,
             import_ledger,
             ledger_path,
-            speech_recognize
+            speech_recognize,
+            get_voice_shortcut,
+            set_voice_shortcut,
+            open_voice_capture,
+            hide_quick_capture,
+            show_main_window
         ])
         .run(tauri::generate_context!())
         .expect("failed to run bubo Tauri application");

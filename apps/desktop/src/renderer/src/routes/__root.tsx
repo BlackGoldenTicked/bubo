@@ -15,15 +15,42 @@ import { DemoLedgerBanner } from "../components/layout/DemoLedgerBanner"
 import { AppUpdateTracker } from "../components/layout/AppUpdateTracker"
 import { GlobalConfirmModal } from "../components/ui/ConfirmModal"
 import { VoiceCaptureSheet } from "../voice/VoiceCaptureSheet"
+import { QuickCapturePage } from "../quick/QuickCapturePage"
+import { deliverVoiceIntent } from "../lib/voice/intentHandoff"
+import type { VoiceIntent } from "@bubo/shared/contracts"
 import { buboPerfLog, roundMs } from "../lib/debug/perf"
 import { useThemeEffect } from "../lib/theme"
 
 export const Route = createRootRoute({
-  component: RootLayout,
+  component: RootRouteComponent,
 })
+
+/** The menu-bar window renders the bare capture surface: no shell, nav, or voice sheet. */
+function RootRouteComponent() {
+  const isQuickCapture =
+    typeof window !== "undefined" && window.location.hash.startsWith("#/quick-capture")
+  if (isQuickCapture) return <QuickCapturePage />
+  return <RootLayout />
+}
 
 function RootLayout() {
   useThemeEffect()
+
+  // A quick-capture window hands asset/investment intents to the live page here.
+  useEffect(() => {
+    let dispose: (() => void) | null = null
+    void (async () => {
+      try {
+        const { listen } = await import("@tauri-apps/api/event")
+        dispose = await listen<VoiceIntent>("bubo://voice-intent", (event) => {
+          if (event.payload) deliverVoiceIntent(event.payload)
+        })
+      } catch {
+        // Outside Tauri there is nothing to listen to.
+      }
+    })()
+    return () => dispose?.()
+  }, [])
   const href = useRouterState({ select: (state) => state.location.href })
   const previousHref = useRef<string | null>(null)
   const previousCommitAt = useRef(performance.now())
