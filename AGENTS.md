@@ -57,6 +57,23 @@ Every feature, fix, and refactor must be associated with a work item in the Plan
 5. Run the smallest meaningful verification from [docs/testing.md](docs/testing.md), then broaden to `pnpm check-types`, `pnpm test`, and `pnpm build` when feasible.
 6. Run `pnpm check-docs` or `node scripts/check-docs.mjs` before finishing and clear hard failures.
 
+## App Build Gate
+
+Development is not complete until the desktop app itself is built. A green `pnpm build` only
+produces dist assets, not a runnable app, so every change that ships to the app ends with a
+bundle build — run it automatically, do not wait to be asked.
+
+1. `pnpm package` builds the renderer, the Node sidecar, and the Rust shell, then writes
+   `apps/desktop/src-tauri/target/release/bundle/macos/bubo.app`.
+2. `pnpm install:local [--open]` performs the same build and installs to
+   `/Applications/bubo.app`; use it when the result must run outside the dev session.
+3. `pnpm dev` stays the inner loop (it rebuilds the sidecar and hot-reloads the renderer).
+   It is not a substitute for the bundle build.
+
+Report the bundle path, the version from `apps/desktop/src-tauri/tauri.conf.json`, and the
+build outcome in the final message. If the build fails, name the failing stage instead of
+reporting the change as delivered.
+
 Ratchet rule: when an agent mistake reveals a repeatable risk, add a test, lint rule, sensor, or ADR so the same mistake is harder next time.
 
 ## Navigation
@@ -66,7 +83,7 @@ Ratchet rule: when an agent mistake reveals a repeatable risk, add a test, lint 
 - Runtime and IPC: [docs/architecture.md](docs/architecture.md), [docs/topics/tauri-sidecar-trpc.md](docs/topics/tauri-sidecar-trpc.md)
 - Native sidecar and ABI: [docs/topics/tauri-node-sidecar.md](docs/topics/tauri-node-sidecar.md)
 - Modules: [desktop](docs/modules/desktop/), [api](docs/modules/api/), [db](docs/modules/db/), [shared](docs/modules/shared/), [ui](docs/modules/ui/), [hooks](docs/modules/hooks/)
-- Design system: [design.md](design.md)
+- Design system: [docs/modules/ui/](docs/modules/ui/) (token contract and primitives)
 - Runbook: [docs/run.md](docs/run.md)
 - Conventions and terms: [docs/conventions.md](docs/conventions.md)
 - Testing and validation: [docs/testing.md](docs/testing.md)

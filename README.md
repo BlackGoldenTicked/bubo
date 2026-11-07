@@ -68,7 +68,7 @@ used by the sidecar and CLI builds.
 
 ## Agent Harness Docs
 
-Agents should start at [docs/](docs/). Detailed run, testing, design,
+Agents should start at [AGENTS.md](AGENTS.md). Detailed run, testing, design,
 module, topic, and decision docs live under [docs/](docs/). The documentation
 sensor is:
 
