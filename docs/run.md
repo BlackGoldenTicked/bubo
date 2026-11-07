@@ -54,6 +54,27 @@ change on its own used to leave an old sidecar running and surface as
 `No procedure found on path "voice,parseIntent"` after a tRPC rename. If you see
 a procedure/route error that does not match the source, restart with `pnpm dev`.
 
+### Ledger Data And Backups
+
+The two profiles keep separate data folders, and they are **not** the same ledger:
+
+| Profile      | Identifier              | Folder (macOS)                                        |
+| ------------ | ----------------------- | ----------------------------------------------------- |
+| `pnpm dev`   | `com.chaordex.bubo.dev` | `~/Library/Application Support/com.chaordex.bubo.dev` |
+| Packaged app | `com.chaordex.bubo`     | `~/Library/Application Support/com.chaordex.bubo`     |
+
+Opening the wrong one looks exactly like data loss. Two safeguards now cover it:
+
+- `dev` first runs `scripts/sync-dev-ledger.mjs`. It copies the packaged app's
+  ledger forward **only when that copy is newer**, snapshots the dev file before
+  overwriting it (`bubo.sqlite3.bak-dev-<time>`, newest 7 kept), and removes a
+  stale `-wal`/`-shm` so SQLite can never replay a foreign journal. A dev session
+  that recorded fresh entries is therefore never rolled back; it just prints that
+  the dev ledger is already newest. Set `BUBO_SKIP_LEDGER_SYNC=1` to disable it.
+- The sidecar snapshots the active ledger on every open, before migrations run:
+  `<ledger>.bak-<time>` via `VACUUM INTO` (so uncheckpointed WAL pages are
+  included), newest 7 kept. Rolling back is a file copy away.
+
 Equivalent direct command:
 
 ```bash

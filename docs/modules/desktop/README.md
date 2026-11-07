@@ -18,6 +18,8 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `apps/desktop/src/main/trpc/transport.ts` - compact sidecar request dispatcher.
 - `apps/desktop/src/main/trpc/ledger-service.ts` - runtime-neutral ledger lifecycle contract.
 - `apps/desktop/src/main/trpc/voice-service.ts` - runtime-neutral voice intent contract for the router.
+- `apps/desktop/src/tauri-sidecar/ledger-backup.ts` - pre-open ledger snapshot (`VACUUM INTO`, newest 7), so every schema migration has a rollback file.
+- `apps/desktop/scripts/sync-dev-ledger.mjs` - pre-dev sync of the packaged ledger into the dev profile; newest-wins, snapshots the dev file first, and drops stale WAL/SHM.
 - `apps/desktop/src/main/trpc/card-service.ts` - runtime-neutral card service contract for the router.
 - `apps/desktop/src/tauri-sidecar/card-image-store.ts` - owns `<user data>/card-images`: extension allow-list (PNG/JPG/WebP), 20MB cap, generated file names, and data-URL reads.
 - `apps/desktop/src/tauri-sidecar/card-service.ts` - copies a picked scan, persists its metadata, and removes the copy if the row write fails.

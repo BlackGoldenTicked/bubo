@@ -3,6 +3,8 @@
  * @role    Node-side ledger host behind the Tauri command boundary.
  * @deps    Node filesystem, better-sqlite3, Drizzle migrations, @bubo/api, and @bubo/db.
  * @gotcha  File picker and reveal operations remain native-shell work for BUBO-8.
+ *          Every open snapshots the ledger first (`ledger-backup.ts`), so a bad migration
+ *          or import always has a recent file to fall back to.
  */
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
@@ -21,6 +23,7 @@ import {
   startLocalLedgerChangeServer,
   type StartLocalLedgerChangeServerOptions,
 } from "../main/local-ledger-change-server"
+import { backupLedger } from "./ledger-backup"
 import type {
   ActiveLedger,
   LedgerListEntry,
@@ -164,6 +167,9 @@ export class TauriLedgerStore implements LedgerService {
     mkdirSync(dirname(absPath), { recursive: true })
     const client = new Database(absPath)
     client.pragma("foreign_keys = ON")
+    // Snapshot before migrating: the copy is both a data backup and a schema rollback point.
+    const snapshot = backupLedger(client, absPath)
+    if (snapshot) console.error("[bubo-sidecar] ledger snapshot:", snapshot)
     this.client = client
     this.drizzleDb = drizzle(client, { schema })
     migrate(this.drizzleDb, { migrationsFolder: this.options.migrationsDir })
