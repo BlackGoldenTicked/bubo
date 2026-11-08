@@ -2,7 +2,7 @@
   "name": "@barrysongdev4real/bubo-cli",
   "version": "0.1.17",
   "description": "Safe local bubo ledger CLI for agents and developers.",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",

@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.17",
   "description": "Asymmetric personal finance tracker: past cashflow, present assets, and future obligations kept as separate layers.",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BarrySong97/bubo-desktop.git"

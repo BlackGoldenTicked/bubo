@@ -1,7 +1,7 @@
 # bubo Desktop
 
 [![CI](https://github.com/BarrySong97/bubo-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/BarrySong97/bubo-desktop/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](./LICENSE)
 [![Tauri 2](https://img.shields.io/badge/shell-Tauri%202-24c8db.svg)](https://tauri.app)
 
 A local-first personal finance tracker that keeps **three layers separate**: what you already
@@ -141,12 +141,14 @@ pnpm install:local  # same, then install to /Applications/bubo.app
   [ADR 0013](./docs/decisions/0013-rename-brand-to-bubo.md).
 - **[lumno-extension](https://github.com/kubai087/lumno-extension)** by kubai087 — the
   `lumno` visual style (and the reference palette behind the theme system) is ported from
-  its design language, which ships as **GPL-3.0**. See the license note in
-  [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) and
-  [ADR 0019](./docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+  its design language, which ships as **GPL-3.0**. That lineage is why bubo itself is
+  GPL-3.0 — see the license note in
+  [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md),
+  [ADR 0019](./docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md) and
+  [ADR 0028](./docs/decisions/0028-adopt-gpl3-license.md).
 
 ## License
 
-[MIT](./LICENSE). Third-party attribution — including the Apache-2.0 icon set, React Aria,
-and the GPL-3.0 lineage of the `lumno` visual style — is listed in
+[GPL-3.0-only](./LICENSE). Third-party attribution — including the Apache-2.0 icon set,
+React Aria, and the GPL-3.0 lineage of the `lumno` visual style — is listed in
 [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).

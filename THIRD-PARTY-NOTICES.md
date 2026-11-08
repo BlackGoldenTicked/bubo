@@ -1,8 +1,8 @@
 # Third-Party Notices
 
-bubo Desktop is MIT-licensed (see [LICENSE](./LICENSE)). It builds on third-party
+bubo Desktop is licensed **GPL-3.0-only** (see [LICENSE](./LICENSE)). It builds on third-party
 software whose licenses are reproduced by each package in `node_modules` when installed.
-This file records the components that carry attribution obligations beyond a plain MIT
+This file records the components that carry attribution obligations beyond a plain license
 notice, plus the direct dependencies worth knowing about.
 
 ## Derived visual style — GPL-3.0 lineage
@@ -13,15 +13,17 @@ by kubai087 (product "Lumno", internally referred to as `crx-ui` in this reposit
 and plans), which is licensed **GPL-3.0**. The theme-system palette introduced in
 [ADR 0018](./docs/decisions/0018-renderer-theme-system.md) also draws on that reference.
 
-Consequence: the ported CSS is a derivative of GPL-3.0 code, so distributing a combined
-work must honour GPL-3.0 for that portion; the MIT license above cannot relicense it.
-How this repository resolves that (relicense / rewrite / remove) is recorded in
-[ADR 0019](./docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+Because that CSS is a derivative of GPL-3.0 code, the whole project adopted **GPL-3.0-only**
+([ADR 0028](./docs/decisions/0028-adopt-gpl3-license.md)) — under the earlier MIT license the
+port could not have been relicensed. Keep the lumno-extension copyright notice with any
+distribution, and ship or link the source of any build you publish.
 
 ## Attribution required (Apache-2.0)
 
-These components are licensed under Apache License 2.0. Redistributing a built app keeps
-their `LICENSE`/`NOTICE` obligations: do not remove the copyright lines, and keep this file
+These components are licensed under Apache License 2.0, which is one-way compatible with
+GPL-3.0: including them in a GPL-3.0 project is fine, but their Apache notices and the
+license text must stay reachable. Redistributing a built app keeps their
+`LICENSE`/`NOTICE` obligations: do not remove the copyright lines, and keep this file
 in the repository.
 
 | Component                                                                                                      | Version | License    | Copyright             |
