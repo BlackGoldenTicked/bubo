@@ -2,6 +2,12 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Native dependencies allowed to run install scripts. pnpm 10 reads this here; the
+# old `pnpm.onlyBuiltDependencies` field in package.json is ignored and warns.
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+
 # Shared dependency versions. Reference with "catalog:" in package.json so the
 # whole workspace stays on one version of React, Tailwind, HeroUI, etc.
 catalog:

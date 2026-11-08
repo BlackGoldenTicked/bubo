@@ -2,7 +2,20 @@
   "name": "bubo",
   "private": true,
   "version": "0.1.17",
+  "description": "Asymmetric personal finance tracker: past cashflow, present assets, and future obligations kept as separate layers.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BarrySong97/bubo-desktop.git"
+  },
+  "homepage": "https://github.com/BarrySong97/bubo-desktop#readme",
+  "bugs": {
+    "url": "https://github.com/BarrySong97/bubo-desktop/issues"
+  },
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -42,11 +55,5 @@
     "typescript": "~5.8.3",
     "vitest": "^4.0.18"
   },
-  "packageManager": "pnpm@10.12.1",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild"
-    ]
-  }
+  "packageManager": "pnpm@10.12.1"
 }

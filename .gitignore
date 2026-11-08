@@ -38,6 +38,10 @@ apps/*/.tanstack/tmp
 .superpowers/
 .bubo/
 
+# Local agent state and session notes (never published: contains machine paths and
+# personal records from working sessions)
+.workbuddy/
+
 # Local ledger exports (personal data)
 *.xlsx
 
