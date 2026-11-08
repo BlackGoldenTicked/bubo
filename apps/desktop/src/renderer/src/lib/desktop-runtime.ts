@@ -33,6 +33,19 @@ async function invokeTauri<T>(command: string, args?: Record<string, unknown>): 
   return invoke<T>(command, args)
 }
 
+/** Native image picker shared by "replace a scan" and "attach a scan while creating a card". */
+async function pickImagePath(): Promise<string | null> {
+  const { open } = await import("@tauri-apps/plugin-dialog")
+  const path = await open({
+    title: "选择卡片图片",
+    multiple: false,
+    directory: false,
+    fileAccessMode: "scoped",
+    filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }],
+  })
+  return path == null ? null : String(path)
+}
+
 type DesktopTrpcRequest = Parameters<Window["bubo"]["trpcRequest"]>[0]
 
 async function tauriTrpcRequest(request: DesktopTrpcRequest): Promise<unknown> {
@@ -62,14 +75,11 @@ async function tauriTrpcRequest(request: DesktopTrpcRequest): Promise<unknown> {
   }
 
   if (request.type === "mutation" && request.path === "cards.attachImage") {
-    const { open } = await import("@tauri-apps/plugin-dialog")
-    const path = await open({
-      title: "选择卡片图片",
-      multiple: false,
-      directory: false,
-      fileAccessMode: "scoped",
-      filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }],
-    })
+    // The card form may already hold a picked path; only prompt when the caller has none.
+    const pending = request.input as { filePath?: string } | undefined
+    if (pending?.filePath) return invokeTauri("trpc_request", { request })
+
+    const path = await pickImagePath()
     if (path == null) return { ok: true, data: null }
     return invokeTauri("trpc_request", {
       request: { ...request, input: { ...(request.input as object), filePath: path } },
@@ -173,12 +183,21 @@ export function installDesktopRuntimeBridge(): void {
       await relaunch()
     },
     voiceShortcut: {
-      get: () => invokeTauri<Awaited<ReturnType<Window["bubo"]["voiceShortcut"]["get"]>>>("get_voice_shortcut"),
+      get: () =>
+        invokeTauri<Awaited<ReturnType<Window["bubo"]["voiceShortcut"]["get"]>>>(
+          "get_voice_shortcut",
+        ),
       set: (shortcut) =>
         invokeTauri<Awaited<ReturnType<Window["bubo"]["voiceShortcut"]["set"]>>>(
           "set_voice_shortcut",
           { shortcut },
         ),
+    },
+    pickCardImage: async () => {
+      const path = await pickImagePath()
+      if (path == null) return null
+      const dataUrl = await invokeTauri<string>("read_image_preview", { path })
+      return { path, dataUrl }
     },
     openQuickCapture: () => invokeTauri<void>("open_voice_capture"),
     hideQuickCapture: () => invokeTauri<void>("hide_quick_capture"),

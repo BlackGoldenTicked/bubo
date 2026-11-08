@@ -20,6 +20,13 @@ The database only knows the file name, so the folder can move with the user data
 - **Renderer never touches disk.** `cards.attachImage` is intercepted by the desktop bridge,
   which opens the native image dialog and injects `filePath`. The sidecar validates the
   extension (PNG/JPG/WebP), enforces a 20MB cap, copies the file, then writes metadata.
+  When the caller already holds a path (the create form picks scans before the card exists),
+  the bridge skips the dialog and forwards it — one entry point, two callers.
+- **Scans can be attached while creating.** The form offers 正面 / 反面 tiles backed by
+  `window.bubo.pickCardImage`, which returns the path plus a preview data URL from the Rust
+  command `read_image_preview`. The preview never touches SQLite; on save the card row is
+  written first, then each picked face is imported, and a failed import keeps the dialog open
+  with the reason instead of silently losing the scan.
 - **Write order matters.** Copy first, persist second; if the row write fails the copy is
   deleted. Removing a face deletes the row first, then the file.
 - **HEIC is rejected.** WebKit and Chromium on Windows cannot render it.
@@ -37,6 +44,9 @@ The database only knows the file name, so the folder can move with the user data
   expiry, and currency over a brand-tinted gradient (or the user's `colorHex`).
 - Credit cards additionally show limit and 账单日 / 还款日; the form hides those fields for other
   types.
+- The create/edit dialog is portalled to `document.body` and opened on the next animation frame:
+  inside the page's `overflow: hidden` container the overlay was clipped and painted only after
+  another interaction, which read as "the first click on 添加卡片 does nothing".
 
 ## Deliberate Gaps
 

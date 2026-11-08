@@ -12,6 +12,7 @@ use std::{
         Arc, Mutex,
     },
 };
+use base64::Engine as _;
 use tauri::{Manager, State, WindowEvent};
 use tauri_plugin_shell::{
     process::{CommandChild, CommandEvent},
@@ -185,6 +186,30 @@ fn set_voice_shortcut(
     Ok(value)
 }
 
+/// Read a picked image as a data URL so the card form can preview a scan before importing it.
+#[tauri::command]
+fn read_image_preview(path: String) -> Result<String, String> {
+    const MAX_BYTES: u64 = 20 * 1024 * 1024;
+    let metadata = std::fs::metadata(&path).map_err(|error| format!("无法读取图片：{error}"))?;
+    if metadata.len() > MAX_BYTES {
+        return Err("图片超过 20MB".into());
+    }
+    let extension = std::path::Path::new(&path)
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    let mime = match extension.as_str() {
+        "png" => "image/png",
+        "webp" => "image/webp",
+        "jpg" | "jpeg" => "image/jpeg",
+        _ => return Err("只支持 PNG / JPG / WebP 图片".into()),
+    };
+    let bytes = std::fs::read(&path).map_err(|error| format!("无法读取图片：{error}"))?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(bytes);
+    Ok(format!("data:{mime};base64,{encoded}"))
+}
+
 #[tauri::command]
 fn open_voice_capture(app: tauri::AppHandle) -> Result<(), String> {
     shell::open_quick_capture(&app)
@@ -336,6 +361,7 @@ pub fn run() {
             speech_recognize,
             get_voice_shortcut,
             set_voice_shortcut,
+            read_image_preview,
             open_voice_capture,
             hide_quick_capture,
             show_main_window

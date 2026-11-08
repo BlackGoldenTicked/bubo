@@ -13,7 +13,14 @@
 import { Button, Input, Label, Modal, Select, ListBox } from "@heroui/react"
 import { useEffect, useState, type ReactNode } from "react"
 import { Controller, useForm } from "react-hook-form"
-import type { CardBrand, CardSummary, CardType, CreateCardInput } from "@bubo/shared/contracts"
+import { AppIcon, notify } from "@bubo/ui"
+import type {
+  CardBrand,
+  CardSide,
+  CardSummary,
+  CardType,
+  CreateCardInput,
+} from "@bubo/shared/contracts"
 import { FormField } from "../components/ui/FormField"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { ColorPickerField } from "../components/ui/ColorPickerField"
@@ -168,19 +175,36 @@ function SelectField<T extends string>({
   )
 }
 
+/** A scan the user picked in the form but has not imported yet (the card may not exist yet). */
+export interface PickedScan {
+  path: string
+  dataUrl: string
+}
+
+export type CardScanPaths = Partial<Record<CardSide, string>>
+
 interface CardFormModalProps {
   open: boolean
   /** Editing keeps the id; creating ignores it. */
   card?: CardSummary | null
   defaultCurrency: string
+  /** Which faces the saved card already has, so the tiles can say "已有图片". */
+  existingScans?: Record<CardSide, boolean>
   onClose: () => void
-  onSave: (values: CardFormValues) => void | Promise<void>
+  /** Paths are imported by the caller once the card row exists. */
+  onSave: (values: CardFormValues, scans: CardScanPaths) => void | Promise<void>
 }
+
+const SCAN_SIDES: Array<{ side: CardSide; label: string }> = [
+  { side: "front", label: "正面" },
+  { side: "back", label: "反面" },
+]
 
 export function CardFormModal({
   open,
   card,
   defaultCurrency,
+  existingScans,
   onClose,
   onSave,
 }: CardFormModalProps) {
@@ -197,16 +221,37 @@ export function CardFormModal({
   })
   const values = watch()
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [scans, setScans] = useState<Partial<Record<CardSide, PickedScan>>>({})
+  const [pickingSide, setPickingSide] = useState<CardSide | null>(null)
 
   useEffect(() => {
     reset(card ? cardToForm(card) : emptyCardForm(defaultCurrency))
     setSaveError(null)
+    setScans({})
+    setPickingSide(null)
   }, [card, defaultCurrency, reset, open])
 
   function handleClose() {
     reset(card ? cardToForm(card) : emptyCardForm(defaultCurrency))
     setSaveError(null)
+    setScans({})
     onClose()
+  }
+
+  async function pickScan(side: CardSide) {
+    setPickingSide(side)
+    try {
+      const picked = await window.bubo.pickCardImage()
+      if (picked) setScans((current) => ({ ...current, [side]: picked }))
+    } catch (error) {
+      notify.error(error instanceof Error ? error.message : "无法读取图片")
+    } finally {
+      setPickingSide(null)
+    }
+  }
+
+  function clearScan(side: CardSide) {
+    setScans((current) => ({ ...current, [side]: undefined }))
   }
 
   const isCredit = values.cardType === "credit"
@@ -214,7 +259,7 @@ export function CardFormModal({
 
   return (
     <Modal isOpen={open} onOpenChange={(next) => (!next ? handleClose() : undefined)}>
-      <Modal.Container>
+      <Modal.Container placement="center">
         <Modal.Dialog style={{ maxWidth: 560 }}>
           <Modal.CloseTrigger />
           <Modal.Header>
@@ -231,7 +276,12 @@ export function CardFormModal({
                 void handleSubmit(async (formValues) => {
                   setSaveError(null)
                   try {
-                    await onSave(formValues)
+                    const paths: CardScanPaths = {}
+                    for (const { side } of SCAN_SIDES) {
+                      const picked = scans[side]
+                      if (picked) paths[side] = picked.path
+                    }
+                    await onSave(formValues, paths)
                     handleClose()
                   } catch (error) {
                     // Keep the dialog open: a silent close would look like the save worked.
@@ -391,6 +441,73 @@ export function CardFormModal({
                     value={values.colorHex || "#2f6f8f"}
                     onChange={(hex) => setValue("colorHex", hex)}
                   />
+                </div>
+
+                <div className="col-span-2 min-w-0">
+                  <Label
+                    style={{
+                      fontSize: 12,
+                      color: "var(--ink-3)",
+                      marginBottom: 6,
+                      display: "block",
+                    }}
+                  >
+                    卡片图片
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {SCAN_SIDES.map(({ side, label }) => {
+                      const picked = scans[side]
+                      const preview = picked?.dataUrl ?? null
+                      const already = existingScans?.[side] ?? false
+                      const busy = pickingSide === side
+                      return (
+                        <div key={side} className="min-w-0">
+                          <div
+                            className="relative flex w-full items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--hair)] bg-[var(--surface-2)]"
+                            style={{ aspectRatio: "1.586" }}
+                          >
+                            {preview ? (
+                              <img
+                                src={preview}
+                                alt={`${label}预览`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="flex flex-col items-center gap-1 text-[10.5px] text-[var(--ink-4)]">
+                                <AppIcon name={already ? "check" : "add"} size={15} />
+                                {already ? "已有图片" : "未上传"}
+                              </span>
+                            )}
+                            {busy && (
+                              <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]/70 text-[11px] text-[var(--ink-3)]">
+                                读取中…
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span className="text-[11px] text-[var(--ink-3)]">{label}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="ml-auto"
+                              isDisabled={busy}
+                              onPress={() => void pickScan(side)}
+                            >
+                              {preview ? "更换" : "上传"}
+                            </Button>
+                            {picked && (
+                              <Button size="sm" variant="ghost" onPress={() => clearScan(side)}>
+                                移除
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="mt-1.5 text-[10.5px] text-[var(--ink-4)]">
+                    正反面各一张，保存卡片时一并导入（PNG / JPG / WebP，单张不超过 20MB）
+                  </div>
                 </div>
 
                 <FormField label="备注" className="col-span-2 min-w-0">

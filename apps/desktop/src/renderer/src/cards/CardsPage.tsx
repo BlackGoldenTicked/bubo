@@ -9,6 +9,7 @@
  */
 
 import { useMemo, useState, type ReactNode } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppIcon, notify } from "@bubo/ui"
@@ -22,7 +23,12 @@ import { QueryState } from "../components/ui/QueryState"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { StatBlock } from "../components/ui/StatBlock"
 import { CardVisual, CardScanControls } from "./CardVisual"
-import { CardFormModal, formToInput, type CardFormValues } from "./CardFormModal"
+import {
+  CardFormModal,
+  formToInput,
+  type CardFormValues,
+  type CardScanPaths,
+} from "./CardFormModal"
 
 const TYPE_LABEL: Record<CardSummary["cardType"], string> = {
   debit: "借记卡",
@@ -126,19 +132,40 @@ export function CardsPage() {
     return [...map.entries()]
   }, [cards])
 
-  function openCreate() {
-    setEditing(null)
-    setFormOpen(true)
+  /**
+   * Open the dialog on the next frame. WebKit can skip the paint of an overlay that is opened
+   * inside the same event handler as the click, which read as "the first click does nothing".
+   */
+  function openForm() {
+    requestAnimationFrame(() => setFormOpen(true))
   }
 
-  async function handleSave(values: CardFormValues) {
+  function openCreate() {
+    setEditing(null)
+    openForm()
+  }
+
+  async function handleSave(values: CardFormValues, scans: CardScanPaths) {
     const input = formToInput(values)
     // Rethrow so the dialog stays open with the reason instead of closing silently.
-    if (editing) {
-      await updateCard.mutateAsync({ id: editing.id, ...input })
-      return
+    const saved = editing
+      ? await updateCard.mutateAsync({ id: editing.id, ...input })
+      : await createCard.mutateAsync(input)
+
+    // The card row must exist before a scan can be attached; import each picked face in turn.
+    for (const side of ["front", "back"] as const) {
+      const path = scans[side]
+      if (!path) continue
+      try {
+        await attachImage.mutateAsync({ cardId: saved.id, side, filePath: path })
+      } catch (error) {
+        throw new Error(
+          `${side === "front" ? "正面" : "反面"}图片导入失败：${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        )
+      }
     }
-    await createCard.mutateAsync(input)
   }
 
   function handlePick(side: CardSide) {
@@ -303,7 +330,7 @@ export function CardsPage() {
                 onRemove={handleRemove}
                 onEdit={() => {
                   setEditing(selected)
-                  setFormOpen(true)
+                  openForm()
                 }}
                 onArchive={() => handleArchive(selected)}
                 baseCurrency={base}
@@ -322,17 +349,24 @@ export function CardsPage() {
         </ScrollArea>
       </div>
 
-      {formOpen && (
+      {/* Portal to the body: the page clips its own overflow, which used to drag the dialog
+          off-centre and delay its first paint. */}
+      {createPortal(
         <CardFormModal
-          open
+          open={formOpen}
           card={editing}
           defaultCurrency={base}
+          existingScans={{
+            front: editing?.images.front != null,
+            back: editing?.images.back != null,
+          }}
           onClose={() => {
             setFormOpen(false)
             setEditing(null)
           }}
           onSave={handleSave}
-        />
+        />,
+        document.body,
       )}
     </div>
   )

@@ -51,6 +51,8 @@ declare global {
         get: () => Promise<VoiceShortcutState>
         set: (shortcut: string) => Promise<VoiceShortcutState>
       }
+      /** Native image picker for card scans; returns the path plus a preview data URL. */
+      pickCardImage: () => Promise<{ path: string; dataUrl: string } | null>
       openQuickCapture: () => Promise<void>
       hideQuickCapture: () => Promise<void>
       showMainWindow: () => Promise<void>
