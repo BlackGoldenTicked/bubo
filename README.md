@@ -132,7 +132,21 @@ pnpm install:local  # same, then install to /Applications/bubo.app
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — checks, commit style, product-model red lines.
 - [SECURITY.md](./SECURITY.md) — data layout, threat model, private reporting.
 
+## Acknowledgements
+
+- **[flowm-desktop](https://github.com/BarrySong97/flowm-desktop)** — bubo started as a
+  personal fork of this project. The asymmetric three-layer product model, the guarded
+  ledger CLI, and the statement-import pipeline all descend from it; every `flowm` brand
+  and identifier was migrated to `bubo` in
+  [ADR 0013](./docs/decisions/0013-rename-brand-to-bubo.md).
+- **[lumno-extension](https://github.com/kubai087/lumno-extension)** by kubai087 — the
+  `lumno` visual style (and the reference palette behind the theme system) is ported from
+  its design language, which ships as **GPL-3.0**. See the license note in
+  [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) and
+  [ADR 0019](./docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+
 ## License
 
-[MIT](./LICENSE). Third-party attribution — including the Apache-2.0 icon set and React Aria —
-is listed in [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
+[MIT](./LICENSE). Third-party attribution — including the Apache-2.0 icon set, React Aria,
+and the GPL-3.0 lineage of the `lumno` visual style — is listed in
+[THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).

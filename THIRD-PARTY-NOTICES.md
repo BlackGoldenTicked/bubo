@@ -5,6 +5,19 @@ software whose licenses are reproduced by each package in `node_modules` when in
 This file records the components that carry attribution obligations beyond a plain MIT
 notice, plus the direct dependencies worth knowing about.
 
+## Derived visual style — GPL-3.0 lineage
+
+The `lumno` visual style (`[data-style="lumno"]` in `packages/ui/src/styles/`) is **ported**
+from the design language of [lumno-extension](https://github.com/kubai087/lumno-extension)
+by kubai087 (product "Lumno", internally referred to as `crx-ui` in this repository's ADRs
+and plans), which is licensed **GPL-3.0**. The theme-system palette introduced in
+[ADR 0018](./docs/decisions/0018-renderer-theme-system.md) also draws on that reference.
+
+Consequence: the ported CSS is a derivative of GPL-3.0 code, so distributing a combined
+work must honour GPL-3.0 for that portion; the MIT license above cannot relicense it.
+How this repository resolves that (relicense / rewrite / remove) is recorded in
+[ADR 0019](./docs/decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+
 ## Attribution required (Apache-2.0)
 
 These components are licensed under Apache License 2.0. Redistributing a built app keeps

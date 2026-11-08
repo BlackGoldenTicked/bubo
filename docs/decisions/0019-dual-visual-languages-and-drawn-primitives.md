@@ -2,6 +2,10 @@
 
 - Status: Accepted
 - Date: 2026-09-22
+- Attribution: the Lumno (`crx-ui`) design language referenced here is the UI style of
+  [lumno-extension](https://github.com/kubai087/lumno-extension) by kubai087, licensed
+  **GPL-3.0**; the ported palette and component forms are derivative of it, which is recorded
+  in [THIRD-PARTY-NOTICES.md](../../THIRD-PARTY-NOTICES.md).
 
 ## Context
 
