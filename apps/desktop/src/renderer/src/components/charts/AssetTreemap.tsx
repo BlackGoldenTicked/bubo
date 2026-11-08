@@ -70,7 +70,7 @@ function Cell({
           fill="rgba(255,255,255,0.92)"
           fontSize={10}
           fontWeight={600}
-          style={{ fontFamily: "Noto Sans SC, sans-serif" }}
+          style={{ fontFamily: "var(--font-ui)" }}
         >
           {name}
         </text>

@@ -1,12 +1,22 @@
 /**
  * @purpose Entry stylesheet for the shared bubo UI: fonts, framework imports, and base rules.
  * @role    Workspace-wide CSS foundation imported by the desktop renderer.
- * @deps    Google Fonts, @heroui/styles (bundles Tailwind v4), ./tokens.css, ./primitives.css.
- * @gotcha  Token values live in tokens.css and component forms in primitives.css; keep this
- *          file to imports and element-level base rules.
+ * @deps    @fontsource (bundled IBM Plex), @heroui/styles (bundles Tailwind v4), ./tokens.css,
+ *          ./primitives.css.
+ * @gotcha  Fonts ship with the app: never re-introduce a `fonts.googleapis.com` import, the
+ *          desktop build must render identically offline and must not call out on launch.
+ *          Only the Latin subsets are bundled — IBM Plex has no CJK glyphs, and Chinese falls
+ *          back to the platform face through the token stack. Token values live in tokens.css
+ *          and component forms in primitives.css; keep this file to imports and base rules.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap");
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-500.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+@import "@fontsource/ibm-plex-sans/latin-700.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+@import "@fontsource/ibm-plex-mono/latin-600.css";
 
 @import "@heroui/styles";
 @import "./tokens.css";

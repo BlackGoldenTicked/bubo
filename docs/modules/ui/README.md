@@ -8,7 +8,7 @@
 
 - `packages/ui/src/components/ui/` - reusable primitives and shared control wrappers.
 - `packages/ui/src/lib/utils.ts` - UI utility helpers.
-- `packages/ui/src/styles/globals.css` - entry stylesheet: font import, base layer, and the `@import` of the token and primitive sheets.
+- `packages/ui/src/styles/globals.css` - entry stylesheet: the bundled `@fontsource` font faces (Latin subsets of IBM Plex Sans/Mono — never a `fonts.googleapis.com` import, the desktop app must render offline and must not call out on launch), base layer, and the `@import` of the token and primitive sheets.
 - `packages/ui/src/styles/tokens.css` - the four style × mode token blocks (`[data-style="bubo"|"lumno"]` × light/dark) plus the compatibility aliases (`--surface-1/2/3`, `--hair*`, `--bg`, `--mono`, `--popover-shadow`).
 - `packages/ui/src/styles/primitives.css` - hand-drawn component forms, every one branched on `[data-style]`.
 - `packages/ui/components.json` - shadcn-style component configuration.

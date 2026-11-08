@@ -40,8 +40,10 @@ Latin text is set in **IBM Plex Sans** and **IBM Plex Mono**, bundled locally fr
 `@fontsource/*` (SIL Open Font License 1.1). Chinese text falls back to the platform UI face
 (PingFang SC on macOS, Microsoft YaHei on Windows); no CJK font is bundled.
 
-The app does **not** fetch fonts, scripts, or stylesheets from a CDN at runtime. If you add
-a webfont, prefer packaging it and update this section.
+The **desktop app** does not fetch fonts, scripts, or stylesheets from a CDN at runtime —
+IBM Plex is bundled through `@fontsource` and CJK text uses the platform face. If you add a
+webfont to the desktop renderer, package it and update this section. (The marketing site
+under `apps/web` is a separate Next.js surface and may load webfonts normally.)
 
 ## Rust crates
 
