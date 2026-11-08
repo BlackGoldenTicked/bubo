@@ -10,10 +10,19 @@
  *          the dialog open and reports the reason instead of closing silently.
  */
 
-import { Button, Input, Label, Modal, Select, ListBox } from "@heroui/react"
-import { useEffect, useState, type ReactNode } from "react"
+import { Input, Label, Select, ListBox } from "@heroui/react"
+import { useEffect, useId, useState, type ReactNode } from "react"
 import { Controller, useForm } from "react-hook-form"
-import { AppIcon, notify } from "@bubo/ui"
+import {
+  AppIcon,
+  Button,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalHeading,
+  notify,
+} from "@bubo/ui"
 import type {
   CardBrand,
   CardSide,
@@ -220,6 +229,7 @@ export function CardFormModal({
     defaultValues: card ? cardToForm(card) : emptyCardForm(defaultCurrency),
   })
   const values = watch()
+  const titleId = useId()
   const [saveError, setSaveError] = useState<string | null>(null)
   const [scans, setScans] = useState<Partial<Record<CardSide, PickedScan>>>({})
   const [pickingSide, setPickingSide] = useState<CardSide | null>(null)
@@ -258,295 +268,285 @@ export function CardFormModal({
   const years = expiryYears()
 
   return (
-    <Modal isOpen={open} onOpenChange={(next) => (!next ? handleClose() : undefined)}>
-      <Modal.Container placement="center">
-        <Modal.Dialog style={{ maxWidth: 560 }}>
-          <Modal.CloseTrigger />
-          <Modal.Header>
-            <Modal.Heading>{card ? "编辑卡片" : "添加卡片"}</Modal.Heading>
-            <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 2 }}>
-              只记录后四位与卡面信息，不保存完整卡号
-            </p>
-          </Modal.Header>
-          <Modal.Body style={{ maxHeight: "calc(100vh - 240px)", overflowY: "auto" }}>
-            <form
-              id="card-form"
-              onSubmit={(event) => {
-                event.preventDefault()
-                void handleSubmit(async (formValues) => {
-                  setSaveError(null)
-                  try {
-                    const paths: CardScanPaths = {}
-                    for (const { side } of SCAN_SIDES) {
-                      const picked = scans[side]
-                      if (picked) paths[side] = picked.path
-                    }
-                    await onSave(formValues, paths)
-                    handleClose()
-                  } catch (error) {
-                    // Keep the dialog open: a silent close would look like the save worked.
-                    setSaveError(error instanceof Error ? error.message : "保存失败，请重试")
-                  }
-                })()
-              }}
-            >
-              <FieldGrid>
-                <FormField label="名称" required error={errors.name?.message} className="min-w-0">
-                  <Input
-                    variant="secondary"
-                    placeholder="例如：招行 Visa 白金"
-                    aria-invalid={Boolean(errors.name)}
-                    {...register("name", {
-                      validate: (value) => value.trim().length > 0 || "请填写卡片名称",
-                    })}
-                  />
-                </FormField>
-                <FormField
-                  label="发卡银行"
-                  required
-                  error={errors.bank?.message}
-                  className="min-w-0"
-                >
-                  <Input
-                    variant="secondary"
-                    placeholder="例如：招商银行"
-                    aria-invalid={Boolean(errors.bank)}
-                    {...register("bank", {
-                      validate: (value) => value.trim().length > 0 || "请填写发卡银行",
-                    })}
-                  />
-                </FormField>
+    <Modal
+      open={open}
+      onClose={handleClose}
+      labelledBy={titleId}
+      dismissable={!isSubmitting}
+      className="max-w-[560px]"
+    >
+      <ModalHeader>
+        <div className="min-w-0">
+          <ModalHeading id={titleId}>{card ? "编辑卡片" : "添加卡片"}</ModalHeading>
+          <p className="mt-0.5 text-[11.5px] text-[var(--ink-4)]">
+            只记录后四位与卡面信息，不保存完整卡号
+          </p>
+        </div>
+      </ModalHeader>
+      <ModalBody className="max-h-[calc(100vh-220px)] overflow-y-auto">
+        <form
+          id="card-form"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void handleSubmit(async (formValues) => {
+              setSaveError(null)
+              try {
+                const paths: CardScanPaths = {}
+                for (const { side } of SCAN_SIDES) {
+                  const picked = scans[side]
+                  if (picked) paths[side] = picked.path
+                }
+                await onSave(formValues, paths)
+                handleClose()
+              } catch (error) {
+                // Keep the dialog open: a silent close would look like the save worked.
+                setSaveError(error instanceof Error ? error.message : "保存失败，请重试")
+              }
+            })()
+          }}
+        >
+          <FieldGrid>
+            <FormField label="名称" required error={errors.name?.message} className="min-w-0">
+              <Input
+                variant="secondary"
+                placeholder="例如：招行 Visa 白金"
+                aria-invalid={Boolean(errors.name)}
+                {...register("name", {
+                  validate: (value) => value.trim().length > 0 || "请填写卡片名称",
+                })}
+              />
+            </FormField>
+            <FormField label="发卡银行" required error={errors.bank?.message} className="min-w-0">
+              <Input
+                variant="secondary"
+                placeholder="例如：招商银行"
+                aria-invalid={Boolean(errors.bank)}
+                {...register("bank", {
+                  validate: (value) => value.trim().length > 0 || "请填写发卡银行",
+                })}
+              />
+            </FormField>
 
-                <FormField label="卡片类型" className="min-w-0">
+            <FormField label="卡片类型" className="min-w-0">
+              <Controller
+                control={control}
+                name="cardType"
+                render={({ field }) => (
+                  <SelectField value={field.value} options={CARD_TYPES} onChange={field.onChange} />
+                )}
+              />
+            </FormField>
+            <FormField label="卡组织" className="min-w-0">
+              <Controller
+                control={control}
+                name="brand"
+                render={({ field }) => (
+                  <SelectField value={field.value} options={BRANDS} onChange={field.onChange} />
+                )}
+              />
+            </FormField>
+
+            <FormField label="卡号后四位" className="min-w-0">
+              <Input
+                variant="secondary"
+                placeholder="1234"
+                inputMode="numeric"
+                maxLength={4}
+                {...register("numberLast4")}
+              />
+            </FormField>
+            <FormField label="持卡人" className="min-w-0">
+              <Input variant="secondary" placeholder="可选" {...register("holderName")} />
+            </FormField>
+
+            <FormField label="币种" className="min-w-0">
+              <CurrencySelect
+                value={values.currency}
+                onChange={(code) => setValue("currency", code)}
+              />
+            </FormField>
+            <FormField label="有效期" className="min-w-0">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="min-w-0 flex-1">
                   <Controller
                     control={control}
-                    name="cardType"
+                    name="expiryMonth"
                     render={({ field }) => (
                       <SelectField
                         value={field.value}
-                        options={CARD_TYPES}
+                        options={EXPIRY_MONTHS}
                         onChange={field.onChange}
                       />
                     )}
                   />
-                </FormField>
-                <FormField label="卡组织" className="min-w-0">
+                </div>
+                <span className="shrink-0 text-[12px] text-[var(--ink-4)]">/</span>
+                <div className="min-w-0 flex-1">
                   <Controller
                     control={control}
-                    name="brand"
+                    name="expiryYear"
                     render={({ field }) => (
-                      <SelectField value={field.value} options={BRANDS} onChange={field.onChange} />
+                      <SelectField value={field.value} options={years} onChange={field.onChange} />
                     )}
                   />
-                </FormField>
+                </div>
+              </div>
+            </FormField>
 
-                <FormField label="卡号后四位" className="min-w-0">
+            {isCredit && (
+              <>
+                <FormField label="信用额度" className="col-span-2 min-w-0">
                   <Input
                     variant="secondary"
-                    placeholder="1234"
-                    inputMode="numeric"
-                    maxLength={4}
-                    {...register("numberLast4")}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    {...register("creditLimit")}
                   />
                 </FormField>
-                <FormField label="持卡人" className="min-w-0">
-                  <Input variant="secondary" placeholder="可选" {...register("holderName")} />
+                <FormField label="账单日" className="min-w-0">
+                  <Input
+                    variant="secondary"
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="例如：5"
+                    {...register("billingDay")}
+                  />
                 </FormField>
+                <FormField label="还款日" className="min-w-0">
+                  <Input
+                    variant="secondary"
+                    type="number"
+                    min="1"
+                    max="31"
+                    placeholder="例如：23"
+                    {...register("repaymentDay")}
+                  />
+                </FormField>
+              </>
+            )}
 
-                <FormField label="币种" className="min-w-0">
-                  <CurrencySelect
-                    value={values.currency}
-                    onChange={(code) => setValue("currency", code)}
-                  />
-                </FormField>
-                <FormField label="有效期" className="min-w-0">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <Controller
-                        control={control}
-                        name="expiryMonth"
-                        render={({ field }) => (
-                          <SelectField
-                            value={field.value}
-                            options={EXPIRY_MONTHS}
-                            onChange={field.onChange}
+            <div className="col-span-2 min-w-0">
+              <Label
+                style={{
+                  fontSize: 12,
+                  color: "var(--ink-3)",
+                  marginBottom: 6,
+                  display: "block",
+                }}
+              >
+                卡面主色
+              </Label>
+              <ColorPickerField
+                value={values.colorHex || "#2f6f8f"}
+                onChange={(hex) => setValue("colorHex", hex)}
+              />
+            </div>
+
+            <div className="col-span-2 min-w-0">
+              <Label
+                style={{
+                  fontSize: 12,
+                  color: "var(--ink-3)",
+                  marginBottom: 6,
+                  display: "block",
+                }}
+              >
+                卡片图片
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {SCAN_SIDES.map(({ side, label }) => {
+                  const picked = scans[side]
+                  const preview = picked?.dataUrl ?? null
+                  const already = existingScans?.[side] ?? false
+                  const busy = pickingSide === side
+                  return (
+                    <div key={side} className="min-w-0">
+                      <div
+                        className="relative flex w-full items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--hair)] bg-[var(--surface-2)]"
+                        style={{ aspectRatio: "1.586" }}
+                      >
+                        {preview ? (
+                          <img
+                            src={preview}
+                            alt={`${label}预览`}
+                            className="h-full w-full object-cover"
                           />
+                        ) : (
+                          <span className="flex flex-col items-center gap-1 text-[10.5px] text-[var(--ink-4)]">
+                            <AppIcon name={already ? "check" : "add"} size={15} />
+                            {already ? "已有图片" : "未上传"}
+                          </span>
                         )}
-                      />
-                    </div>
-                    <span className="shrink-0 text-[12px] text-[var(--ink-4)]">/</span>
-                    <div className="min-w-0 flex-1">
-                      <Controller
-                        control={control}
-                        name="expiryYear"
-                        render={({ field }) => (
-                          <SelectField
-                            value={field.value}
-                            options={years}
-                            onChange={field.onChange}
-                          />
+                        {busy && (
+                          <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]/70 text-[11px] text-[var(--ink-3)]">
+                            读取中…
+                          </span>
                         )}
-                      />
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <span className="text-[11px] text-[var(--ink-3)]">{label}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="ml-auto"
+                          disabled={busy}
+                          onClick={() => void pickScan(side)}
+                        >
+                          {preview ? "更换" : "上传"}
+                        </Button>
+                        {picked && (
+                          <Button size="sm" variant="ghost" onPress={() => clearScan(side)}>
+                            移除
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </FormField>
+                  )
+                })}
+              </div>
+              <div className="mt-1.5 text-[10.5px] text-[var(--ink-4)]">
+                正反面各一张，保存卡片时一并导入（PNG / JPG / WebP，单张不超过 20MB）
+              </div>
+            </div>
 
-                {isCredit && (
-                  <>
-                    <FormField label="信用额度" className="col-span-2 min-w-0">
-                      <Input
-                        variant="secondary"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...register("creditLimit")}
-                      />
-                    </FormField>
-                    <FormField label="账单日" className="min-w-0">
-                      <Input
-                        variant="secondary"
-                        type="number"
-                        min="1"
-                        max="31"
-                        placeholder="例如：5"
-                        {...register("billingDay")}
-                      />
-                    </FormField>
-                    <FormField label="还款日" className="min-w-0">
-                      <Input
-                        variant="secondary"
-                        type="number"
-                        min="1"
-                        max="31"
-                        placeholder="例如：23"
-                        {...register("repaymentDay")}
-                      />
-                    </FormField>
-                  </>
-                )}
+            <FormField label="备注" className="col-span-2 min-w-0">
+              <Input variant="secondary" placeholder="可选" {...register("note")} />
+            </FormField>
+          </FieldGrid>
 
-                <div className="col-span-2 min-w-0">
-                  <Label
-                    style={{
-                      fontSize: 12,
-                      color: "var(--ink-3)",
-                      marginBottom: 6,
-                      display: "block",
-                    }}
-                  >
-                    卡面主色
-                  </Label>
-                  <ColorPickerField
-                    value={values.colorHex || "#2f6f8f"}
-                    onChange={(hex) => setValue("colorHex", hex)}
-                  />
-                </div>
-
-                <div className="col-span-2 min-w-0">
-                  <Label
-                    style={{
-                      fontSize: 12,
-                      color: "var(--ink-3)",
-                      marginBottom: 6,
-                      display: "block",
-                    }}
-                  >
-                    卡片图片
-                  </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {SCAN_SIDES.map(({ side, label }) => {
-                      const picked = scans[side]
-                      const preview = picked?.dataUrl ?? null
-                      const already = existingScans?.[side] ?? false
-                      const busy = pickingSide === side
-                      return (
-                        <div key={side} className="min-w-0">
-                          <div
-                            className="relative flex w-full items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--hair)] bg-[var(--surface-2)]"
-                            style={{ aspectRatio: "1.586" }}
-                          >
-                            {preview ? (
-                              <img
-                                src={preview}
-                                alt={`${label}预览`}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <span className="flex flex-col items-center gap-1 text-[10.5px] text-[var(--ink-4)]">
-                                <AppIcon name={already ? "check" : "add"} size={15} />
-                                {already ? "已有图片" : "未上传"}
-                              </span>
-                            )}
-                            {busy && (
-                              <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]/70 text-[11px] text-[var(--ink-3)]">
-                                读取中…
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt-1.5 flex items-center gap-2">
-                            <span className="text-[11px] text-[var(--ink-3)]">{label}</span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="ml-auto"
-                              isDisabled={busy}
-                              onPress={() => void pickScan(side)}
-                            >
-                              {preview ? "更换" : "上传"}
-                            </Button>
-                            {picked && (
-                              <Button size="sm" variant="ghost" onPress={() => clearScan(side)}>
-                                移除
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="mt-1.5 text-[10.5px] text-[var(--ink-4)]">
-                    正反面各一张，保存卡片时一并导入（PNG / JPG / WebP，单张不超过 20MB）
-                  </div>
-                </div>
-
-                <FormField label="备注" className="col-span-2 min-w-0">
-                  <Input variant="secondary" placeholder="可选" {...register("note")} />
-                </FormField>
-              </FieldGrid>
-
-              {saveError && (
-                <div
-                  role="alert"
-                  style={{
-                    marginTop: 12,
-                    fontSize: 11.5,
-                    lineHeight: 1.5,
-                    color: "var(--red)",
-                  }}
-                >
-                  {saveError}
-                </div>
-              )}
-            </form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="ghost" onPress={handleClose}>
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              isDisabled={isSubmitting}
-              onPress={() => {
-                const form = document.getElementById("card-form")
-                if (form instanceof HTMLFormElement) form.requestSubmit()
+          {saveError && (
+            <div
+              role="alert"
+              style={{
+                marginTop: 12,
+                fontSize: 11.5,
+                lineHeight: 1.5,
+                color: "var(--red)",
               }}
             >
-              {card ? "保存" : "添加"}
-            </Button>
-          </Modal.Footer>
-        </Modal.Dialog>
-      </Modal.Container>
+              {saveError}
+            </div>
+          )}
+        </form>
+      </ModalBody>
+      <ModalFooter>
+        <Button variant="secondary" onClick={handleClose}>
+          取消
+        </Button>
+        <Button
+          variant="primary"
+          disabled={isSubmitting}
+          onClick={() => {
+            const form = document.getElementById("card-form")
+            if (form instanceof HTMLFormElement) form.requestSubmit()
+          }}
+        >
+          {card ? "保存" : "添加"}
+        </Button>
+      </ModalFooter>
     </Modal>
   )
 }

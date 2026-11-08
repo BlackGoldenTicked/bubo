@@ -44,9 +44,12 @@ The database only knows the file name, so the folder can move with the user data
   expiry, and currency over a brand-tinted gradient (or the user's `colorHex`).
 - Credit cards additionally show limit and 账单日 / 还款日; the form hides those fields for other
   types.
-- The create/edit dialog is portalled to `document.body` and opened on the next animation frame:
-  inside the page's `overflow: hidden` container the overlay was clipped and painted only after
-  another interaction, which read as "the first click on 添加卡片 does nothing".
+- The create/edit dialog is built on the app's own `@bubo/ui` `Modal` (fixed backdrop, portals
+  itself, focus trap, Esc), not HeroUI's raw `Modal`. In this build the raw one renders its
+  overlay in normal flow: appended after the 900px app root it landed below the viewport, so
+  clicking 添加卡片 looked like nothing happened, and inside the page container it was clipped and
+  off-centre. Measured after the fix: the 560px panel sits at the exact viewport centre
+  (`dx = 0, dy = 0`) on the first click.
 
 ## Deliberate Gaps
 

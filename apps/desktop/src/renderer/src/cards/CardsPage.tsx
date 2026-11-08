@@ -9,7 +9,6 @@
  */
 
 import { useMemo, useState, type ReactNode } from "react"
-import { createPortal } from "react-dom"
 import { Button } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppIcon, notify } from "@bubo/ui"
@@ -132,12 +131,8 @@ export function CardsPage() {
     return [...map.entries()]
   }, [cards])
 
-  /**
-   * Open the dialog on the next frame. WebKit can skip the paint of an overlay that is opened
-   * inside the same event handler as the click, which read as "the first click does nothing".
-   */
   function openForm() {
-    requestAnimationFrame(() => setFormOpen(true))
+    setFormOpen(true)
   }
 
   function openCreate() {
@@ -349,25 +344,20 @@ export function CardsPage() {
         </ScrollArea>
       </div>
 
-      {/* Portal to the body: the page clips its own overflow, which used to drag the dialog
-          off-centre and delay its first paint. */}
-      {createPortal(
-        <CardFormModal
-          open={formOpen}
-          card={editing}
-          defaultCurrency={base}
-          existingScans={{
-            front: editing?.images.front != null,
-            back: editing?.images.back != null,
-          }}
-          onClose={() => {
-            setFormOpen(false)
-            setEditing(null)
-          }}
-          onSave={handleSave}
-        />,
-        document.body,
-      )}
+      <CardFormModal
+        open={formOpen}
+        card={editing}
+        defaultCurrency={base}
+        existingScans={{
+          front: editing?.images.front != null,
+          back: editing?.images.back != null,
+        }}
+        onClose={() => {
+          setFormOpen(false)
+          setEditing(null)
+        }}
+        onSave={handleSave}
+      />
     </div>
   )
 }
