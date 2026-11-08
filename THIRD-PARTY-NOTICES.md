@@ -11,11 +11,11 @@ These components are licensed under Apache License 2.0. Redistributing a built a
 their `LICENSE`/`NOTICE` obligations: do not remove the copyright lines, and keep this file
 in the repository.
 
-| Component | Version | License | Copyright |
-| --- | --- | --- | --- |
-| [QingIcon](https://github.com/asorn/qingicon-open) (`qingicon-react`) | 2.0.4 | Apache-2.0 | QingIcon contributors |
-| [React Aria](https://github.com/adobe/react-spectrum) (`react-aria`, `react-aria-components`, `react-stately`) | 3.x | Apache-2.0 | Adobe |
-| [Drizzle ORM](https://github.com/drizzle-team/drizzle-orm) | 0.4x | Apache-2.0 | Drizzle Team |
+| Component                                                                                                      | Version | License    | Copyright             |
+| -------------------------------------------------------------------------------------------------------------- | ------- | ---------- | --------------------- |
+| [QingIcon](https://github.com/asorn/qingicon-open) (`qingicon-react`)                                          | 2.0.4   | Apache-2.0 | QingIcon contributors |
+| [React Aria](https://github.com/adobe/react-spectrum) (`react-aria`, `react-aria-components`, `react-stately`) | 3.x     | Apache-2.0 | Adobe                 |
+| [Drizzle ORM](https://github.com/drizzle-team/drizzle-orm)                                                     | 0.4x    | Apache-2.0 | Drizzle Team          |
 
 The icon set reaches the UI only through `packages/ui/src/components/ui/app-icon.tsx`, which
 maps semantic names onto QingIcon glyphs. If you swap the icon set, keep an equivalent

@@ -1,0 +1,68 @@
+name: Bug report
+description: Something behaves incorrectly, crashes, or shows wrong numbers.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Numbers are the point of this app — if a figure looks wrong,
+        please say what you expected and why (the calculation you had in mind).
+        Security issues must go through the private advisory link instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Shown in the app under 设置 → 关于, or the release tag you installed."
+      placeholder: 0.1.17
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: How are you running it?
+      options:
+        - Packaged app (dmg / nsis release)
+        - Local build (pnpm package:app)
+        - Dev server (pnpm dev / pnpm dev:tauri)
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS and version
+      placeholder: macOS 26.1 (arm64)
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps starting from app launch. Mention the ledger and the page/tab.
+      placeholder: |
+        1. Open 卡片
+        2. Click 添加卡片
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: |
+        Terminal output helps a lot when you run from source. On macOS the app logs to
+        stderr; `log stream --predicate 'process == "bubo"'` also works.
+      render: shell
+    validations:
+      required: false

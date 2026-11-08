@@ -2,10 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
   "description": "Base capability for the bubo Tauri shell (main window and the menu-bar capture window)",
-  "windows": [
-    "main",
-    "quick-capture"
-  ],
+  "windows": ["main", "quick-capture"],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",

@@ -130,7 +130,11 @@ export function ShortcutSection() {
             }}
             aria-label="按下组合键录制快捷键"
           >
-            {capturing ? (preview.length > 0 ? `${preview} …` : "请按下组合键…") : formatShortcut(live)}
+            {capturing
+              ? preview.length > 0
+                ? `${preview} …`
+                : "请按下组合键…"
+              : formatShortcut(live)}
           </Button>
           <Button
             size="sm"

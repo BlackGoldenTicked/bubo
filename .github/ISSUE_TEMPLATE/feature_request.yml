@@ -1,0 +1,48 @@
+name: Feature request
+description: Propose a capability or a change in behaviour.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        bubo keeps three layers deliberately separate (past cashflow, present assets, future
+        obligations). Requests that reconcile them into one balanced book will be declined,
+        so please describe the problem before the solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do today, and where does the app get in the way?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What should happen instead? Mockups or a sketch of the flow help.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer does this touch?
+      options:
+        - Past cashflow (流水 / 分类 / 账本)
+        - Present assets (资产 / 投资 / 合约)
+        - Future obligations (订阅 / 贷款)
+        - Cards (卡片)
+        - Voice entry / AI
+        - Shell, settings, or packaging
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+    validations:
+      required: false

@@ -4,6 +4,7 @@
   "sortPackageJson": false,
   "ignorePatterns": [
     "apps/desktop/src/renderer/src/routeTree.gen.ts",
-    "apps/desktop/src/renderer/src/vite-env.d.ts"
+    "apps/desktop/src/renderer/src/vite-env.d.ts",
+    "packages/db/migrations/meta/**"
   ]
 }

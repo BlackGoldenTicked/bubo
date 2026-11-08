@@ -372,18 +372,10 @@ export function AssetDetailPanel({ asset, onBack, onEdit, onDelete }: Props) {
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, marginTop: 20, alignItems: "center" }}>
-        <Button
-          size="sm"
-          variant="primary"
-          onPress={() => onEdit(asset, "balance")}
-        >
+        <Button size="sm" variant="primary" onPress={() => onEdit(asset, "balance")}>
           {isInvestment ? "更新市值" : "更新余额"}
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onPress={() => onEdit(asset, "account")}
-        >
+        <Button size="sm" variant="outline" onPress={() => onEdit(asset, "account")}>
           编辑账户
         </Button>
         <div style={{ flex: 1 }} />

@@ -8,7 +8,15 @@
  *          Files live under <user data>/card-images and survive ledger switches.
  */
 
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs"
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs"
 import { basename, extname, join } from "node:path"
 import type { CardImageData, CardSide } from "@bubo/shared/contracts"
 

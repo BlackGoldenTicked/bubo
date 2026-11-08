@@ -17,9 +17,7 @@ const OPTIONS: SelectOption[] = COMMON_BANKS.map((bank) => ({
   content: (
     <span className="inline-flex min-w-0 items-baseline gap-2">
       <span className="min-w-0 truncate">{bank.name}</span>
-      <span className="shrink-0 text-[10px] text-[var(--ink-4)]">
-        {BANK_KIND_LABEL[bank.kind]}
-      </span>
+      <span className="shrink-0 text-[10px] text-[var(--ink-4)]">{BANK_KIND_LABEL[bank.kind]}</span>
     </span>
   ),
 }))

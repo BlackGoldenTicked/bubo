@@ -89,9 +89,7 @@ describe("cards", () => {
 
   it("updates fields and keeps untouched ones", async () => {
     const card = expectOk(await api.createCard({ name: "旧名", bank: "招行", billingDay: 5 }))
-    const updated = expectOk(
-      await api.updateCard({ id: card.id, name: "新名", repaymentDay: 23 }),
-    )
+    const updated = expectOk(await api.updateCard({ id: card.id, name: "新名", repaymentDay: 23 }))
 
     expect(updated.name).toBe("新名")
     expect(updated.bank).toBe("招行")

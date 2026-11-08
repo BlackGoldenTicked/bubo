@@ -24,7 +24,12 @@ Imported statements, asset snapshots, and future plans may inform each other in 
 
 ## Mandatory Plane Workflow
 
-Every feature, fix, and refactor must be associated with a work item in the Plane `bubo` project. Plane is a prerequisite before coding and a hard delivery gate, not an optional closing step.
+> **Maintainer-only.** This section describes the private workflow of the project owner, whose
+> work is tracked in a private Plane project. External contributors do not need Plane access:
+> open an issue and follow [CONTRIBUTING.md](CONTRIBUTING.md) instead.
+
+Every feature, fix, and refactor must be associated with a work item in the Plane `bubo`
+project. Plane is a prerequisite before coding and a hard delivery gate, not an optional closing step.
 
 ### Before Implementation
 

@@ -493,11 +493,7 @@ export function BudgetDetailPage() {
               >
                 编辑预算
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onPress={openBudgetCashflow}
-              >
+              <Button variant="outline" size="sm" onPress={openBudgetCashflow}>
                 查看该类别流水
               </Button>
               <div style={{ flex: 1 }} />

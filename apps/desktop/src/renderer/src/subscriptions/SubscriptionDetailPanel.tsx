@@ -417,11 +417,7 @@ export function SubscriptionDetailPanel({ id, onBack }: Props) {
               >
                 {sub.autoRenew ? "关闭自动续费" : "开启自动续费"}
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onPress={() => setEditing(true)}
-              >
+              <Button size="sm" variant="outline" onPress={() => setEditing(true)}>
                 编辑
               </Button>
               <div style={{ flex: 1 }} />

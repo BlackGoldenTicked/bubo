@@ -402,7 +402,9 @@ export const appRouter = router({
       ),
     get: publicProcedure
       .input(apiInput<"getCard">())
-      .query(({ ctx, input }) => callApi(ctx, (api) => api.getCard(requiredInput<"getCard">(input)))),
+      .query(({ ctx, input }) =>
+        callApi(ctx, (api) => api.getCard(requiredInput<"getCard">(input))),
+      ),
     create: publicProcedure
       .input(apiInput<"createCard">())
       .mutation(({ ctx, input }) =>
@@ -426,7 +428,9 @@ export const appRouter = router({
       ),
     image: publicProcedure
       .input((v) => v as CardImageRefInput)
-      .query(async ({ ctx, input }): Promise<CardImageData> => unwrap(await ctx.cards.readScan(input))),
+      .query(
+        async ({ ctx, input }): Promise<CardImageData> => unwrap(await ctx.cards.readScan(input)),
+      ),
     removeImage: publicProcedure
       .input((v) => v as CardImageRefInput)
       .mutation(

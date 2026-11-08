@@ -95,8 +95,7 @@ export function FeatureShowcase() {
     <section id="features-detail" className="py-[64px]">
       <Wrap>
         <SectionHead tag="产品一览" title="三层理念，落到每一页">
-          过去的流水、当前的余额、未来的扣费——三层各归其位。下面这些页面，就是它们在 bubo
-          里的样子。
+          过去的流水、当前的余额、未来的扣费——三层各归其位。下面这些页面，就是它们在 bubo 里的样子。
         </SectionHead>
         <div className="mt-12 flex flex-col gap-7">
           {ROWS.map((r, i) => {

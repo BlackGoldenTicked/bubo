@@ -276,7 +276,9 @@ function ScanTile({
         )}
         <span
           className={`pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(15,23,42,0.42)] text-[11px] font-medium text-white transition-opacity ${
-            busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+            busy
+              ? "opacity-100"
+              : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
           }`}
         >
           {hint}

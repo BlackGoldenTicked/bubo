@@ -57,7 +57,8 @@ function parseArgs(argv: string[]): CliOptions {
     else if (arg === "--wipe") options.wipe = true
     else throw new Error(`Unknown argument: ${arg}`)
   }
-  if (!options.jsonPath) throw new Error("Usage: tsx import-qianji.ts --json <export.json> [--db <path>] [--wipe]")
+  if (!options.jsonPath)
+    throw new Error("Usage: tsx import-qianji.ts --json <export.json> [--db <path>] [--wipe]")
   if (!existsSync(options.jsonPath)) throw new Error(`Input JSON not found: ${options.jsonPath}`)
   if (!existsSync(options.dbPath)) throw new Error(`Ledger database not found: ${options.dbPath}`)
   return options
@@ -192,7 +193,9 @@ async function main(): Promise<void> {
     )
     imported += 1
     if (imported % 1000 === 0) {
-      console.log(`imported ${imported}/${rows.length} (${Math.round((Date.now() - startedAt) / 1000)}s)`)
+      console.log(
+        `imported ${imported}/${rows.length} (${Math.round((Date.now() - startedAt) / 1000)}s)`,
+      )
     }
   }
 
@@ -203,7 +206,9 @@ async function main(): Promise<void> {
     )
     .all()
 
-  console.log(`done: imported=${imported} skipped=${skipped} in ${Math.round((Date.now() - startedAt) / 1000)}s`)
+  console.log(
+    `done: imported=${imported} skipped=${skipped} in ${Math.round((Date.now() - startedAt) / 1000)}s`,
+  )
   for (const row of totals as Array<{ direction: string; n: number; total: number }>) {
     console.log(`  ${row.direction}: ${row.n} rows, total ${row.total}`)
   }

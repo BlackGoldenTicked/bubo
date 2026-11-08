@@ -131,7 +131,9 @@ export const COMMON_BANKS: readonly BankMeta[] = [
   { name: "恒生银行", kind: "foreign", aliases: ["hang seng"] },
 ]
 
-const BY_NAME: ReadonlyMap<string, BankMeta> = new Map(COMMON_BANKS.map((bank) => [bank.name, bank]))
+const BY_NAME: ReadonlyMap<string, BankMeta> = new Map(
+  COMMON_BANKS.map((bank) => [bank.name, bank]),
+)
 
 /** Registry entry for a stored bank name, or undefined for free-typed names. */
 export function bankMeta(name: string | null | undefined): BankMeta | undefined {

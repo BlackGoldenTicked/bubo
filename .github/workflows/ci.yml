@@ -1,0 +1,56 @@
+name: CI
+
+# Type, lint, docs, and unit checks for every push and pull request.
+# The desktop bundle build lives in release.yml — it needs macOS/Windows runners and
+# signing material, so it stays off the PR path.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Type check
+        run: pnpm check-types
+
+      - name: Architecture boundaries
+        run: pnpm check-architecture
+
+      - name: Docs sensor
+        run: pnpm check-docs
+
+      - name: Unit tests
+        run: pnpm test

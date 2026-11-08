@@ -7,7 +7,13 @@
  */
 
 import type { Result } from "@bubo/shared"
-import type { BuboId, CardImageData, CardImageRefInput, CardSide, CardSummary } from "@bubo/shared/contracts"
+import type {
+  BuboId,
+  CardImageData,
+  CardImageRefInput,
+  CardSide,
+  CardSummary,
+} from "@bubo/shared/contracts"
 
 export interface AttachCardScanInput {
   cardId: BuboId

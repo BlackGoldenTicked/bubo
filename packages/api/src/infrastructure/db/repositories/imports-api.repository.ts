@@ -6,12 +6,7 @@
  */
 
 import { and, desc, eq, type SQL } from "drizzle-orm"
-import {
-  cashflowEvents,
-  statementImports,
-  statementLines,
-  type StatementImportRow,
-} from "@bubo/db"
+import { cashflowEvents, statementImports, statementLines, type StatementImportRow } from "@bubo/db"
 import type { Result } from "@bubo/shared"
 import type {
   CashflowKind,
