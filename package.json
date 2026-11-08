@@ -6,11 +6,11 @@
   "license": "GPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BarrySong97/bubo-desktop.git"
+    "url": "git+https://github.com/BlackGoldenTicked/bubo-desktop.git"
   },
-  "homepage": "https://github.com/BarrySong97/bubo-desktop#readme",
+  "homepage": "https://github.com/BlackGoldenTicked/bubo-desktop#readme",
   "bugs": {
-    "url": "https://github.com/BarrySong97/bubo-desktop/issues"
+    "url": "https://github.com/BlackGoldenTicked/bubo-desktop/issues"
   },
   "type": "module",
   "engines": {

@@ -204,7 +204,7 @@ export function installDesktopRuntimeBridge(): void {
     showMainWindow: () => invokeTauri<void>("show_main_window"),
     openDownloadPage: async () => {
       const { openUrl } = await import("@tauri-apps/plugin-opener")
-      await openUrl("https://github.com/BarrySong97/bubo-desktop/releases/latest")
+      await openUrl("https://github.com/BlackGoldenTicked/bubo-desktop/releases/latest")
     },
   }
 }

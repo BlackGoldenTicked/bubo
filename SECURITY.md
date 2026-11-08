@@ -5,9 +5,9 @@
 Please **do not** open a public issue for anything security-related.
 
 - Preferred: GitHub's private advisory flow —
-  <https://github.com/BarrySong97/bubo-desktop/security/advisories/new>
+  <https://github.com/BlackGoldenTicked/bubo-desktop/security/advisories/new>
 - Or email the maintainer listed on the GitHub profile of
-  [@BarrySong97](https://github.com/BarrySong97).
+  [@BlackGoldenTicked](https://github.com/BlackGoldenTicked).
 
 Include the version (`bubo → 关于`), the platform, steps to reproduce, and what an attacker
 gains. Expect an initial reply within about a week; this is a single-maintainer project.

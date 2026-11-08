@@ -31,7 +31,7 @@ individual is representing the project in public.
 ## Enforcement
 
 Report unacceptable behaviour to the maintainer
-([@BarrySong97](https://github.com/BarrySong97)) privately. All complaints are reviewed and
+([@BlackGoldenTicked](https://github.com/BlackGoldenTicked)) privately. All complaints are reviewed and
 investigated promptly and fairly, and the reporter's privacy is respected.
 
 Consequences escalate with severity and repetition: a private warning, a temporary ban from

@@ -1,6 +1,6 @@
 # bubo Desktop
 
-[![CI](https://github.com/BarrySong97/bubo-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/BarrySong97/bubo-desktop/actions/workflows/ci.yml)
+[![CI](https://github.com/BlackGoldenTicked/bubo-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/BlackGoldenTicked/bubo-desktop/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](./LICENSE)
 [![Tauri 2](https://img.shields.io/badge/shell-Tauri%202-24c8db.svg)](https://tauri.app)
 
@@ -48,7 +48,7 @@ and a forecast never silently becomes an actual.
 
 ## Download
 
-Grab the latest build from [Releases](https://github.com/BarrySong97/bubo-desktop/releases):
+Grab the latest build from [Releases](https://github.com/BlackGoldenTicked/bubo-desktop/releases):
 macOS is distributed as an `.app`/`.dmg` (Apple Silicon, ad-hoc signed — right-click → Open
 the first time), Windows as an NSIS installer.
 
@@ -134,7 +134,7 @@ pnpm install:local  # same, then install to /Applications/bubo.app
 
 ## Acknowledgements
 
-- **[flowm-desktop](https://github.com/BarrySong97/flowm-desktop)** — bubo started as a
+- **[flowm-desktop](https://github.com/BlackGoldenTicked/flowm-desktop)** — bubo started as a
   personal fork of this project. The asymmetric three-layer product model, the guarded
   ledger CLI, and the statement-import pipeline all descend from it; every `flowm` brand
   and identifier was migrated to `bubo` in
