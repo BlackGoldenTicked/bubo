@@ -30,6 +30,9 @@ packages/cli/npm
 # Turborepo
 .turbo
 
+# Velite content build output (only used by the non-open blog pipeline)
+.velite
+
 # TanStack Router temporary files
 .tanstack/tmp
 apps/*/.tanstack/tmp

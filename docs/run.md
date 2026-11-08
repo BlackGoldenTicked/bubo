@@ -230,13 +230,8 @@ flutter test
 The mobile development fixture lives in the mobile sandbox and does not open
 the user's desktop ledger.
 
-## Blog Images
+## Blog
 
-After configuring Cloudflare R2 credentials from `.env.example`:
-
-```bash
-pnpm img <blog-slug> --dry-run
-pnpm img <blog-slug>
-```
-
-See [Blog Image Pipeline](topics/blog-images.md).
+The blog content and its R2 image pipeline are **not part of this repository** — they live in
+a private project next to it (`bubo-blog-private`). `apps/web` ships the marketing site only;
+its routes, navigation, and sitemap no longer reference `/blog`.

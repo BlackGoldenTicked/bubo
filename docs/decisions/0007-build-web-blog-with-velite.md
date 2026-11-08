@@ -1,6 +1,7 @@
 # 0007. Build The Web Blog With Velite
 
-- Status: accepted
+- Status: superseded (2026-11-09 — the blog, its content, and the R2 image pipeline moved out
+  of this repository before it was open-sourced; `apps/web` no longer runs Velite)
 - Date: 2026-07-14
 
 ## Context
