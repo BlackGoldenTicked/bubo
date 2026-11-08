@@ -6,11 +6,18 @@
  *          number or CVV. Bank and name are the only required fields; everything else is
  *          optional metadata the user can fill in later. The grid gives every control at
  *          least half the dialog width: a currency combobox or a pair of year digits
- *          collapses to one visible character in a three-column row. A failed save keeps
- *          the dialog open and reports the reason instead of closing silently.
+ *          collapses to one visible character in a three-column row. Each select carries an
+ *          explicit short placeholder because the RAC default ("选择一个项目") wraps to two
+ *          lines in a half-width column and makes that row taller than its neighbours. Each
+ *          scan tile is itself the upload button — a placeholder that only reacts to a
+ *          separate "上传" label reads as a static preview — and an already-saved face is
+ *          drawn from its data URL so editing shows the card, not the word "已有图片". A
+ *          failed save keeps the dialog open and reports the reason instead of closing
+ *          silently.
  */
 
 import { Input, Label, Select, ListBox } from "@heroui/react"
+import { useQuery } from "@tanstack/react-query"
 import { useEffect, useId, useState, type ReactNode } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
@@ -31,8 +38,10 @@ import type {
   CreateCardInput,
 } from "@bubo/shared/contracts"
 import { FormField } from "../components/ui/FormField"
+import { BankSelect } from "../components/ui/BankSelect"
 import { CurrencySelect } from "../components/ui/CurrencySelect"
 import { ColorPickerField } from "../components/ui/ColorPickerField"
+import { trpcClient } from "@/lib/trpc"
 
 export interface CardFormValues {
   name: string
@@ -155,19 +164,31 @@ function SelectField<T extends string>({
   value,
   options,
   onChange,
+  placeholder = "请选择",
 }: {
   value: T | ""
   options: Array<{ key: T; label: string }>
   onChange: (next: T) => void
+  placeholder?: string
 }) {
   return (
     <Select
       variant="secondary"
+      className="w-full min-w-0"
+      // The default RAC placeholder ("选择一个项目") is long enough to wrap onto two
+      // lines inside a half-width column, which makes this control taller than its
+      // neighbours. Name the field explicitly, pin the height, and never let the
+      // trigger break lines.
+      placeholder={placeholder}
       selectedKey={value === "" ? null : value}
       onSelectionChange={(key) => key != null && onChange(String(key) as T)}
     >
-      <Select.Trigger>
-        <Select.Value />
+      <Select.Trigger className="h-9 min-w-0 overflow-hidden whitespace-nowrap">
+        <Select.Value className="truncate">
+          {({ isPlaceholder, selectedText }) => (
+            <span className="block truncate">{isPlaceholder ? placeholder : selectedText}</span>
+          )}
+        </Select.Value>
         <Select.Indicator />
       </Select.Trigger>
       <Select.Popover>
@@ -197,8 +218,6 @@ interface CardFormModalProps {
   /** Editing keeps the id; creating ignores it. */
   card?: CardSummary | null
   defaultCurrency: string
-  /** Which faces the saved card already has, so the tiles can say "已有图片". */
-  existingScans?: Record<CardSide, boolean>
   onClose: () => void
   /** Paths are imported by the caller once the card row exists. */
   onSave: (values: CardFormValues, scans: CardScanPaths) => void | Promise<void>
@@ -209,11 +228,95 @@ const SCAN_SIDES: Array<{ side: CardSide; label: string }> = [
   { side: "back", label: "反面" },
 ]
 
+/**
+ * One card face. The whole tile is the upload control — an image placeholder that only
+ * reacts to a separate text button reads like a static preview, so a click on it must open
+ * the native picker directly. A saved face is rendered from its data URL, and a freshly
+ * picked file previews immediately and can be undone before saving.
+ */
+function ScanTile({
+  card,
+  side,
+  label,
+  picked,
+  busy,
+  onPick,
+  onClear,
+}: {
+  card: CardSummary | null | undefined
+  side: CardSide
+  label: string
+  picked: PickedScan | null
+  busy: boolean
+  onPick: () => void
+  onClear: () => void
+}) {
+  const saved = useSavedScan(card, side)
+  const preview = picked?.dataUrl ?? saved
+  const hasSaved = card?.images[side] != null
+  const hint = busy ? "读取中…" : preview ? "点击更换" : "点击上传"
+
+  return (
+    <div className="min-w-0">
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onPick}
+        aria-label={`${label}：${preview ? "更换图片" : "上传图片"}`}
+        className="group relative block w-full cursor-pointer overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--hair)] bg-[var(--surface-2)] transition-colors hover:border-[var(--accent)] focus-visible:border-[var(--accent)] focus-visible:outline-none disabled:cursor-progress"
+        style={{ aspectRatio: "1.586" }}
+      >
+        {preview ? (
+          <img src={preview} alt={`${label}预览`} className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full flex-col items-center justify-center gap-1 text-[10.5px] text-[var(--ink-4)]">
+            <AppIcon name="add" size={15} />
+            {hasSaved ? "读取中…" : "未上传"}
+          </span>
+        )}
+        <span
+          className={`pointer-events-none absolute inset-0 flex items-center justify-center bg-[rgba(15,23,42,0.42)] text-[11px] font-medium text-white transition-opacity ${
+            busy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+          }`}
+        >
+          {hint}
+        </span>
+      </button>
+      <div className="mt-1.5 flex items-center gap-2">
+        <span className="text-[11px] text-[var(--ink-3)]">{label}</span>
+        <span className="min-w-0 truncate text-[10.5px] text-[var(--ink-4)]">
+          {picked ? "已选新图片，保存后替换" : hasSaved ? "已上传" : "未上传"}
+        </span>
+        {picked && (
+          <Button size="sm" variant="ghost" className="ml-auto shrink-0" onPress={onClear}>
+            撤销
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * The saved face as a data URL, so editing shows the real scan instead of a "已有图片"
+ * label. Shares the query key used by the detail pane, so the bytes come from cache.
+ */
+function useSavedScan(card: CardSummary | null | undefined, side: CardSide): string | null {
+  const meta = card?.images[side] ?? null
+  const query = useQuery({
+    queryKey: ["cards.image", card ? String(card.id) : "none", side, meta?.updatedAt ?? "none"],
+    queryFn: () => trpcClient.cards.image.query({ cardId: card!.id, side }),
+    enabled: meta != null,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  })
+  return meta ? (query.data?.dataUrl ?? null) : null
+}
+
 export function CardFormModal({
   open,
   card,
   defaultCurrency,
-  existingScans,
   onClose,
   onSave,
 }: CardFormModalProps) {
@@ -273,7 +376,7 @@ export function CardFormModal({
       onClose={handleClose}
       labelledBy={titleId}
       dismissable={!isSubmitting}
-      className="max-w-[560px]"
+      className="max-w-[700px]"
     >
       <ModalHeader>
         <div className="min-w-0">
@@ -317,13 +420,17 @@ export function CardFormModal({
               />
             </FormField>
             <FormField label="发卡银行" required error={errors.bank?.message} className="min-w-0">
-              <Input
-                variant="secondary"
-                placeholder="例如：招商银行"
-                aria-invalid={Boolean(errors.bank)}
-                {...register("bank", {
-                  validate: (value) => value.trim().length > 0 || "请填写发卡银行",
-                })}
+              <Controller
+                control={control}
+                name="bank"
+                rules={{ validate: (value) => value.trim().length > 0 || "请选择发卡银行" }}
+                render={({ field }) => (
+                  <BankSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    invalid={Boolean(errors.bank)}
+                  />
+                )}
               />
             </FormField>
 
@@ -332,7 +439,12 @@ export function CardFormModal({
                 control={control}
                 name="cardType"
                 render={({ field }) => (
-                  <SelectField value={field.value} options={CARD_TYPES} onChange={field.onChange} />
+                  <SelectField
+                    value={field.value}
+                    options={CARD_TYPES}
+                    onChange={field.onChange}
+                    placeholder="选择类型"
+                  />
                 )}
               />
             </FormField>
@@ -341,7 +453,12 @@ export function CardFormModal({
                 control={control}
                 name="brand"
                 render={({ field }) => (
-                  <SelectField value={field.value} options={BRANDS} onChange={field.onChange} />
+                  <SelectField
+                    value={field.value}
+                    options={BRANDS}
+                    onChange={field.onChange}
+                    placeholder="选择卡组织"
+                  />
                 )}
               />
             </FormField>
@@ -363,11 +480,12 @@ export function CardFormModal({
               <CurrencySelect
                 value={values.currency}
                 onChange={(code) => setValue("currency", code)}
+                inputClassName="h-9"
               />
             </FormField>
             <FormField label="有效期" className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <div className="w-[104px] shrink-0">
                   <Controller
                     control={control}
                     name="expiryMonth"
@@ -376,6 +494,7 @@ export function CardFormModal({
                         value={field.value}
                         options={EXPIRY_MONTHS}
                         onChange={field.onChange}
+                        placeholder="月份"
                       />
                     )}
                   />
@@ -386,7 +505,12 @@ export function CardFormModal({
                     control={control}
                     name="expiryYear"
                     render={({ field }) => (
-                      <SelectField value={field.value} options={years} onChange={field.onChange} />
+                      <SelectField
+                        value={field.value}
+                        options={years}
+                        onChange={field.onChange}
+                        placeholder="年份"
+                      />
                     )}
                   />
                 </div>
@@ -457,55 +581,18 @@ export function CardFormModal({
                 卡片图片
               </Label>
               <div className="grid grid-cols-2 gap-3">
-                {SCAN_SIDES.map(({ side, label }) => {
-                  const picked = scans[side]
-                  const preview = picked?.dataUrl ?? null
-                  const already = existingScans?.[side] ?? false
-                  const busy = pickingSide === side
-                  return (
-                    <div key={side} className="min-w-0">
-                      <div
-                        className="relative flex w-full items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-dashed border-[var(--hair)] bg-[var(--surface-2)]"
-                        style={{ aspectRatio: "1.586" }}
-                      >
-                        {preview ? (
-                          <img
-                            src={preview}
-                            alt={`${label}预览`}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <span className="flex flex-col items-center gap-1 text-[10.5px] text-[var(--ink-4)]">
-                            <AppIcon name={already ? "check" : "add"} size={15} />
-                            {already ? "已有图片" : "未上传"}
-                          </span>
-                        )}
-                        {busy && (
-                          <span className="absolute inset-0 flex items-center justify-center bg-[var(--surface-1)]/70 text-[11px] text-[var(--ink-3)]">
-                            读取中…
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <span className="text-[11px] text-[var(--ink-3)]">{label}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="ml-auto"
-                          disabled={busy}
-                          onClick={() => void pickScan(side)}
-                        >
-                          {preview ? "更换" : "上传"}
-                        </Button>
-                        {picked && (
-                          <Button size="sm" variant="ghost" onPress={() => clearScan(side)}>
-                            移除
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
+                {SCAN_SIDES.map(({ side, label }) => (
+                  <ScanTile
+                    key={side}
+                    card={card}
+                    side={side}
+                    label={label}
+                    picked={scans[side] ?? null}
+                    busy={pickingSide === side}
+                    onPick={() => void pickScan(side)}
+                    onClear={() => clearScan(side)}
+                  />
+                ))}
               </div>
               <div className="mt-1.5 text-[10.5px] text-[var(--ink-4)]">
                 正反面各一张，保存卡片时一并导入（PNG / JPG / WebP，单张不超过 20MB）

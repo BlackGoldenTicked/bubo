@@ -3,9 +3,11 @@
  * @role    Hand-drawn replacement for the HeroUI ComboBox, used by the currency picker.
  * @deps    React state and effects, the cn helper, and the `.bubo-select`/`.bubo-item`
  *          rules in primitives.css.
- * @gotcha  Custom values are never accepted: typing only filters, and the field snaps
- *          back to the selected label on blur. Filtering matches the option `label`
- *          case-insensitively, so put every searchable token in it.
+ * @gotcha  Typing filters by `label` (and any `keywords`), never by value. With
+ *          `allowCustom` the typed text becomes the value when nothing matches, so a field
+ *          backed by a curated list can still hold something the list does not know about;
+ *          on blur that text is committed explicitly. Without it the field snaps back to
+ *          the selected label on blur.
  */
 
 import * as React from "react"
@@ -41,6 +43,10 @@ export interface ComboboxProps {
   value: string | null
   onChange: (key: string) => void
   placeholder?: string
+  /** Accept the typed text as the value when no option matches. */
+  allowCustom?: boolean
+  /** Draw the danger border (the caller owns the message). */
+  invalid?: boolean
   disabled?: boolean
   /** Compatibility alias for `disabled`. Prefer `disabled` in new code. */
   isDisabled?: boolean
@@ -56,6 +62,8 @@ export function Combobox({
   value,
   onChange,
   placeholder = "搜索",
+  allowCustom = false,
+  invalid = false,
   disabled,
   isDisabled,
   size = "md",
@@ -73,14 +81,30 @@ export function Combobox({
   const isDisabledFinal = disabled ?? isDisabled ?? false
   const selected = options.find((option) => option.key === value) ?? null
 
-  // While closed the field mirrors the selection; while open it mirrors the query.
-  const displayText = open ? query : (selected?.label ?? "")
+  // While closed the field mirrors the selection; while open it mirrors the query. A free
+  // value that is not in the list still has to survive, hence the `value` fallback.
+  const displayText = open ? query : (selected?.label ?? value ?? "")
 
   const filtered = React.useMemo(() => {
     const needle = query.trim().toLowerCase()
     if (needle === "") return options
-    return options.filter((option) => option.label.toLowerCase().includes(needle))
+    return options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(needle) ||
+        option.keywords?.some((keyword) => keyword.toLowerCase().includes(needle)) === true,
+    )
   }, [options, query])
+
+  // The "use this text" row is appended, so option indices stay stable for the others.
+  const rows = React.useMemo<SelectOption[]>(() => {
+    const custom = query.trim()
+    if (!allowCustom || custom === "") return [...filtered]
+    const known = options.some(
+      (option) => option.label.toLowerCase() === custom.toLowerCase() || option.key === custom,
+    )
+    if (known) return [...filtered]
+    return [...filtered, { key: custom, label: `使用「${custom}」` }]
+  }, [allowCustom, filtered, options, query])
 
   React.useEffect(() => {
     if (!open) return
@@ -93,9 +117,9 @@ export function Combobox({
 
   React.useEffect(() => {
     if (!open) return
-    const index = filtered.findIndex((option) => option.key === value)
+    const index = rows.findIndex((option) => option.key === value)
     setActive(index >= 0 ? index : 0)
-  }, [open, filtered, value])
+  }, [open, rows, value])
 
   function openMenu() {
     if (isDisabledFinal) return
@@ -108,6 +132,13 @@ export function Combobox({
     onChange(option.key)
     setOpen(false)
     inputRef.current?.blur()
+  }
+
+  /** Commit typed text that the list does not know about, if this field accepts free text. */
+  function commitCustom() {
+    const text = query.trim()
+    if (!allowCustom || text === "" || text === selected?.label) return
+    onChange(text)
   }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
@@ -127,14 +158,14 @@ export function Combobox({
     }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault()
-      if (filtered.length === 0) return
+      if (rows.length === 0) return
       const step = event.key === "ArrowDown" ? 1 : -1
-      setActive((current) => (current + step + filtered.length) % filtered.length)
+      setActive((current) => (current + step + rows.length) % rows.length)
       return
     }
     if (event.key === "Enter") {
       event.preventDefault()
-      const option = filtered[active]
+      const option = rows[active]
       if (option != null) choose(option)
     }
   }
@@ -155,6 +186,7 @@ export function Combobox({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-autocomplete="list"
+        aria-invalid={invalid || undefined}
         autoComplete="off"
         spellCheck={false}
         placeholder={selected == null ? placeholder : ""}
@@ -167,8 +199,16 @@ export function Combobox({
           if (!open) setOpen(true)
         }}
         onKeyDown={handleKeyDown}
-        onBlur={() => setOpen(false)}
-        className={cn("bubo-field bubo-select__trigger", INPUT_SIZE[size], inputClassName)}
+        onBlur={() => {
+          setOpen(false)
+          commitCustom()
+        }}
+        className={cn(
+          "bubo-field bubo-select__trigger",
+          INPUT_SIZE[size],
+          invalid && "bubo-field--invalid",
+          inputClassName,
+        )}
       />
       <button
         type="button"
@@ -188,14 +228,14 @@ export function Combobox({
         {CHEVRON}
       </button>
 
-      {open && filtered.length > 0 && (
+      {open && rows.length > 0 && (
         <div
           role="listbox"
           aria-label={ariaLabel}
           data-open="true"
           className={cn("bubo-pop bubo-pop-motion bubo-select__menu", menuClassName)}
         >
-          {filtered.map((option, index) => (
+          {rows.map((option, index) => (
             <button
               key={option.key}
               type="button"

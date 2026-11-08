@@ -5,10 +5,14 @@
  * @gotcha  A card never changes money: this page only edits identity data and local scans.
  *          Scans are fetched per face with the scan's `updatedAt` in the query key, otherwise
  *          replacing an image would leave the old data URL on screen. Files stay in the
- *          sidecar's folder; nothing here writes to disk.
+ *          sidecar's folder; nothing here writes to disk. The wallet list groups cards by
+ *          bank (heaviest bank first, collapsible) and shows the front scan as the row
+ *          thumbnail, so the list reads like a wallet rather than a table. There is no page
+ *          header on purpose: the wallet list owns the single add action at its foot, and
+ *          totals are not shown — the route title comes from the top navigation.
  */
 
-import { useMemo, useState, type ReactNode } from "react"
+import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react"
 import { Button } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { AppIcon, notify } from "@bubo/ui"
@@ -20,7 +24,6 @@ import { useConfirm } from "../components/ui/ConfirmModal"
 import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { ScrollArea } from "../components/ui/ScrollArea"
-import { StatBlock } from "../components/ui/StatBlock"
 import { CardVisual, CardScanControls } from "./CardVisual"
 import {
   CardFormModal,
@@ -46,13 +49,20 @@ const BRAND_LABEL: Record<CardSummary["brand"], string> = {
   other: "其他",
 }
 
-function fmtAmount(value: number, symbol: string): string {
-  return `${symbol}${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+/**
+ * Open on press start, not on release: the gesture is already committed when the pointer
+ * goes down, so a release that the shell swallows (window activation, focus change) cannot
+ * leave the button looking dead while the user has to click again.
+ */
+function pressStarts(open: () => void) {
+  return (event: ReactPointerEvent) => {
+    if (event.button === 0) open()
+  }
 }
 
 export function CardsPage() {
   const queryClient = useQueryClient()
-  const { base, baseSymbol, toDisplay } = useCurrentRates()
+  const { base, baseSymbol } = useCurrentRates()
   const confirm = useConfirm()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -61,6 +71,7 @@ export function CardsPage() {
   const [busySide, setBusySide] = useState<CardSide | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CardSummary | null>(null)
+  const [collapsedBanks, setCollapsedBanks] = useState<Set<string>>(() => new Set())
 
   const cardsQuery = useQuery(trpc.cards.list.queryOptions({ includeArchived: showArchived }))
   const cards = useMemo(() => cardsQuery.data ?? [], [cardsQuery.data])
@@ -112,24 +123,26 @@ export function CardsPage() {
     }),
   )
 
-  const totals = useMemo(() => {
-    const active = cards.filter((card) => card.status === "active")
-    const creditLimit = active.reduce((sum, card) => {
-      if (card.cardType !== "credit" || !card.creditLimit) return sum
-      return sum + (toDisplay(card.creditLimit, card.currency) ?? 0)
-    }, 0)
-    const creditCount = active.filter((card) => card.cardType === "credit").length
-    const withScans = active.filter((card) => card.images.front || card.images.back).length
-    return { count: active.length, creditLimit, creditCount, withScans }
-  }, [cards, toDisplay])
-
   const grouped = useMemo(() => {
     const map = new Map<string, CardSummary[]>()
     for (const card of cards) {
-      map.set(card.bank, [...(map.get(card.bank) ?? []), card])
+      const bank = card.bank.trim() || "未填银行"
+      map.set(bank, [...(map.get(bank) ?? []), card])
     }
-    return [...map.entries()]
+    // Heaviest banks first, then by name so the order never jitters between renders.
+    return [...map.entries()].sort(
+      (a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], "zh-CN"),
+    )
   }, [cards])
+
+  function toggleBank(bank: string) {
+    setCollapsedBanks((current) => {
+      const next = new Set(current)
+      if (next.has(bank)) next.delete(bank)
+      else next.add(bank)
+      return next
+    })
+  }
 
   function openForm() {
     setFormOpen(true)
@@ -137,6 +150,11 @@ export function CardsPage() {
 
   function openCreate() {
     setEditing(null)
+    openForm()
+  }
+
+  function openEdit(card: CardSummary) {
+    setEditing(card)
     openForm()
   }
 
@@ -199,40 +217,9 @@ export function CardsPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--surface-1)]">
-      <div className="shrink-0 border-b border-[var(--hair-2)] px-8 pb-4 pt-7">
-        <div className="flex items-start gap-10">
-          <div>
-            <div className="flex items-center gap-2 text-[11px] text-[var(--ink-3)]">
-              <AppIcon name="cards" size={13} className="text-[var(--ink-4)]" />
-              卡片
-            </div>
-            <div className="mt-1 text-[13px] text-[var(--ink-2)]">
-              管理银行卡、信用卡与预付卡，扫描件只保存在本机
-            </div>
-          </div>
-          <div className="ml-auto flex items-end gap-8">
-            <StatBlock icon="cards" label="卡片" value={`${totals.count} 张`} />
-            <StatBlock
-              icon="investments"
-              label="信用卡额度"
-              value={`${fmtAmount(totals.creditLimit, baseSymbol)} · ${totals.creditCount} 张`}
-            />
-            <StatBlock
-              icon="import"
-              label="已上传卡面"
-              value={`${totals.withScans} / ${totals.count}`}
-            />
-            <Button size="sm" variant="primary" onPress={openCreate}>
-              <AppIcon name="add" size={13} />
-              添加卡片
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="flex w-[320px] shrink-0 flex-col border-r border-[var(--hair-2)]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-3">
+          <div className="flex items-center justify-between px-5 pb-2 pt-4">
             <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-[var(--ink-4)]">
               {showArchived ? "全部卡片" : "使用中"}
             </span>
@@ -250,62 +237,82 @@ export function CardsPage() {
                 <EmptyState
                   icon="cards"
                   title="还没有卡片"
-                  hint="添加第一张卡，再上传正反面扫描件"
-                  action={{ label: "添加卡片", onClick: openCreate }}
+                  hint="用下面的按钮添加第一张卡，再上传正反面扫描件"
                 />
               ) : (
-                <div className="px-3 pb-6">
-                  {grouped.map(([bank, bankCards]) => (
-                    <div key={bank} className="mt-2">
-                      <div className="px-2 pb-1 text-[10.5px] text-[var(--ink-4)]">{bank}</div>
-                      {bankCards.map((card) => {
-                        const isSelected =
-                          selected != null && String(selected.id) === String(card.id)
-                        return (
-                          <button
-                            key={String(card.id)}
-                            type="button"
-                            aria-selected={isSelected}
-                            onClick={() => {
-                              setSelectedId(String(card.id))
-                              setFlipped(false)
-                            }}
-                            className="bubo-row flex w-full items-center gap-3 rounded-[2px] px-2 py-2 text-left"
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="h-[26px] w-[40px] shrink-0 rounded-[3px]"
-                              style={{
-                                background: card.colorHex
-                                  ? `linear-gradient(135deg, ${card.colorHex}, color-mix(in srgb, ${card.colorHex} 70%, #000))`
-                                  : "linear-gradient(135deg, #2f6f8f, #1b3a5c)",
-                              }}
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-[12.5px] text-[var(--ink)]">
-                                {card.name}
-                              </span>
-                              <span className="block truncate text-[10.5px] text-[var(--ink-4)]">
-                                {TYPE_LABEL[card.cardType]} ·{" "}
-                                {card.numberLast4 ? `•••• ${card.numberLast4}` : "未填卡号"}
-                              </span>
-                            </span>
-                            {card.status === "archived" && (
-                              <span className="text-[10px] text-[var(--ink-4)]">已归档</span>
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
+                <div className="px-2 pb-6">
+                  {grouped.map(([bank, bankCards]) => {
+                    const isCollapsed = collapsedBanks.has(bank)
+                    return (
+                      <section key={bank} className="mt-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleBank(bank)}
+                          aria-expanded={!isCollapsed}
+                          className="sticky top-0 z-10 flex w-full items-center gap-1.5 rounded-[2px] bg-[var(--surface-1)] px-2 py-1.5 text-left"
+                        >
+                          <AppIcon
+                            name="chevronRight"
+                            size={11}
+                            className={`text-[var(--ink-4)] transition-transform duration-150 ${
+                              isCollapsed ? "" : "rotate-90"
+                            }`}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-[10.5px] font-semibold tracking-[.04em] text-[var(--ink-3)]">
+                            {bank}
+                          </span>
+                          <span className="shrink-0 text-[10px] tabular-nums text-[var(--ink-4)]">
+                            {bankCards.length}
+                          </span>
+                        </button>
+                        {!isCollapsed &&
+                          bankCards.map((card) => {
+                            const isSelected =
+                              selected != null && String(selected.id) === String(card.id)
+                            return (
+                              <button
+                                key={String(card.id)}
+                                type="button"
+                                aria-selected={isSelected}
+                                onClick={() => {
+                                  setSelectedId(String(card.id))
+                                  setFlipped(false)
+                                }}
+                                className="bubo-row flex w-full items-center gap-3 rounded-[2px] px-2 py-2 text-left"
+                              >
+                                <CardThumb card={card} />
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-[12.5px] text-[var(--ink)]">
+                                    {card.name}
+                                  </span>
+                                  <span className="block truncate text-[10.5px] text-[var(--ink-4)]">
+                                    {TYPE_LABEL[card.cardType]} ·{" "}
+                                    {card.numberLast4 ? `•••• ${card.numberLast4}` : "未填卡号"}
+                                  </span>
+                                </span>
+                                {card.status === "archived" && (
+                                  <span className="text-[10px] text-[var(--ink-4)]">已归档</span>
+                                )}
+                              </button>
+                            )
+                          })}
+                      </section>
+                    )
+                  })}
                 </div>
               )}
             </QueryState>
           </ScrollArea>
-          {/* Always-visible add action: the list header is easy to miss when the pane is
-              empty, and this keeps the affordance anchored to the list itself. */}
+          {/* The list owns the only add action: the page header is gone, so this stays
+              anchored under the wallet instead of floating in a toolbar. */}
           <div className="shrink-0 border-t border-[var(--hair-2)] px-4 py-3">
-            <Button size="sm" variant="secondary" className="w-full" onPress={openCreate}>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="w-full"
+              onPointerDown={pressStarts(openCreate)}
+              onPress={openCreate}
+            >
               <AppIcon name="add" size={12} />
               添加卡片
             </Button>
@@ -323,10 +330,7 @@ export function CardsPage() {
                 onFlipTo={setFlipped}
                 onPick={handlePick}
                 onRemove={handleRemove}
-                onEdit={() => {
-                  setEditing(selected)
-                  openForm()
-                }}
+                onEdit={() => openEdit(selected)}
                 onArchive={() => handleArchive(selected)}
                 baseCurrency={base}
                 baseSymbol={baseSymbol}
@@ -348,10 +352,6 @@ export function CardsPage() {
         open={formOpen}
         card={editing}
         defaultCurrency={base}
-        existingScans={{
-          front: editing?.images.front != null,
-          back: editing?.images.back != null,
-        }}
         onClose={() => {
           setFormOpen(false)
           setEditing(null)
@@ -401,7 +401,7 @@ function CardDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="ghost" onPress={onEdit}>
+          <Button size="sm" variant="ghost" onPointerDown={pressStarts(onEdit)} onPress={onEdit}>
             <AppIcon name="edit" size={12} />
             编辑
           </Button>
@@ -481,6 +481,24 @@ function InfoRow({ label, children }: { label: string; children: ReactNode }) {
       <span className="text-[10.5px] text-[var(--ink-4)]">{label}</span>
       <span className="text-[12px] text-[var(--ink-2)]">{children}</span>
     </div>
+  )
+}
+
+/** Wallet list thumbnail: the front scan when one exists, else the card's own gradient. */
+function CardThumb({ card }: { card: CardSummary }) {
+  const front = useCardScan(card, "front")
+  return (
+    <span
+      aria-hidden="true"
+      className="relative block h-[26px] w-[41px] shrink-0 overflow-hidden rounded-[3px]"
+      style={{
+        background: card.colorHex
+          ? `linear-gradient(135deg, ${card.colorHex}, color-mix(in srgb, ${card.colorHex} 70%, #000))`
+          : "linear-gradient(135deg, #2f6f8f, #1b3a5c)",
+      }}
+    >
+      {front.data && <img src={front.data} alt="" className="h-full w-full object-cover" />}
+    </span>
   )
 }
 

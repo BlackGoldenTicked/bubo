@@ -28,6 +28,8 @@ interface CurrencySelectProps {
   ariaLabel?: string
   isDisabled?: boolean
   className?: string
+  /** Extra classes for the input itself, e.g. a height override that matches the form. */
+  inputClassName?: string
 }
 
 export function CurrencySelect({
@@ -36,6 +38,7 @@ export function CurrencySelect({
   ariaLabel = "币种",
   isDisabled,
   className,
+  inputClassName = "",
 }: CurrencySelectProps) {
   return (
     <Combobox
@@ -47,7 +50,7 @@ export function CurrencySelect({
       value={value ? value.toUpperCase() : null}
       onChange={onChange}
       placeholder="搜索币种"
-      inputClassName="text-[12px]"
+      inputClassName={`text-[12px] ${inputClassName}`.trim()}
     />
   )
 }

@@ -18,6 +18,8 @@ export interface SelectOption {
   label: string
   /** Richer row content; falls back to `label`. */
   content?: React.ReactNode
+  /** Extra search tokens for the combobox (aliases, abbreviations); never displayed. */
+  keywords?: readonly string[]
   disabled?: boolean
 }
 

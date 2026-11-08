@@ -6,6 +6,7 @@
  */
 
 export * from "./account"
+export * from "./bank"
 export * from "./currency"
 export * from "./platform"
 export * from "./subscription-projection"

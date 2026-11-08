@@ -16,6 +16,12 @@ const FOCUSABLE =
 /** Matches the panel exit window so the closing frame is not cut off. */
 const EXIT_MS = 200
 
+/**
+ * A backdrop press that belongs to the gesture which opened the dialog must not close it.
+ * The opening press can still be in flight when the overlay appears under the pointer.
+ */
+const OPEN_GUARD_MS = 250
+
 export interface ModalProps {
   open: boolean
   onClose: () => void
@@ -37,21 +43,27 @@ export function Modal({
   children,
 }: ModalProps) {
   const panelRef = React.useRef<HTMLDivElement>(null)
-  const [mounted, setMounted] = React.useState(open)
+  const openedAtRef = React.useRef(0)
+  const [exiting, setExiting] = React.useState(false)
+
+  // The portal is part of the same commit as `open`, not a follow-up effect: a deferred
+  // mount costs a render pass and reads as "the first click did nothing" on this shell.
+  const shouldRender = open || exiting
 
   // Keep the panel mounted briefly after close so the exit transition can play.
   React.useEffect(() => {
     if (open) {
-      setMounted(true)
+      setExiting(true)
       return
     }
-    const timer = window.setTimeout(() => setMounted(false), EXIT_MS)
+    const timer = window.setTimeout(() => setExiting(false), EXIT_MS)
     return () => window.clearTimeout(timer)
   }, [open])
 
-  // Move focus into the dialog and restore it on close.
+  // Focus moves into the dialog when it opens and returns to the trigger when it closes.
   React.useEffect(() => {
     if (!open) return
+    openedAtRef.current = performance.now()
     const previous = document.activeElement as HTMLElement | null
     const panel = panelRef.current
     const first = panel?.querySelector<HTMLElement>(FOCUSABLE)
@@ -90,7 +102,7 @@ export function Modal({
     return () => document.removeEventListener("keydown", onKeyDown)
   }, [open, dismissable, onClose])
 
-  if (!mounted) return null
+  if (!shouldRender) return null
 
   return createPortal(
     <div
@@ -99,7 +111,11 @@ export function Modal({
         !open && "pointer-events-none opacity-0",
       )}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget && dismissable) onClose()
+        if (event.target !== event.currentTarget) return
+        if (!dismissable) return
+        // Ignore the tail of the press that opened the dialog.
+        if (performance.now() - openedAtRef.current < OPEN_GUARD_MS) return
+        onClose()
       }}
     >
       <div

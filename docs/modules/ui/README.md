@@ -16,8 +16,8 @@
 ## Primitive Map
 
 - `button.tsx` / `card.tsx` / `label.tsx` - layout and action primitives; the form (square vs pill, flat vs gradient, radius, press feedback) comes from CSS keyed on the active style.
-- `input.tsx` / `select.tsx` / `combobox.tsx` / `checkbox.tsx` / `switch.tsx` / `segmented.tsx` - form controls, replacing the previous component-library versions.
-- `modal.tsx` / `drawer.tsx` / `menu.tsx` / `notice.tsx` - overlay surfaces with portal, focus trap, and the style's own elevation and easing.
+- `input.tsx` / `select.tsx` / `combobox.tsx` / `checkbox.tsx` / `switch.tsx` / `segmented.tsx` - form controls, replacing the previous component-library versions. `Combobox` filters by option `label` plus optional `keywords` (aliases such as 农行), and `allowCustom` turns it into a searchable free-text field by appending a "使用「…」" row and committing the typed text on blur; `invalid` draws the danger border while the caller owns the message.
+- `modal.tsx` / `drawer.tsx` / `menu.tsx` / `notice.tsx` - overlay surfaces with portal, focus trap, and the style's own elevation and easing. `Modal` renders its portal in the same commit as `open` (a deferred mount costs a render pass and reads as "the first click did nothing" in this shell), ignores backdrop presses for the first 250ms so the gesture that opened it cannot close it, and moves focus into the panel on open and back to the trigger on close.
 - `spinner.tsx` / `icons.tsx` - loading state and the hand-drawn glyphs used inside primitives.
 - `app-icon.tsx` - the only icon surface product code should use: `AppIcon` maps semantic names
   (`dashboard`, `voice`, `eyeOff`, `income`…) onto QingIcon glyphs (Apache-2.0, `qingicon-react`),

@@ -34,6 +34,7 @@
   notifications.
 - `utils/account.ts` - account hierarchy and display helpers.
 - `utils/currency.ts` - curated common-currency registry (code, localized name, display symbol) with `currencySymbol` and `formatMoney` helpers used by renderer pickers and money formatting.
+- `utils/bank.ts` - curated Chinese bank registry for the card form's bank picker: official short name (the value stored on a card and the wallet's grouping key), `kind` (国有/政策/股份/城商/农商/民营/外资) with `BANK_KIND_LABEL`, and search-only `aliases` so 农行/招行 find 农业银行/招商银行. The picker accepts free text for banks outside the list.
 - `utils/platform.ts` - cross-package desktop/browser/server helpers that do not import Tauri.
 - `utils/subscription-projection.ts` - pure read-time subscription recurrence projection shared by
   renderer and API compatibility reads; month-end dates stay anchored to the original plan.
