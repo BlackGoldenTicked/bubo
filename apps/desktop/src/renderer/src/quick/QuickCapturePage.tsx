@@ -1,11 +1,11 @@
 /**
  * @purpose Record one utterance from the menu bar, parse it, and let the user save it in place.
  * @role    Renderer surface for the floating quick-capture window.
- * @deps    tRPC voice/cashflow/subscription/loan mutations, the recorder, and the Tauri event bus.
+ * @deps    tRPC voice/cashflow/subscription/loan mutations, the recorder, the theme, and the Tauri event bus.
  * @gotcha  This window is the whole flow: mic → ASR → intent → save → hide. It must never
- *          navigate, because there is no shell here. Non-cashflow domains that need an existing
- *          account or position hand the intent back to the main window through
- *          `bubo://voice-intent` and close, so the page's own form stays the only writer.
+ *          navigate, because there is no shell here. Recording starts by itself when the window
+ *          opens (and again on every `quick-capture:start`), the same hotkey stops it via
+ *          `quick-capture:toggle`, and every message is Chinese — the window has no other copy.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -15,6 +15,7 @@ import { AppIcon, notify } from "@bubo/ui"
 import { currencySymbol } from "@bubo/shared"
 import type { VoiceIntent } from "@bubo/shared/contracts"
 import { trpc, trpcClient } from "@/lib/trpc"
+import { useThemeEffect } from "@/lib/theme"
 import { MAX_RECORDING_MS, VoiceRecorder } from "@/lib/voice/audioRecorder"
 
 type Phase = "idle" | "recording" | "working" | "review" | "done" | "error"
@@ -37,14 +38,32 @@ const DOMAIN_HINT: Record<VoiceIntent["domain"], string> = {
   unknown: "没有听清",
 }
 
+const IDLE_STATUS = "正在准备麦克风…"
+
+/** Browser errors are English; the window only speaks Chinese. */
+function describeRecorderError(error: unknown): string {
+  const name = error instanceof DOMException ? error.name : ""
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "没有麦克风权限。请到「系统设置 → 隐私与安全性 → 麦克风」里允许 bubo，然后重试。"
+  }
+  if (name === "NotFoundError") return "没有检测到可用的麦克风。"
+  if (name === "NotReadableError") return "麦克风正被其它程序占用，先关掉录音软件再重试。"
+  if (error instanceof Error && error.message.trim().length > 0) return error.message
+  return "无法使用麦克风。"
+}
+
 export function QuickCapturePage() {
+  // The quick window skips the shell, so it has to apply the theme itself.
+  useThemeEffect()
+
   const [phase, setPhase] = useState<Phase>("idle")
-  const [status, setStatus] = useState("按快捷键开始说话")
+  const [status, setStatus] = useState(IDLE_STATUS)
   const [transcript, setTranscript] = useState("")
   const [intents, setIntents] = useState<VoiceIntent[]>([])
   const [elapsed, setElapsed] = useState(0)
   const recorderRef = useRef<VoiceRecorder | null>(null)
   const startedRef = useRef(false)
+  const toggleRef = useRef<() => void>(() => {})
 
   const createCashflow = useMutation(trpc.cashflow.create.mutationOptions())
   const createSubscription = useMutation(trpc.subscriptions.create.mutationOptions())
@@ -54,16 +73,16 @@ export function QuickCapturePage() {
     if (recorderRef.current?.isRecording) return
     const recorder = recorderRef.current ?? new VoiceRecorder()
     recorderRef.current = recorder
+    setIntents([])
+    setTranscript("")
+    setElapsed(0)
     try {
       await recorder.start()
       setPhase("recording")
-      setStatus("正在收音…再按一次结束")
-      setIntents([])
-      setTranscript("")
-      setElapsed(0)
+      setStatus("正在收音…再按一次快捷键结束")
     } catch (error) {
       setPhase("error")
-      setStatus(error instanceof Error ? error.message : "无法使用麦克风")
+      setStatus(describeRecorderError(error))
     }
   }, [])
 
@@ -77,7 +96,7 @@ export function QuickCapturePage() {
       recording = await recorder.stop()
     } catch (error) {
       setPhase("error")
-      setStatus(error instanceof Error ? error.message : "录音失败")
+      setStatus(describeRecorderError(error))
       return
     }
     try {
@@ -90,7 +109,7 @@ export function QuickCapturePage() {
       const usable = result.intents.filter((intent) => intent.domain !== "unknown")
       if (usable.length === 0) {
         setPhase("error")
-        setStatus("没有识别出可保存的记录，换个说法再试一次")
+        setStatus("没有听出可保存的记录，换个说法再试一次")
         return
       }
       setIntents(usable)
@@ -98,34 +117,64 @@ export function QuickCapturePage() {
       setStatus(usable.length > 1 ? `识别到 ${usable.length} 笔，逐笔保存` : "确认后保存")
     } catch (error) {
       setPhase("error")
-      setStatus(error instanceof Error ? error.message : "解析失败")
+      setStatus(error instanceof Error ? error.message : "解析失败，请重试")
     }
   }, [])
 
   const toggle = useCallback(() => {
     if (phase === "recording") void stopAndParse()
-    else void start()
+    else if (phase === "idle" || phase === "error") void start()
   }, [phase, start, stopAndParse])
 
-  /** The shortcut (or the tray menu) re-arms the window instead of mounting a new one. */
+  toggleRef.current = toggle
+
+  /** The hotkey re-arms the reused window: drop any live recording and listen again. */
+  const restart = useCallback(async () => {
+    const recorder = recorderRef.current
+    if (recorder?.isRecording) {
+      try {
+        await recorder.stop()
+      } catch {
+        // A failed stop still leaves the window usable for the next attempt.
+      }
+    }
+    setPhase("idle")
+    setStatus(IDLE_STATUS)
+    setIntents([])
+    setTranscript("")
+    await start()
+  }, [start])
+
   useEffect(() => {
-    let dispose: (() => void) | null = null
+    let disposeStart: (() => void) | null = null
+    let disposeToggle: (() => void) | null = null
+    let alive = true
     void (async () => {
       try {
         const { listen } = await import("@tauri-apps/api/event")
-        dispose = await listen("quick-capture:start", () => {
-          setPhase("idle")
-          setStatus("按快捷键开始说话")
-          setIntents([])
-          setTranscript("")
-          void start()
+        const stopStart = await listen("quick-capture:start", () => {
+          void restart()
         })
+        const stopToggle = await listen("quick-capture:toggle", () => {
+          toggleRef.current()
+        })
+        if (!alive) {
+          stopStart()
+          stopToggle()
+          return
+        }
+        disposeStart = stopStart
+        disposeToggle = stopToggle
       } catch {
         // Running outside Tauri (tests): the manual button still works.
       }
     })()
-    return () => dispose?.()
-  }, [start])
+    return () => {
+      alive = false
+      disposeStart?.()
+      disposeToggle?.()
+    }
+  }, [restart])
 
   useEffect(() => {
     if (!startedRef.current) {
@@ -144,6 +193,19 @@ export function QuickCapturePage() {
     return () => window.clearInterval(timer)
   }, [phase, stopAndParse])
 
+  // Esc closes the floating window; a hidden window must never keep the microphone open.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault()
+        void closeWindow()
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const head = intents[0] ?? null
 
   function advance() {
@@ -154,8 +216,16 @@ export function QuickCapturePage() {
   }
 
   async function closeWindow() {
+    const recorder = recorderRef.current
+    if (recorder?.isRecording) {
+      try {
+        await recorder.stop()
+      } catch {
+        // Closing must succeed even if the recorder is already gone.
+      }
+    }
     setPhase("idle")
-    setStatus("按快捷键开始说话")
+    setStatus(IDLE_STATUS)
     try {
       await window.bubo.hideQuickCapture()
     } catch {
@@ -231,6 +301,7 @@ export function QuickCapturePage() {
   }
 
   const amountValue = head && head.domain === "cashflow" ? head.amount : null
+  const recording = phase === "recording"
 
   return (
     <div
@@ -242,9 +313,9 @@ export function QuickCapturePage() {
         className="flex shrink-0 items-center gap-2 border-b border-[var(--hair-2)] px-4 py-3"
       >
         <AppIcon name="voice" size={14} className="text-[var(--accent)]" />
-        <span className="text-[12.5px] font-semibold">语音录入</span>
-        <span className="ml-auto text-[10.5px] text-[var(--ink-4)]">
-          {phase === "recording" ? `${(elapsed / 1000).toFixed(1)}s` : "Esc 关闭"}
+        <span className="text-[12.5px] font-semibold">语音记账</span>
+        <span className="ml-auto text-[10.5px] tabular-nums text-[var(--ink-4)]">
+          {recording ? `${(elapsed / 1000).toFixed(1)} 秒` : "按 Esc 关闭"}
         </span>
         <button
           type="button"
@@ -261,20 +332,28 @@ export function QuickCapturePage() {
           type="button"
           onClick={toggle}
           disabled={phase === "working"}
+          aria-label={recording ? "结束录音并识别" : "开始录音"}
           className="mx-auto flex h-[92px] w-[92px] shrink-0 items-center justify-center rounded-full border transition-colors"
           style={{
-            borderColor: phase === "recording" ? "var(--red)" : "var(--hair)",
-            background:
-              phase === "recording"
-                ? "color-mix(in srgb, var(--red) 12%, transparent)"
-                : "var(--surface-2)",
-            color: phase === "recording" ? "var(--red)" : "var(--accent)",
+            borderColor: recording ? "var(--red)" : "var(--hair)",
+            background: recording
+              ? "color-mix(in srgb, var(--red) 12%, transparent)"
+              : "var(--surface-2)",
+            color: recording ? "var(--red)" : "var(--accent)",
           }}
         >
           <AppIcon name="voice" size={30} />
         </button>
 
         <div className="text-center text-[12px] text-[var(--ink-2)]">{status}</div>
+
+        {phase === "error" && (
+          <div className="flex justify-center">
+            <Button size="sm" variant="secondary" onPress={() => void restart()}>
+              重新录音
+            </Button>
+          </div>
+        )}
 
         {transcript && (
           <div className="rounded-[var(--radius-sm)] border border-[var(--hair-2)] px-3 py-2 text-[11.5px] text-[var(--ink-3)]">

@@ -303,6 +303,11 @@ pub fn run() {
 
             let handle = app.handle().clone();
             shell::setup_tray(&handle)?;
+            // Debug hook: BUBO_OPEN_QUICK_CAPTURE=1 opens the capture window on launch so it can be
+            // inspected (or screenshotted) without pressing the global shortcut.
+            if std::env::var("BUBO_OPEN_QUICK_CAPTURE").ok().as_deref() == Some("1") {
+                let _ = shell::open_quick_capture(&handle);
+            }
             match shell::setup_shortcut(&handle) {
                 Ok(registered) => {
                     app.manage(ShortcutState(Mutex::new(registered)));

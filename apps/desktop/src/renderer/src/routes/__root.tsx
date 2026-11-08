@@ -27,8 +27,10 @@ export const Route = createRootRoute({
 
 /** The menu-bar window renders the bare capture surface: no shell, nav, or voice sheet. */
 function RootRouteComponent() {
+  // The capture window is a bare surface: match on the whole URL so a rewritten hash or an
+  // extra query string can never fall through to the full shell (which has no room for it).
   const isQuickCapture =
-    typeof window !== "undefined" && window.location.hash.startsWith("#/quick-capture")
+    typeof window !== "undefined" && window.location.href.includes("quick-capture")
   if (isQuickCapture) return <QuickCapturePage />
   return <RootLayout />
 }
