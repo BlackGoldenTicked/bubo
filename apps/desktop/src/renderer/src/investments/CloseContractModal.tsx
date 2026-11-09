@@ -71,7 +71,9 @@ export function CloseContractModal({ open, form, position, saving, onSave, onClo
         <Modal.Dialog>
           <Modal.CloseTrigger />
           <Modal.Header>
-            <Modal.Heading>平仓合约</Modal.Heading>
+            <Modal.Heading>
+              {form.outcome === "liquidated" ? "标记已爆仓" : "平仓合约"}
+            </Modal.Heading>
             {position != null && (
               <Dim style={{ fontSize: 11, marginTop: 2 }}>
                 {position.symbol} · {CONTRACT_SIDE_LABELS[position.side]}{" "}
@@ -168,7 +170,7 @@ export function CloseContractModal({ open, form, position, saving, onSave, onClo
               isDisabled={saving}
               onPress={() => void handleSubmit(onSave)()}
             >
-              {saving ? "保存中…" : "确认平仓"}
+              {saving ? "保存中…" : form.outcome === "liquidated" ? "确认标记" : "确认平仓"}
             </Button>
             <Button variant="outline" slot="close">
               取消

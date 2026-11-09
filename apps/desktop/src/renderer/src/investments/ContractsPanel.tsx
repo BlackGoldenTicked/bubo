@@ -31,7 +31,12 @@ import { BackButton } from "../components/ui/BackButton"
 import { useConfirm } from "../components/ui/ConfirmModal"
 import { AddContractModal, emptyContractForm, type ContractForm } from "./AddContractModal"
 import { EditContractModal, contractUpdateForm, type ContractUpdateForm } from "./EditContractModal"
-import { CloseContractModal, closeContractForm, type CloseContractForm } from "./CloseContractModal"
+import {
+  CloseContractModal,
+  closeContractForm,
+  type CloseContractForm,
+  type CloseOutcome,
+} from "./CloseContractModal"
 import {
   computeContractPnl,
   CONTRACT_SIDE_LABELS,
@@ -51,6 +56,7 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
   const pnl = computeContractPnl(contract)
   const symbol = currencySymbol(contract.currency)
   const open = contract.status === "open"
+  const liquidated = contract.status === "liquidated"
   const pnlValue = open ? (pnl.unrealizedPnl ?? 0) : (pnl.realizedPnl ?? 0)
   const pnlLabel = open ? "未实现" : "已实现"
 
@@ -77,7 +83,14 @@ const ContractRow = memo(function ContractRow({ contract, selected, onSelect }: 
         }}
       >
         <div style={{ width: 170, flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: liquidated ? "var(--ink-3)" : "var(--ink)",
+              textDecoration: liquidated ? "line-through" : "none",
+            }}
+          >
             {contract.symbol}
             <span
               style={{
@@ -234,9 +247,9 @@ export function ContractsPanel() {
     setUpdateForm(contractUpdateForm(contract))
   }
 
-  function openClose(contract: ContractPositionSummary) {
+  function openClose(contract: ContractPositionSummary, outcome: CloseOutcome = "closed") {
     setCloseTarget(contract)
-    setCloseForm(closeContractForm())
+    setCloseForm({ ...closeContractForm(), outcome })
   }
 
   function saveContract(values: ContractForm) {
@@ -470,6 +483,7 @@ export function ContractsPanel() {
                   onBack={() => setSelectedId(null)}
                   onUpdate={() => openUpdate(selectedContract)}
                   onClose={() => openClose(selectedContract)}
+                  onMarkLiquidated={() => openClose(selectedContract, "liquidated")}
                   onDelete={() => removeContract(selectedContract)}
                 />
               )}
@@ -511,6 +525,7 @@ interface ContractDetailProps {
   onBack: () => void
   onUpdate: () => void
   onClose: () => void
+  onMarkLiquidated: () => void
   onDelete: () => void
 }
 
@@ -520,6 +535,7 @@ function ContractDetail({
   onBack,
   onUpdate,
   onClose,
+  onMarkLiquidated,
   onDelete,
 }: ContractDetailProps) {
   const fmt = useMoney()
@@ -620,6 +636,15 @@ function ContractDetail({
             </Button>
             <Button size="sm" variant="outline" onPress={onClose}>
               平仓
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              style={{ color: "var(--red)" }}
+              isDisabled={saving}
+              onPress={onMarkLiquidated}
+            >
+              标记已爆仓
             </Button>
           </>
         )}

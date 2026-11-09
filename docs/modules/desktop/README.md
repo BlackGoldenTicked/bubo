@@ -62,7 +62,9 @@ renderer, routing, local app resources, and desktop packaging configuration.
   snapshots, and the surface stays explicit that market value is estimated from manual quotes.
   A top-level tab switches to `ContractsPanel`: leveraged contract rows grouped by
   open/closed/liquidated with create/update/close/delete forms whose P&L math mirrors
-  `contract-rules.ts` and stays outside net worth.
+  `contract-rules.ts` and stays outside net worth. Liquidated rows render the symbol struck
+  through, and an open contract can be marked 已爆仓 from the detail pane, which opens the
+  close form preset to the 爆仓强平 outcome (realized loss = full margin).
 - `loans/` - future loan obligation views and schedule calculations.
 - `settings/` - ledger, category, and app configuration surfaces, including `AiVoiceSection` for the Bailian ASR and DeepSeek keys used by voice entry.
 - `subscriptions/` - recurring future obligation views that project calendar/list dates from plans at
