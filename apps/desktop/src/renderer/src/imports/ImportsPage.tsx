@@ -90,6 +90,15 @@ const KIND_FILTERS: Array<{ key: KindFilterKey; label: string }> = [
   { key: "income", label: "收入" },
 ]
 
+/**
+ * The list query must let the database do the date filtering: the page renders and counts
+ * exactly what the fetch returns, so a small fixed limit silently hides every row outside
+ * the newest window — filtering 自定义 2025-10 over a ledger whose newest 500 rows start in
+ * 2026-06 rendered 「共 0 笔」 even though October 2025 has 167 rows. The table is
+ * virtualized, so a window covering the whole ledger stays cheap.
+ */
+const LIST_LIMIT = 20000
+
 const parseAsTrimmedString = createParser({
   parse: (value: string) => value.trim(),
   serialize: (value: string) => value.trim(),
@@ -518,7 +527,11 @@ export function ImportsPage() {
       status: "active",
       includeInAnalytics: true,
       flowKind: ["income", "expense"],
-      limit: 500,
+      // Same predicates the client filter applies, pushed into SQLite so older windows
+      // actually return rows instead of being cut off by the limit.
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+      limit: LIST_LIMIT,
     }),
   )
   const statementLinesQuery = useQuery(trpc.imports.statementLines.queryOptions({ limit: 500 }))
