@@ -32,7 +32,7 @@ import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES, sourceLabel } from "@/lib/domainDisplay"
 import { dateKey } from "@/lib/dates"
-import { RANGE_PRESETS, resolveRangePreset, type RangePresetKey } from "@/lib/dateRanges"
+import { resolveRangePreset, type RangePresetKey } from "@/lib/dateRanges"
 import { useMoney } from "@/lib/useMoney"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { TxDetailPanel, type Tx } from "./TxDetailPanel"
@@ -61,7 +61,6 @@ interface TxFilterForm {
   timeFilter: TimeFilterKey
   dateFrom: string
   dateTo: string
-  sourceFilter: string
   categoryFilter: string
   kindFilter: KindFilterKey
   keyword: string
@@ -72,17 +71,10 @@ const DEFAULT_FILTERS: TxFilterForm = {
   timeFilter: "this_month",
   dateFrom: DEFAULT_TIME_BOUNDS.from,
   dateTo: DEFAULT_TIME_BOUNDS.to,
-  sourceFilter: "all",
   categoryFilter: "all",
   kindFilter: "all",
   keyword: "",
 }
-
-/** Chinese quick ranges, in the order a ledger user scans them. */
-const TIME_FILTERS: Array<{ key: TimeFilterKey; label: string }> = [
-  ...RANGE_PRESETS,
-  { key: "all", label: "全部" },
-]
 
 const KIND_FILTERS: Array<{ key: KindFilterKey; label: string }> = [
   { key: "all", label: "全部类型" },
@@ -108,7 +100,6 @@ const IMPORTS_FILTER_PARSERS = {
   timeFilter: parseAsStringLiteral(TIME_FILTER_KEYS).withDefault(DEFAULT_FILTERS.timeFilter),
   dateFrom: parseAsTrimmedString.withDefault(DEFAULT_FILTERS.dateFrom),
   dateTo: parseAsTrimmedString.withDefault(DEFAULT_FILTERS.dateTo),
-  sourceFilter: parseAsString.withDefault(DEFAULT_FILTERS.sourceFilter),
   categoryFilter: parseAsString.withDefault(DEFAULT_FILTERS.categoryFilter),
   kindFilter: parseAsStringLiteral(KIND_FILTER_KEYS).withDefault(DEFAULT_FILTERS.kindFilter),
   keyword: parseAsTrimmedString.withDefault(DEFAULT_FILTERS.keyword),
@@ -118,7 +109,6 @@ const IMPORTS_FILTER_URL_KEYS = {
   timeFilter: "period",
   dateFrom: "from",
   dateTo: "to",
-  sourceFilter: "source",
   categoryFilter: "category",
   kindFilter: "type",
   keyword: "q",
@@ -487,7 +477,6 @@ export function ImportsPage() {
   const timeFilter = useWatch({ control, name: "timeFilter" }) ?? DEFAULT_FILTERS.timeFilter
   const dateFrom = useWatch({ control, name: "dateFrom" }) ?? DEFAULT_FILTERS.dateFrom
   const dateTo = useWatch({ control, name: "dateTo" }) ?? DEFAULT_FILTERS.dateTo
-  const sourceFilter = useWatch({ control, name: "sourceFilter" }) ?? DEFAULT_FILTERS.sourceFilter
   const categoryFilter =
     useWatch({ control, name: "categoryFilter" }) ?? DEFAULT_FILTERS.categoryFilter
   const kindFilter = useWatch({ control, name: "kindFilter" }) ?? DEFAULT_FILTERS.kindFilter
@@ -513,7 +502,6 @@ export function ImportsPage() {
     urlFilters.dateTo,
     urlFilters.kindFilter,
     urlFilters.keyword,
-    urlFilters.sourceFilter,
     urlFilters.timeFilter,
   ])
 
@@ -567,17 +555,6 @@ export function ImportsPage() {
     () => new Map((categoriesQuery.data ?? []).map((category) => [String(category.id), category])),
     [categoriesQuery.data],
   )
-  const sourceOptions = useMemo(
-    () => [...new Set(txs.map((tx) => tx.source))].sort((a, b) => a.localeCompare(b)),
-    [txs],
-  )
-  const sourceFilterOptions = useMemo(
-    () => [
-      { key: "all", label: "全部来源" },
-      ...sourceOptions.map((source) => ({ key: source, label: sourceLabel(source) })),
-    ],
-    [sourceOptions],
-  )
   const categoryOptions = useMemo(
     () =>
       (categoriesQuery.data ?? [])
@@ -619,20 +596,12 @@ export function ImportsPage() {
     setValue("categoryFilter", "all")
     updateUrlFilters({ categoryFilter: "all" })
   }, [categoriesQuery.data, categoryFilter, categoryOptions, setValue, updateUrlFilters])
-  useEffect(() => {
-    if (cashflowQuery.data == null) return
-    if (sourceFilter === "all") return
-    if (sourceOptions.includes(sourceFilter)) return
-    setValue("sourceFilter", "all")
-    updateUrlFilters({ sourceFilter: "all" })
-  }, [cashflowQuery.data, setValue, sourceFilter, sourceOptions, updateUrlFilters])
   const filteredTxs = useMemo(() => {
     const term = normalizedKeyword.toLowerCase()
     const selectedCategories = categoryFilterSet(categoryFilter)
     return txs.filter((tx) => {
       if (dateFrom && tx.date < dateFrom) return false
       if (dateTo && tx.date > dateTo) return false
-      if (sourceFilter !== "all" && tx.source !== sourceFilter) return false
       if (selectedCategories != null && !selectedCategories.has(String(tx.categoryId ?? ""))) {
         return false
       }
@@ -653,7 +622,7 @@ export function ImportsPage() {
       }
       return true
     })
-  }, [categoryFilter, dateFrom, dateTo, kindFilter, normalizedKeyword, sourceFilter, txs])
+  }, [categoryFilter, dateFrom, dateTo, kindFilter, normalizedKeyword, txs])
   const rangeOut = filteredTxs
     .filter((t) => t.flowKind === "expense")
     .reduce((s, t) => s + t.amount, 0)
@@ -734,7 +703,6 @@ export function ImportsPage() {
     timeFilter !== DEFAULT_FILTERS.timeFilter ||
     dateFrom !== DEFAULT_FILTERS.dateFrom ||
     dateTo !== DEFAULT_FILTERS.dateTo ||
-    sourceFilter !== DEFAULT_FILTERS.sourceFilter ||
     categoryFilter !== DEFAULT_FILTERS.categoryFilter ||
     kindFilter !== DEFAULT_FILTERS.kindFilter ||
     normalizedKeyword.length > 0
@@ -951,60 +919,18 @@ export function ImportsPage() {
             >
               <Controller
                 control={control}
-                name="timeFilter"
+                name="kindFilter"
                 render={({ field }) => (
                   <FilterSelectField
-                    label="时间"
+                    label="类型"
                     value={field.value}
                     onChange={(value) => {
-                      const next = value as TimeFilterKey
-                      if (next === "custom") {
-                        field.onChange(next)
-                        updateUrlFilters({ timeFilter: next })
-                        return
-                      }
-                      const bounds = timeFilterBounds(next, refDate)
+                      const next = value as KindFilterKey
                       field.onChange(next)
-                      setValue("dateFrom", bounds.from)
-                      setValue("dateTo", bounds.to)
-                      updateUrlFilters({
-                        timeFilter: next,
-                        dateFrom: bounds.from,
-                        dateTo: bounds.to,
-                      })
+                      updateUrlFilters({ kindFilter: next })
                     }}
-                    options={TIME_FILTERS}
-                    className="w-[116px]"
-                  />
-                )}
-              />
-              <div className="w-[250px]">
-                <FormField label="日期范围" labelClassName={FILTER_LABEL_CLASS}>
-                  <DateRangeFilter
-                    value={{ from: dateFrom, to: dateTo }}
-                    allowAll
-                    onChange={(next) => applyCustomDateRange(next.from, next.to)}
-                    onPresetChange={(key) => {
-                      if (key === "custom") return
-                      setValue("timeFilter", key as TimeFilterKey)
-                      updateUrlFilters({ timeFilter: key })
-                    }}
-                  />
-                </FormField>
-              </div>
-              <Controller
-                control={control}
-                name="sourceFilter"
-                render={({ field }) => (
-                  <FilterSelectField
-                    label="来源"
-                    value={field.value}
-                    onChange={(value) => {
-                      field.onChange(value)
-                      updateUrlFilters({ sourceFilter: value })
-                    }}
-                    options={sourceFilterOptions}
-                    className="w-[122px]"
+                    options={KIND_FILTERS}
+                    className="w-[108px]"
                   />
                 )}
               />
@@ -1024,23 +950,20 @@ export function ImportsPage() {
                   />
                 )}
               />
-              <Controller
-                control={control}
-                name="kindFilter"
-                render={({ field }) => (
-                  <FilterSelectField
-                    label="类型"
-                    value={field.value}
-                    onChange={(value) => {
-                      const next = value as KindFilterKey
-                      field.onChange(next)
-                      updateUrlFilters({ kindFilter: next })
+              <div className="w-[250px]">
+                <FormField label="时间" labelClassName={FILTER_LABEL_CLASS}>
+                  <DateRangeFilter
+                    value={{ from: dateFrom, to: dateTo }}
+                    allowAll
+                    onChange={(next) => applyCustomDateRange(next.from, next.to)}
+                    onPresetChange={(key) => {
+                      if (key === "custom") return
+                      setValue("timeFilter", key as TimeFilterKey)
+                      updateUrlFilters({ timeFilter: key })
                     }}
-                    options={KIND_FILTERS}
-                    className="w-[108px]"
                   />
-                )}
-              />
+                </FormField>
+              </div>
               <div className="w-[190px]">
                 <FormField label="搜索" labelClassName={FILTER_LABEL_CLASS}>
                   <Controller

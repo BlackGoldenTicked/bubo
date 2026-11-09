@@ -52,7 +52,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
   widened left summary workbench beside a persistent recent-cashflow table. Its cashflow section
   uses one shared date-range selector above equal-weight expense, income, and savings totals, with
   clickable daily expense bars that open same-period cashflow detail drawers.
-- `imports/` - imported statement and cashflow event views, including `AddTxModal` manual entry, which accepts a prefilled form from a voice cashflow intent. The cashflow list query pushes the page's date bounds into `cashflow.list` (`dateFrom`/`dateTo`, `LIST_LIMIT`) so SQLite filters by window — a fixed small limit would silently hide every row outside the newest window and make older custom ranges render as 「共 0 笔」.
+- `imports/` - imported statement and cashflow event views, including `AddTxModal` manual entry, which accepts a prefilled form from a voice cashflow intent. The cashflow list query pushes the page's date bounds into `cashflow.list` (`dateFrom`/`dateTo`, `LIST_LIMIT`) so SQLite filters by window — a fixed small limit would silently hide every row outside the newest window and make older custom ranges render as 「共 0 笔」. The toolbar order is fixed (类型 → 分类 → 时间 → 搜索) and has no 来源 filter: source is currently a single-value dimension (现金), and quick ranges live in the date field's own menu, so a separate preset select would be redundant.
 - `investments/` - trade-driven holdings with manual price quotes. List rows lead with the invested
   amount (spot: cost basis; leveraged: margin, marked 估 when estimated) so the headline number does
   not drift with the market; market value and notional live in the detail panel and the summary.
