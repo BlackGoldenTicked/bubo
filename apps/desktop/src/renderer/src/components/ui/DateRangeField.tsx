@@ -7,12 +7,16 @@
  *          dispatching an outside pointer event: the surrounding modal listens for the same
  *          event and would dismiss the whole form. The active chip is derived from the current
  *          bounds, never from local state, so a range restored from the URL still highlights.
+ *          The calendar open state is controlled: a click anywhere in the segment field opens
+ *          it (clicking a year/month/day segment must pop the calendar, not just focus the
+ *          segment), and the trigger carries a fixed 22px width — HeroUI's `w-full` lets the
+ *          flex row squeeze it to zero, clipping the calendar icon.
  */
 
 import { DateField, DateRangePicker, Dropdown, RangeCalendar } from "@heroui/react"
 import type { DateValue } from "@internationalized/date"
 import { parseDate } from "@internationalized/date"
-import { useRef, type Key } from "react"
+import { useRef, useState, type Key } from "react"
 import {
   RANGE_PRESETS,
   formatRangeText,
@@ -49,6 +53,7 @@ export function DateRangeField({
   className,
 }: DateRangeFieldProps) {
   const pickerRef = useRef<HTMLDivElement>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
   const activeKey = matchRangePreset(value)
   const rangeValue: RangeValue | null =
     value.from && value.to ? { start: parseDate(value.from), end: parseDate(value.to) } : null
@@ -73,6 +78,8 @@ export function DateRangeField({
       <DateRangePicker
         ref={pickerRef}
         className="min-w-0 flex-1"
+        isOpen={calendarOpen}
+        onOpenChange={setCalendarOpen}
         value={rangeValue}
         onChange={(next: RangeValue | null) => {
           onChange({
@@ -85,6 +92,7 @@ export function DateRangeField({
         <DateField.Group
           fullWidth
           variant="secondary"
+          onClick={() => setCalendarOpen(true)}
           className={size === "sm" ? "h-[30px] min-h-[30px] px-2 text-[11.5px]" : undefined}
         >
           <DateField.Input slot="start">
@@ -97,8 +105,8 @@ export function DateRangeField({
             {(segment) => <DateField.Segment segment={segment} />}
           </DateField.Input>
           <DateField.Suffix>
-            <DateRangePicker.Trigger>
-              <DateRangePicker.TriggerIndicator />
+            <DateRangePicker.Trigger className="h-[22px] w-[22px] shrink-0 justify-center p-1">
+              <DateRangePicker.TriggerIndicator className="size-3.5" />
             </DateRangePicker.Trigger>
           </DateField.Suffix>
         </DateField.Group>
