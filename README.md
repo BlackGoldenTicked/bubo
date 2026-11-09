@@ -134,10 +134,10 @@ pnpm install:local  # same, then install to /Applications/bubo.app
 
 ## Acknowledgements
 
-- **[flowm-desktop](https://github.com/BlackGoldenTicked/flowm-desktop)** — bubo started as a
-  personal fork of this project. The asymmetric three-layer product model, the guarded
-  ledger CLI, and the statement-import pipeline all descend from it; every `flowm` brand
-  and identifier was migrated to `bubo` in
+- **[flowm-desktop](https://github.com/BarrySong97/flowm-desktop)** by BarrySong97 — bubo
+  started as a personal fork of this project. The asymmetric three-layer product model, the
+  guarded ledger CLI, and the statement-import pipeline all descend from it; every `flowm`
+  brand and identifier was migrated to `bubo` in
   [ADR 0013](./docs/decisions/0013-rename-brand-to-bubo.md).
 - **[lumno-extension](https://github.com/kubai087/lumno-extension)** by kubai087 — the
   `lumno` visual style (and the reference palette behind the theme system) is ported from
