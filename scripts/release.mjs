@@ -11,7 +11,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { execFileSync } from "node:child_process"
 
-const REPO = env("BUBO_RELEASE_REPO", "BlackGoldenTicked/bubo-desktop")
+const REPO = env("BUBO_RELEASE_REPO", "BlackGoldenTicked/bubo")
 const OWNER = env("BUBO_RELEASE_OWNER", "BlackGoldenTicked")
 const MAIN_BRANCH = env("BUBO_RELEASE_BRANCH", "main")
 const NOTES_FILE = env(

@@ -1,6 +1,6 @@
 # bubo Desktop
 
-[![CI](https://github.com/BlackGoldenTicked/bubo-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/BlackGoldenTicked/bubo-desktop/actions/workflows/ci.yml)
+[![CI](https://github.com/BlackGoldenTicked/bubo/actions/workflows/ci.yml/badge.svg)](https://github.com/BlackGoldenTicked/bubo/actions/workflows/ci.yml)
 [![License: GPL v3](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](./LICENSE)
 [![Tauri 2](https://img.shields.io/badge/shell-Tauri%202-24c8db.svg)](https://tauri.app)
 
@@ -48,7 +48,7 @@ and a forecast never silently becomes an actual.
 
 ## Download
 
-Grab the latest build from [Releases](https://github.com/BlackGoldenTicked/bubo-desktop/releases):
+Grab the latest build from [Releases](https://github.com/BlackGoldenTicked/bubo/releases):
 macOS is distributed as an `.app`/`.dmg` (Apple Silicon, ad-hoc signed — right-click → Open
 the first time), Windows as an NSIS installer.
 

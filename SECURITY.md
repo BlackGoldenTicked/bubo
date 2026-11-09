@@ -5,7 +5,7 @@
 Please **do not** open a public issue for anything security-related.
 
 - Preferred: GitHub's private advisory flow —
-  <https://github.com/BlackGoldenTicked/bubo-desktop/security/advisories/new>
+  <https://github.com/BlackGoldenTicked/bubo/security/advisories/new>
 - Or email the maintainer listed on the GitHub profile of
   [@BlackGoldenTicked](https://github.com/BlackGoldenTicked).
 

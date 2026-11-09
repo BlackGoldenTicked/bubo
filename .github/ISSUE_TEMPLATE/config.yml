@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/BlackGoldenTicked/bubo-desktop/security/advisories/new
+    url: https://github.com/BlackGoldenTicked/bubo/security/advisories/new
     about: Please report security issues privately, never in a public issue.
   - name: Usage question
-    url: https://github.com/BlackGoldenTicked/bubo-desktop/discussions
+    url: https://github.com/BlackGoldenTicked/bubo/discussions
     about: Ask how something works here instead of opening a bug report.

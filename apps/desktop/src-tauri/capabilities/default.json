@@ -15,7 +15,7 @@
       "identifier": "opener:allow-open-url",
       "allow": [
         {
-          "url": "https://github.com/BlackGoldenTicked/bubo-desktop/releases/latest"
+          "url": "https://github.com/BlackGoldenTicked/bubo/releases/latest"
         }
       ]
     }
