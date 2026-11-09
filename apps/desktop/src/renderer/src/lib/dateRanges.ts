@@ -3,9 +3,10 @@
  * @role    Renderer date-range vocabulary: labels, boundaries, and label formatting.
  * @deps    Local date helpers only.
  * @gotcha  Past periods are whole calendar periods; the running period stops at today so
- *          the range text never claims days that have not happened yet. "最近一个季度" and
- *          "半年" are rolling windows ending today, "上个季度" is a calendar quarter. All
- *          arithmetic stays on local dates — never toISOString, which shifts the day in UTC+8.
+ *          the range text never claims days that have not happened yet. 本季度/上个季度 are
+ *          calendar quarters, "半年" is a rolling window ending today. All arithmetic stays on
+ *          local dates — never toISOString, which shifts the day in UTC+8. "custom" survives
+ *          only as the state marker for a hand-picked range; it is not a menu entry.
  */
 
 import { addDays, localDateKey } from "./dates"
@@ -14,7 +15,7 @@ export type RangePresetKey =
   | "this_week"
   | "this_month"
   | "last_month"
-  | "last_quarter"
+  | "this_quarter"
   | "prev_quarter"
   | "half_year"
   | "this_year"
@@ -31,11 +32,10 @@ export const RANGE_PRESETS: readonly RangePreset[] = [
   { key: "this_week", label: "本周" },
   { key: "this_month", label: "本月" },
   { key: "last_month", label: "上个月" },
-  { key: "last_quarter", label: "最近一个季度" },
+  { key: "this_quarter", label: "本季度" },
   { key: "prev_quarter", label: "上个季度" },
   { key: "half_year", label: "半年" },
   { key: "this_year", label: "全年" },
-  { key: "custom", label: "自定义" },
 ]
 
 export type MenuRangePresetKey = Exclude<RangePresetKey, "custom" | "all">
@@ -87,10 +87,10 @@ export function resolveRangePreset(key: RangePresetKey, now = new Date()): DateB
     const previous = addMonthsToDate(now, -1)
     return { from: localDateKey(startOfMonth(previous)), to: localDateKey(endOfMonth(previous)) }
   }
-  if (key === "last_quarter") {
-    // Rolling three months ending today, which is what 最近一个季度 means in speech.
-    const start = addDays(addMonthsToDate(now, -3), 1)
-    return { from: localDateKey(start), to: today }
+  if (key === "this_quarter") {
+    // Calendar quarter-to-date, mirroring 上个季度 so the pair reads consistently.
+    const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3
+    return { from: localDateKey(new Date(now.getFullYear(), quarterStartMonth, 1)), to: today }
   }
   if (key === "prev_quarter") {
     const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3

@@ -40,9 +40,9 @@ describe("resolveRangePreset", () => {
     expect(resolveRangePreset("last_month", NOW)).toEqual({ from: "2026-10-01", to: "2026-10-31" })
   })
 
-  it("treats 最近一个季度 as a rolling three months ending today", () => {
-    expect(resolveRangePreset("last_quarter", NOW)).toEqual({
-      from: "2026-08-07",
+  it("treats 本季度 as the current calendar quarter up to today", () => {
+    expect(resolveRangePreset("this_quarter", NOW)).toEqual({
+      from: "2026-10-01",
       to: "2026-11-06",
     })
   })
@@ -68,8 +68,8 @@ describe("resolveRangePreset", () => {
 
   it("clamps the day when the rolling start lands on a short month", () => {
     const may31 = new Date(2026, 4, 31, 9, 0, 0)
-    // 5月31日 - 3 个月 = 2月31日 → clamped to 2月28日, then +1 day.
-    expect(resolveRangePreset("last_quarter", may31).from).toBe("2026-03-01")
+    // 5月31日 - 6 个月 = 11月31日 → clamped to 11月30日, then +1 day.
+    expect(resolveRangePreset("half_year", may31).from).toBe("2025-12-01")
   })
 
   it("gives the year to date for 全年", () => {
@@ -88,7 +88,7 @@ describe("matchRangePreset", () => {
     expect(matchRangePreset(resolveRangePreset("prev_quarter", NOW), NOW)).toBe("prev_quarter")
   })
 
-  it("falls back to 自定义 for a hand-picked range", () => {
+  it("falls back to the custom marker for a hand-picked range", () => {
     expect(matchRangePreset({ from: "2026-03-02", to: "2026-03-09" }, NOW)).toBe("custom")
   })
 
@@ -120,16 +120,15 @@ describe("formatRangeText", () => {
 })
 
 describe("RANGE_PRESETS", () => {
-  it("lists the eight quick ranges in Chinese order", () => {
+  it("lists the seven quick ranges in Chinese order", () => {
     expect(RANGE_PRESETS.map((preset) => preset.label)).toEqual([
       "本周",
       "本月",
       "上个月",
-      "最近一个季度",
+      "本季度",
       "上个季度",
       "半年",
       "全年",
-      "自定义",
     ])
   })
 })

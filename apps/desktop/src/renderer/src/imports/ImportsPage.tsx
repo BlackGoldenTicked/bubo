@@ -3,10 +3,13 @@
  * @role    Renderer feature surface for statement lines and cashflow details.
  * @deps    React, tRPC import/cashflow queries, and table/detail UI.
  * @gotcha  Imports describe past cashflow and must not update asset balances automatically.
+ *          The filter bar is sticky inside the table's scroll column, so the table header
+ *          sticks below its measured height instead of a constant — a stale constant leaves
+ *          the header floating over the first rows instead of pinning under the filters.
  */
 
-import { useCallback, useEffect, useRef, useMemo, useState } from "react"
-import { Button, Input } from "@heroui/react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useMemo, useState } from "react"
+import { Button } from "@heroui/react"
 import { Controller, useForm, useWatch } from "react-hook-form"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
@@ -47,7 +50,7 @@ const TIME_FILTER_KEYS = [
   "this_week",
   "this_month",
   "last_month",
-  "last_quarter",
+  "this_quarter",
   "prev_quarter",
   "half_year",
   "this_year",
@@ -63,7 +66,6 @@ interface TxFilterForm {
   dateTo: string
   categoryFilter: string
   kindFilter: KindFilterKey
-  keyword: string
 }
 
 const DEFAULT_TIME_BOUNDS = timeFilterBounds("this_month")
@@ -73,7 +75,6 @@ const DEFAULT_FILTERS: TxFilterForm = {
   dateTo: DEFAULT_TIME_BOUNDS.to,
   categoryFilter: "all",
   kindFilter: "all",
-  keyword: "",
 }
 
 const KIND_FILTERS: Array<{ key: KindFilterKey; label: string }> = [
@@ -130,7 +131,6 @@ const IMPORTS_FILTER_PARSERS = {
   dateTo: parseAsTrimmedString.withDefault(DEFAULT_FILTERS.dateTo),
   categoryFilter: parseAsString.withDefault(DEFAULT_FILTERS.categoryFilter),
   kindFilter: parseAsStringLiteral(KIND_FILTER_KEYS).withDefault(DEFAULT_FILTERS.kindFilter),
-  keyword: parseAsTrimmedString.withDefault(DEFAULT_FILTERS.keyword),
 }
 
 const IMPORTS_FILTER_URL_KEYS = {
@@ -139,7 +139,6 @@ const IMPORTS_FILTER_URL_KEYS = {
   dateTo: "to",
   categoryFilter: "category",
   kindFilter: "type",
-  keyword: "q",
 } as const
 
 const UNCATEGORIZED_CATEGORY_FILTER = "__uncategorized__"
@@ -514,8 +513,6 @@ export function ImportsPage() {
   const categoryFilter =
     useWatch({ control, name: "categoryFilter" }) ?? DEFAULT_FILTERS.categoryFilter
   const kindFilter = useWatch({ control, name: "kindFilter" }) ?? DEFAULT_FILTERS.kindFilter
-  const keyword = useWatch({ control, name: "keyword" }) ?? DEFAULT_FILTERS.keyword
-  const normalizedKeyword = keyword.trim()
   const refDate = useMemo(() => new Date(), [])
   const updateUrlFilters = useCallback(
     (next: Partial<TxFilterForm>, options?: NuqsOptions) => {
@@ -535,7 +532,6 @@ export function ImportsPage() {
     urlFilters.dateFrom,
     urlFilters.dateTo,
     urlFilters.kindFilter,
-    urlFilters.keyword,
     urlFilters.timeFilter,
   ])
 
@@ -651,7 +647,6 @@ export function ImportsPage() {
     updateUrlFilters({ categoryFilter: "all" })
   }, [categoriesQuery.data, categoryFilter, categoryOptions, setValue, updateUrlFilters])
   const filteredTxs = useMemo(() => {
-    const term = normalizedKeyword.toLowerCase()
     const selectedCategories = categoryFilterSet(categoryFilter)
     return txs.filter((tx) => {
       if (dateFrom && tx.date < dateFrom) return false
@@ -660,23 +655,9 @@ export function ImportsPage() {
         return false
       }
       if (kindFilter !== "all" && tx.flowKind !== kindFilter) return false
-      if (term) {
-        const haystack = [
-          tx.counterparty,
-          tx.title,
-          tx.description,
-          tx.userNote,
-          tx.categoryName,
-          tx.source,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-        if (!haystack.includes(term)) return false
-      }
       return true
     })
-  }, [categoryFilter, dateFrom, dateTo, kindFilter, normalizedKeyword, txs])
+  }, [categoryFilter, dateFrom, dateTo, kindFilter, txs])
   const rangeOut = filteredTxs
     .filter((t) => t.flowKind === "expense")
     .reduce((s, t) => s + t.amount, 0)
@@ -759,8 +740,7 @@ export function ImportsPage() {
     dateFrom !== DEFAULT_FILTERS.dateFrom ||
     dateTo !== DEFAULT_FILTERS.dateTo ||
     categoryFilter !== DEFAULT_FILTERS.categoryFilter ||
-    kindFilter !== DEFAULT_FILTERS.kindFilter ||
-    normalizedKeyword.length > 0
+    kindFilter !== DEFAULT_FILTERS.kindFilter
 
   function resetFilters() {
     urlFiltersRef.current = DEFAULT_FILTERS
@@ -783,6 +763,23 @@ export function ImportsPage() {
   }
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  /**
+   * The filter bar is itself sticky, so the table header must stick exactly below it. Its
+   * height depends on the control row wrapping, so it is measured instead of hard-coded —
+   * a stale constant leaves the header hovering over the first rows instead of pinning.
+   */
+  const filterBarRef = useRef<HTMLDivElement>(null)
+  const [filterBarHeight, setFilterBarHeight] = useState(0)
+  useLayoutEffect(() => {
+    const el = filterBarRef.current
+    if (!el) return
+    // Measured before paint so the header never flashes at the wrong offset.
+    const sync = () => setFilterBarHeight(el.getBoundingClientRect().height)
+    sync()
+    const observer = new ResizeObserver(sync)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const table = useReactTable({
     data: sorted,
     columns: COLUMNS,
@@ -967,7 +964,10 @@ export function ImportsPage() {
           className="bubo-scroller"
           style={{ flex: "0 0 68%", minWidth: 0, height: "100%", overflowY: "auto" }}
         >
-          <div className="sticky top-0 z-[2] border-b border-[var(--hair-3)] bg-[var(--surface-1)] px-8 pb-2.5">
+          <div
+            ref={filterBarRef}
+            className="sticky top-0 z-[2] border-b border-[var(--hair-3)] bg-[var(--surface-1)] px-8 pb-2.5"
+          >
             <form
               className="flex flex-wrap items-end gap-2"
               onSubmit={(event) => event.preventDefault()}
@@ -1005,7 +1005,7 @@ export function ImportsPage() {
                   />
                 )}
               />
-              <div className="w-[250px]">
+              <div className="w-[300px]">
                 <FormField label="时间" labelClassName={FILTER_LABEL_CLASS}>
                   <DateRangeFilter
                     value={{ from: dateFrom, to: dateTo }}
@@ -1016,29 +1016,6 @@ export function ImportsPage() {
                       setValue("timeFilter", key as TimeFilterKey)
                       updateUrlFilters({ timeFilter: key })
                     }}
-                  />
-                </FormField>
-              </div>
-              <div className="w-[190px]">
-                <FormField label="搜索" labelClassName={FILTER_LABEL_CLASS}>
-                  <Controller
-                    control={control}
-                    name="keyword"
-                    render={({ field }) => (
-                      <Input
-                        variant="secondary"
-                        className="h-[30px] px-2 text-[11.5px]"
-                        placeholder="商户 / 备注"
-                        aria-label="搜索商户或备注"
-                        value={field.value}
-                        onChange={(event) => {
-                          const next = event.target.value
-                          const trimmed = next.trim()
-                          field.onChange(next)
-                          updateUrlFilters({ keyword: trimmed })
-                        }}
-                      />
-                    )}
                   />
                 </FormField>
               </div>
@@ -1077,7 +1054,12 @@ export function ImportsPage() {
               ))}
             </colgroup>
             <thead
-              style={{ position: "sticky", top: 65, zIndex: 1, background: "var(--surface-1)" }}
+              style={{
+                position: "sticky",
+                top: filterBarHeight,
+                zIndex: 1,
+                background: "var(--surface-1)",
+              }}
             >
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id} style={{ borderBottom: "1px solid var(--hair-2)" }}>

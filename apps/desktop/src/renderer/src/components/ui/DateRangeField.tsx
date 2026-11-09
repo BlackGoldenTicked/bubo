@@ -10,13 +10,16 @@
  *          The calendar open state is controlled: a click anywhere in the segment field opens
  *          it (clicking a year/month/day segment must pop the calendar, not just focus the
  *          segment), and the trigger carries a fixed 22px width — HeroUI's `w-full` lets the
- *          flex row squeeze it to zero, clipping the calendar icon.
+ *          flex row squeeze it to zero, clipping the calendar icon. For the same reason both
+ *          date inputs are forced shrinkable: HeroUI's range layout keeps them `flex: none`,
+ *          which pushes the suffix out of the clipped group when the value is long. The
+ *          shortcut menu has no 自定义 row — the calendar itself is how a custom range is made.
  */
 
 import { DateField, DateRangePicker, Dropdown, RangeCalendar } from "@heroui/react"
 import type { DateValue } from "@internationalized/date"
 import { parseDate } from "@internationalized/date"
-import { useRef, useState, type Key } from "react"
+import { useState, type Key } from "react"
 import {
   RANGE_PRESETS,
   formatRangeText,
@@ -26,12 +29,19 @@ import {
   type RangePresetKey,
 } from "@/lib/dateRanges"
 
+/**
+ * HeroUI pins both date inputs to `flex: none` inside a range group, so long values push the
+ * suffix (the calendar trigger) past the group's clipped right edge. Letting the inputs shrink
+ * keeps the icon inside the field frame at any width.
+ */
+const SHRINKABLE_SEGMENTS = { flex: "0 1 auto", minWidth: 0 } as const
+
 interface DateRangeFieldProps {
   value: { from: string; to: string }
   onChange: (next: { from: string; to: string }) => void
   /** Fires with the shortcut the user picked, so callers can persist the choice. */
   onPresetChange?: (key: RangePresetKey) => void
-  /** Shortcut list; defaults to the eight shared ranges. */
+  /** Shortcut list; defaults to the seven shared ranges. */
   presets?: readonly RangePreset[]
   /** Adds an 全部 shortcut that clears both ends. */
   allowAll?: boolean
@@ -52,21 +62,15 @@ export function DateRangeField({
   placement = "bottom",
   className,
 }: DateRangeFieldProps) {
-  const pickerRef = useRef<HTMLDivElement>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const activeKey = matchRangePreset(value)
   const rangeValue: RangeValue | null =
     value.from && value.to ? { start: parseDate(value.from), end: parseDate(value.to) } : null
 
   function applyPreset(rawKey: Key) {
-    const key = String(rawKey)
-    if (key === "custom") {
-      // 自定义 means "I'll type it": put the caret in the start segments instead of
-      // trying to force the calendar open (HeroUI owns that state).
-      pickerRef.current?.querySelector<HTMLElement>('[role="spinbutton"]')?.focus()
-      return
-    }
-    const presetKey = key as RangePresetKey
+    // No 自定义 row: a hand-picked range comes from the calendar itself, so every shortcut
+    // here is a real preset.
+    const presetKey = String(rawKey) as RangePresetKey
     onChange(resolveRangePreset(presetKey))
     onPresetChange?.(presetKey)
   }
@@ -76,7 +80,6 @@ export function DateRangeField({
   return (
     <div className={`flex w-full items-center gap-1 ${className ?? ""}`.trim()}>
       <DateRangePicker
-        ref={pickerRef}
         className="min-w-0 flex-1"
         isOpen={calendarOpen}
         onOpenChange={setCalendarOpen}
@@ -95,17 +98,17 @@ export function DateRangeField({
           onClick={() => setCalendarOpen(true)}
           className={size === "sm" ? "h-[30px] min-h-[30px] px-2 text-[11.5px]" : undefined}
         >
-          <DateField.Input slot="start">
+          <DateField.Input slot="start" style={SHRINKABLE_SEGMENTS}>
             {(segment) => <DateField.Segment segment={segment} />}
           </DateField.Input>
-          <DateRangePicker.RangeSeparator className="px-1 text-[var(--ink-4)]">
+          <DateRangePicker.RangeSeparator className="shrink-0 px-1 text-[var(--ink-4)]">
             至
           </DateRangePicker.RangeSeparator>
-          <DateField.Input slot="end">
+          <DateField.Input slot="end" style={SHRINKABLE_SEGMENTS}>
             {(segment) => <DateField.Segment segment={segment} />}
           </DateField.Input>
-          <DateField.Suffix>
-            <DateRangePicker.Trigger className="h-[22px] w-[22px] shrink-0 justify-center p-1">
+          <DateField.Suffix style={{ marginRight: 4 }}>
+            <DateRangePicker.Trigger className="h-[22px] w-[22px] shrink-0 justify-center rounded-[3px] p-1">
               <DateRangePicker.TriggerIndicator className="size-3.5" />
             </DateRangePicker.Trigger>
           </DateField.Suffix>
