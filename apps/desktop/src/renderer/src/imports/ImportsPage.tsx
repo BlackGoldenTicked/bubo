@@ -91,6 +91,34 @@ const KIND_FILTERS: Array<{ key: KindFilterKey; label: string }> = [
  */
 const LIST_LIMIT = 20000
 
+/**
+ * Random identifying colors for category dots. Purely visual: each page entry shuffles the
+ * palette across categories (Fisher–Yates), and the assignment is frozen for the visit —
+ * the same category keeps one color everywhere on the page (list dot and breakdown) until
+ * the page is left. Nothing is persisted.
+ */
+const CATEGORY_DOT_PALETTE = [
+  "#3b82f6",
+  "#22c55e",
+  "#ef4444",
+  "#f59e0b",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#eab308",
+  "#6366f1",
+  "#84cc16",
+] as const
+
+function shufflePalette(): string[] {
+  const palette = [...CATEGORY_DOT_PALETTE]
+  for (let i = palette.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[palette[i], palette[j]] = [palette[j]!, palette[i]!]
+  }
+  return palette
+}
+
 const parseAsTrimmedString = createParser({
   parse: (value: string) => value.trim(),
   serialize: (value: string) => value.trim(),
@@ -389,7 +417,12 @@ const COLUMNS = [
           color: "var(--ink-3)",
         }}
       >
-        <ColorDot color={CATEGORY_COLORS[c.getValue()] ?? CATEGORY_COLORS["其他"]} size={7} />
+        <ColorDot
+          color={
+            c.row.original.categoryColor ?? CATEGORY_COLORS[c.getValue()] ?? CATEGORY_COLORS["其他"]
+          }
+          size={7}
+        />
         {c.getValue()}
       </span>
     ),
@@ -424,7 +457,7 @@ function numericId(value: CashflowEventSummary["id"], fallback: number): number 
   return seed || fallback + 1
 }
 
-function toTx(event: CashflowEventSummary, index: number): Tx {
+function toTx(event: CashflowEventSummary, index: number, categoryColor: string | null): Tx {
   return {
     id: numericId(event.id, index),
     rawId: String(event.id),
@@ -435,6 +468,7 @@ function toTx(event: CashflowEventSummary, index: number): Tx {
     amount: Math.abs(Number(event.amount) || 0),
     categoryId: event.categoryId ?? null,
     categoryName: event.categoryName ?? event.flowKind,
+    categoryColor,
     tag: event.tags[0]?.name,
     source: event.sourceName ?? event.source ?? "手动",
     title: event.title ?? null,
@@ -547,13 +581,33 @@ export function ImportsPage() {
     await queryClient.invalidateQueries(trpc.assets.netWorth.queryFilter())
   }
 
-  const txs = useMemo(() => (cashflowQuery.data ?? []).map(toTx), [cashflowQuery.data])
   const analysisKind: "expense" | "income" = kindFilter === "income" ? "income" : "expense"
   const analysisLabel = analysisKind === "income" ? "收入" : "消费"
   const analysisColor = analysisKind === "income" ? "var(--accent)" : "var(--red)"
   const categoryById = useMemo(
     () => new Map((categoriesQuery.data ?? []).map((category) => [String(category.id), category])),
     [categoriesQuery.data],
+  )
+  // 每次进入页面为每个分类随机重排一次识别色；ref 保证本次访问内（含分类重新拉取）不再变化。
+  const randomCategoryColorsRef = useRef<Map<string, string> | null>(null)
+  const randomCategoryColors = useMemo(() => {
+    if (randomCategoryColorsRef.current != null) return randomCategoryColorsRef.current
+    const categories = categoriesQuery.data ?? []
+    if (categories.length === 0) return new Map<string, string>()
+    const palette = shufflePalette()
+    const map = new Map<string, string>()
+    categories.forEach((category, index) => {
+      map.set(String(category.id), palette[index % palette.length]!)
+    })
+    randomCategoryColorsRef.current = map
+    return map
+  }, [categoriesQuery.data])
+  const txs = useMemo(
+    () =>
+      (cashflowQuery.data ?? []).map((event, index) =>
+        toTx(event, index, randomCategoryColors.get(String(event.categoryId ?? "")) ?? null),
+      ),
+    [cashflowQuery.data, randomCategoryColors],
   )
   const categoryOptions = useMemo(
     () =>
@@ -684,13 +738,14 @@ export function ImportsPage() {
         name: category?.name ?? t.categoryName,
         amt: (current?.amt ?? 0) + t.amount,
         color:
+          randomCategoryColors.get(String(t.categoryId ?? "")) ??
           category?.color ??
           CATEGORY_COLORS[t.categoryName] ??
           (analysisKind === "income" ? "var(--accent)" : CATEGORY_COLORS["其他"]),
       })
     }
     return [...map.values()].sort((a, b) => b.amt - a.amt)
-  }, [analysisKind, categoryById, filteredTxs])
+  }, [analysisKind, categoryById, filteredTxs, randomCategoryColors])
 
   const analysisTotal = flowBreakdown.reduce((s, c) => s + c.amt, 0)
   const sorted = useMemo(

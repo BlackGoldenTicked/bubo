@@ -27,6 +27,8 @@ export interface Tx {
   amount: number
   categoryId?: string | number | null
   categoryName: string
+  /** Per-visit random identifying color for the category dot; null falls back to the name map. */
+  categoryColor?: string | null
   tag?: string
   source: string
   title?: string | null
