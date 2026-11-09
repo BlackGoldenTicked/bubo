@@ -74,7 +74,20 @@ bundle build — run it automatically, do not wait to be asked.
    `TAURI_SIGNING_PRIVATE_KEY`.
 2. `pnpm install:local [--open]` performs the same build and installs to
    `/Applications/bubo.app`; use it when the result must run outside the dev session.
-3. `pnpm dev` stays the inner loop (it rebuilds the sidecar and hot-reloads the renderer).
+3. **Always publish the fresh bundle and launch it**: after the build succeeds, replace
+   `/Applications/bubo.app` with the bundle just produced and open it, so the change is
+   visible in a running app without asking. The bundle's `CFBundleVersion` may not change
+   between builds, so copy unconditionally rather than trusting a version check:
+
+   ```sh
+   ditto apps/desktop/src-tauri/target/release/bundle/macos/bubo.app /Applications/bubo.app
+   open /Applications/bubo.app
+   ```
+
+   Quit the running instance first if macOS refuses the replacement; a failed copy or launch
+   must be reported, not silently skipped.
+
+4. `pnpm dev` stays the inner loop (it rebuilds the sidecar and hot-reloads the renderer).
    It is not a substitute for the bundle build.
 
 Report the bundle path, the version from `apps/desktop/src-tauri/tauri.conf.json`, and the
