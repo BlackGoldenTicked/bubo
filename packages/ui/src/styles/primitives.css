@@ -1235,6 +1235,38 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
 }
 
+/* ---------------------------------------------------------------------
+   Wallet pile — the stack in the card view. Geometry (top / scale) is set
+   per layer by the app from its depth; this only owns the motion and the
+   defocus, so a pile can breathe without re-deriving any layout in CSS.
+   The spring plus the per-layer `--pile-delay` is what turns a selection
+   into a ripple down the stack instead of a snap.
+   --------------------------------------------------------------------- */
+.bubo-pile__layer {
+  /* `backwards` holds the compressed state through the per-layer delay, so the pile assembles
+     itself top-down instead of appearing all at once. */
+  animation: bubo-pile-in 520ms var(--ease-spring) var(--pile-delay, 0ms) backwards;
+  transition:
+    top 460ms var(--ease-spring) var(--pile-delay, 0ms),
+    transform 460ms var(--ease-spring) var(--pile-delay, 0ms),
+    box-shadow 260ms var(--ease-out);
+  will-change: top, transform;
+}
+@keyframes bubo-pile-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+}
+/* The blurred twin of a face: oversized so the blur never exposes its own edge. */
+.bubo-pile__soft {
+  position: absolute;
+  inset: 0;
+  filter: blur(6px) saturate(1.06);
+  transform: scale(1.14);
+  transform-origin: center 40%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bubo-btn,
   .bubo-field,
@@ -1253,7 +1285,8 @@
   .bubo-route-enter,
   .bubo-rec-dot,
   .bubo-busy-dot,
-  .bubo-flipcard__inner {
+  .bubo-flipcard__inner,
+  .bubo-pile__layer {
     transition: none;
     animation: none;
   }

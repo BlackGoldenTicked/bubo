@@ -31,6 +31,13 @@ const BRAND_GRADIENT: Record<CardBrand, string> = {
   other: "linear-gradient(135deg, #24312f 0%, #3d4f4a 62%, #5c6f68 100%)",
 }
 
+/** The face colour of a card: its own colour when set, else the brand gradient. */
+export function cardFaceBackground(card: CardSummary): string {
+  return card.colorHex
+    ? `linear-gradient(135deg, color-mix(in srgb, ${card.colorHex} 88%, #000) 0%, ${card.colorHex} 62%, color-mix(in srgb, ${card.colorHex} 74%, #fff) 100%)`
+    : BRAND_GRADIENT[card.brand]
+}
+
 interface CardVisualProps {
   card: CardSummary
   frontUrl: string | null
@@ -40,9 +47,7 @@ interface CardVisualProps {
 }
 
 export function CardVisual({ card, frontUrl, backUrl, flipped, onFlip }: CardVisualProps) {
-  const background = card.colorHex
-    ? `linear-gradient(135deg, color-mix(in srgb, ${card.colorHex} 88%, #000) 0%, ${card.colorHex} 62%, color-mix(in srgb, ${card.colorHex} 74%, #fff) 100%)`
-    : BRAND_GRADIENT[card.brand]
+  const background = cardFaceBackground(card)
   const hasBack = backUrl != null
 
   return (
@@ -82,7 +87,21 @@ export function CardVisual({ card, frontUrl, backUrl, flipped, onFlip }: CardVis
   )
 }
 
-function CardFacePlaceholder({ card, side }: { card: CardSummary; side: CardSide }) {
+/**
+ * The no-scan front face, shared with the wallet stack so both read as the same card.
+ * `compact` re-scales it for the half-width pile card, whose top band is the only part the
+ * mask keeps in focus: one bank name plus one number line, because four short rows of type
+ * blur into smudges that read as dirt rather than as a card.
+ */
+export function CardFacePlaceholder({
+  card,
+  side,
+  compact = false,
+}: {
+  card: CardSummary
+  side: CardSide
+  compact?: boolean
+}) {
   if (side === "back") {
     return (
       <div className="flex h-full flex-col justify-between p-[6%] text-white/85">
@@ -93,6 +112,22 @@ function CardFacePlaceholder({ card, side }: { card: CardSummary; side: CardSide
           <span className="tabular-nums">
             {card.numberLast4 ? `•••• ${card.numberLast4}` : "••••"}
           </span>
+        </div>
+      </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <div className="flex h-full flex-col p-[7%] text-white">
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-[9px] font-semibold tracking-[.02em]">{card.bank}</span>
+          <span className="shrink-0 text-[7px] font-semibold tracking-[.12em] opacity-85">
+            {BRAND_LABEL[card.brand]}
+          </span>
+        </div>
+        <div className="mt-auto pb-[10%] text-[13px] tabular-nums tracking-[.18em] opacity-45">
+          •••• {card.numberLast4 ?? "••••"}
         </div>
       </div>
     )

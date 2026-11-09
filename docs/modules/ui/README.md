@@ -68,6 +68,11 @@
   Lumno 18px with a soft shadow) and the flip is disabled under `prefers-reduced-motion`.
 - Do not stack two images to fake a card. The flip is the interaction, and each face must
   still read as a card (bank, last four, brand) when no scan has been uploaded.
+- `.bubo-pile__layer` / `.bubo-pile__soft` own the motion and defocus of the wallet's pile view
+  (top/scale per layer stay app-side, since they derive from depth). The spring plus the
+  per-layer `--pile-delay` makes a selection ripple down the stack; `__soft` is the blurred twin
+  of a face, oversized so its blur never exposes an edge. It is listed in the
+  `prefers-reduced-motion` block too.
 
 ## Data Flow
 

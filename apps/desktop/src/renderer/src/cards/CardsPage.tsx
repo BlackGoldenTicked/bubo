@@ -6,39 +6,35 @@
  *          Scans are fetched per face with the scan's `updatedAt` in the query key, otherwise
  *          replacing an image would leave the old data URL on screen. Files stay in the
  *          sidecar's folder; nothing here writes to disk. The wallet list groups cards by
- *          bank (heaviest bank first, collapsible) and shows the front scan as the row
- *          thumbnail, so the list reads like a wallet rather than a table. There is no page
- *          header on purpose: the wallet list owns the single add action at its foot, and
- *          totals are not shown — the route title comes from the top navigation.
+ *          bank (heaviest bank first, collapsible) and has two views over the same groups:
+ *          列表 (compact rows) and 卡片 (image-first piles, see CardStackList). The chosen
+ *          view is remembered per device. There is no page header on purpose: the wallet list
+ *          owns the single add action at its foot, and totals are not shown — the route title
+ *          comes from the top navigation.
  */
 
 import { useMemo, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react"
 import { Button } from "@heroui/react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AppIcon, notify } from "@bubo/ui"
+import { AppIcon, Segmented, notify } from "@bubo/ui"
 import { currencySymbol } from "@bubo/shared"
 import type { CardSide, CardSummary } from "@bubo/shared/contracts"
-import { trpc, trpcClient } from "@/lib/trpc"
+import { trpc } from "@/lib/trpc"
 import { useCurrentRates } from "@/lib/useCurrentRates"
 import { useConfirm } from "../components/ui/ConfirmModal"
 import { EmptyState } from "../components/ui/EmptyState"
 import { QueryState } from "../components/ui/QueryState"
 import { ScrollArea } from "../components/ui/ScrollArea"
 import { CardVisual, CardScanControls } from "./CardVisual"
+import { CardStackList } from "./CardStackList"
+import { CARD_TYPE_LABEL } from "./labels"
+import { useCardScan } from "./useCardScan"
 import {
   CardFormModal,
   formToInput,
   type CardFormValues,
   type CardScanPaths,
 } from "./CardFormModal"
-
-const TYPE_LABEL: Record<CardSummary["cardType"], string> = {
-  debit: "借记卡",
-  credit: "信用卡",
-  prepaid: "预付卡",
-  virtual: "虚拟卡",
-  other: "其他",
-}
 
 const BRAND_LABEL: Record<CardSummary["brand"], string> = {
   unionpay: "银联",
@@ -47,6 +43,27 @@ const BRAND_LABEL: Record<CardSummary["brand"], string> = {
   amex: "Amex",
   jcb: "JCB",
   other: "其他",
+}
+
+type WalletView = "list" | "stack"
+const WALLET_VIEW_STORAGE_KEY = "bubo:cards:wallet-view"
+/** 列表 stays the default: it is the denser view and what existing users expect. */
+const DEFAULT_WALLET_VIEW: WalletView = "list"
+
+function readWalletView(): WalletView {
+  try {
+    return window.localStorage.getItem(WALLET_VIEW_STORAGE_KEY) === "stack" ? "stack" : "list"
+  } catch {
+    return DEFAULT_WALLET_VIEW
+  }
+}
+
+function rememberWalletView(view: WalletView) {
+  try {
+    window.localStorage.setItem(WALLET_VIEW_STORAGE_KEY, view)
+  } catch {
+    // A blocked storage API must not break the view switch.
+  }
 }
 
 /**
@@ -72,6 +89,7 @@ export function CardsPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<CardSummary | null>(null)
   const [collapsedBanks, setCollapsedBanks] = useState<Set<string>>(() => new Set())
+  const [walletView, setWalletView] = useState<WalletView>(readWalletView)
 
   const cardsQuery = useQuery(trpc.cards.list.queryOptions({ includeArchived: showArchived }))
   const cards = useMemo(() => cardsQuery.data ?? [], [cardsQuery.data])
@@ -142,6 +160,17 @@ export function CardsPage() {
       else next.add(bank)
       return next
     })
+  }
+
+  function changeWalletView(next: string) {
+    const view: WalletView = next === "stack" ? "stack" : "list"
+    setWalletView(view)
+    rememberWalletView(view)
+  }
+
+  function selectCard(card: CardSummary) {
+    setSelectedId(String(card.id))
+    setFlipped(false)
   }
 
   function openForm() {
@@ -218,18 +247,33 @@ export function CardsPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--surface-1)]">
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex w-[320px] shrink-0 flex-col border-r border-[var(--hair-2)]">
-          <div className="flex items-center justify-between px-5 pb-2 pt-4">
-            <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-[var(--ink-4)]">
-              {showArchived ? "全部卡片" : "使用中"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setShowArchived((value) => !value)}
-              className="text-[10.5px] text-[var(--accent)] transition-opacity hover:opacity-75"
-            >
-              {showArchived ? "只看使用中" : "显示已归档"}
-            </button>
+        <div
+          className={`flex shrink-0 flex-col border-r border-[var(--hair-2)] ${
+            walletView === "stack" ? "w-[300px]" : "w-[320px]"
+          }`}
+        >
+          <div className="px-5 pb-2 pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10.5px] font-semibold uppercase tracking-[.1em] text-[var(--ink-4)]">
+                {showArchived ? "全部卡片" : "使用中"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowArchived((value) => !value)}
+                className="text-[10.5px] text-[var(--accent)] transition-opacity hover:opacity-75"
+              >
+                {showArchived ? "只看使用中" : "显示已归档"}
+              </button>
+            </div>
+            <Segmented
+              className="mt-2.5"
+              value={walletView}
+              onChange={changeWalletView}
+              options={[
+                { key: "list", label: "列表" },
+                { key: "stack", label: "卡片" },
+              ]}
+            />
           </div>
           <ScrollArea className="min-h-0 flex-1">
             <QueryState query={cardsQuery} skeletonRows={5}>
@@ -238,6 +282,14 @@ export function CardsPage() {
                   icon="cards"
                   title="还没有卡片"
                   hint="用下面的按钮添加第一张卡，再上传正反面扫描件"
+                />
+              ) : walletView === "stack" ? (
+                <CardStackList
+                  groups={grouped}
+                  selectedId={selected == null ? null : String(selected.id)}
+                  collapsedBanks={collapsedBanks}
+                  onSelect={selectCard}
+                  onToggleBank={toggleBank}
                 />
               ) : (
                 <div className="px-2 pb-6">
@@ -274,10 +326,7 @@ export function CardsPage() {
                                 key={String(card.id)}
                                 type="button"
                                 aria-selected={isSelected}
-                                onClick={() => {
-                                  setSelectedId(String(card.id))
-                                  setFlipped(false)
-                                }}
+                                onClick={() => selectCard(card)}
                                 className="bubo-row flex w-full items-center gap-3 rounded-[2px] px-2 py-2 text-left"
                               >
                                 <CardThumb card={card} />
@@ -286,7 +335,7 @@ export function CardsPage() {
                                     {card.name}
                                   </span>
                                   <span className="block truncate text-[10.5px] text-[var(--ink-4)]">
-                                    {TYPE_LABEL[card.cardType]} ·{" "}
+                                    {CARD_TYPE_LABEL[card.cardType]} ·{" "}
                                     {card.numberLast4 ? `•••• ${card.numberLast4}` : "未填卡号"}
                                   </span>
                                 </span>
@@ -396,7 +445,7 @@ function CardDetail({
         <div>
           <div className="text-[16px] font-semibold text-[var(--ink)]">{card.name}</div>
           <div className="mt-0.5 text-[11px] text-[var(--ink-4)]">
-            {card.bank} · {TYPE_LABEL[card.cardType]} · {BRAND_LABEL[card.brand]}
+            {card.bank} · {CARD_TYPE_LABEL[card.cardType]} · {BRAND_LABEL[card.brand]}
             {card.status === "archived" ? " · 已归档" : ""}
           </div>
         </div>
@@ -500,18 +549,4 @@ function CardThumb({ card }: { card: CardSummary }) {
       {front.data && <img src={front.data} alt="" className="h-full w-full object-cover" />}
     </span>
   )
-}
-
-/** Loads one face's data URL; the key carries `updatedAt` so a replaced scan refetches. */
-function useCardScan(card: CardSummary, side: CardSide) {
-  const meta = card.images[side]
-  const query = useQuery({
-    // `updatedAt` is part of the key: replacing a scan must not serve the old data URL.
-    queryKey: ["cards.image", String(card.id), side, meta?.updatedAt ?? "none"],
-    queryFn: () => trpcClient.cards.image.query({ cardId: card.id, side }),
-    enabled: meta != null,
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: false,
-  })
-  return { data: meta ? (query.data?.dataUrl ?? null) : null }
 }

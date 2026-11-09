@@ -37,6 +37,15 @@ The database only knows the file name, so the folder can move with the user data
 
 - Route `/cards` is the last primary tab (卡片). Left: cards grouped by bank, with archived ones
   behind a toggle. Right: the selected card.
+- The wallet column has two views over the same bank groups, switched by 列表 / 卡片 and
+  remembered per device (`bubo:cards:wallet-view`): the compact row list, and image-first piles
+  where the selected card is the only fully visible face and the rest show a 24px strip above
+  it. Pile order is derived from selection, never stored — clicking a strip selects that card,
+  which brings it to the front.
+- Pile cards are half the rail's width and only their top ~30% stays in focus: the face is drawn
+  twice, sharp above the band and gaussian-blurred below it, so a wallet reads as crisp card tops
+  over frosted colour. The stack springs into place with a per-depth delay (the "breath"), and
+  hovering widens the strips from 24px to 34px.
 - The card is **one** flippable surface: front and back sit on the same 3D plane and rotate on
   `[data-flipped]`. Click the card (or use 正面 / 反面) to flip; the flip is disabled when only
   one face exists and under `prefers-reduced-motion`.
