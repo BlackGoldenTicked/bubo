@@ -34,6 +34,11 @@ import { useBudgetRolloverPrompt } from "../budget/useBudgetRolloverPrompt"
 import { buildNetWorthTrend } from "./netWorthTrend"
 import { buildUpcomingCharges } from "./upcoming"
 import { buildLoanSchedule } from "../loans/loanSchedule"
+import {
+  computeContractPnl,
+  CONTRACT_SIDE_LABELS,
+  formatLeverage,
+} from "../investments/contractDisplay"
 import { sourceLabel } from "@/lib/domainDisplay"
 import {
   RANGE_PRESET_MENU,
@@ -240,6 +245,8 @@ export function OverviewPage() {
     ...trpc.budgets.progress.queryOptions({ budgetPeriodId: currentBudgetPeriod?.id ?? "" }),
     enabled: Boolean(currentBudgetPeriod),
   })
+  const investmentPositionsQuery = useQuery(trpc.investments.positions.queryOptions({}))
+  const contractPositionsQuery = useQuery(trpc.contracts.positions.queryOptions({}))
   usePagePerf("overview", [
     { name: "cashflow.list", query: cashflowQuery },
     { name: "assets.snapshots.latest", query: assetSnapshotsQuery },
@@ -251,6 +258,8 @@ export function OverviewPage() {
     { name: "loans.futurePressure", query: futurePressureQuery },
     { name: "budgets.periods", query: budgetPeriodsQuery },
     { name: "budgets.progress", query: budgetProgressQuery },
+    { name: "investments.positions", query: investmentPositionsQuery },
+    { name: "contracts.positions", query: contractPositionsQuery },
   ])
 
   const { toDisplay, baseSymbol } = useCurrentRates()
@@ -371,6 +380,102 @@ export function OverviewPage() {
   const recentTx = _recentTx
   const transactionRows = recentTx.map(toTransactionRow)
 
+  interface InvestmentActivityItem {
+    id: string
+    date: string
+    kindLabel: string
+    tone: "pos" | "neg" | "neutral"
+    title: string
+    detail: string
+    amount: number | null
+    currency: string
+  }
+
+  // 最近一个月的投资动态：现货建仓/清仓 + 合约开仓/平仓/爆仓，全部由持仓行
+  // 派生（合约的 openedAt/closedAt、现货的 createdAt/updatedAt），没有事件表。
+  const investmentActivity = useMemo(() => {
+    const from = addDateKeyDays(today, -30)
+    const items: InvestmentActivityItem[] = []
+    for (const contract of contractPositionsQuery.data ?? []) {
+      const opened = contract.openedAt.slice(0, 10)
+      if (opened >= from) {
+        items.push({
+          id: `contract-open-${contract.id}`,
+          date: opened,
+          kindLabel: "开仓",
+          tone: "neutral",
+          title: `${contract.symbol} · ${CONTRACT_SIDE_LABELS[contract.side]} ${formatLeverage(contract.leverageBps)}`,
+          detail: `保证金 ${currencySymbol(contract.currency)}${fmt(Number(computeContractPnl(contract).effectiveMargin))}`,
+          amount: null,
+          currency: contract.currency,
+        })
+      }
+      if (contract.closedAt != null) {
+        const closed = contract.closedAt.slice(0, 10)
+        if (closed >= from && contract.status === "liquidated") {
+          items.push({
+            id: `contract-liquidated-${contract.id}`,
+            date: closed,
+            kindLabel: "爆仓",
+            tone: "neg",
+            title: `${contract.symbol} · ${CONTRACT_SIDE_LABELS[contract.side]} ${formatLeverage(contract.leverageBps)}`,
+            detail: "已实现盈亏 = −全部保证金",
+            amount: -computeContractPnl(contract).effectiveMargin,
+            currency: contract.currency,
+          })
+        } else if (closed >= from && contract.status === "closed") {
+          const realized = computeContractPnl(contract).realizedPnl ?? 0
+          items.push({
+            id: `contract-close-${contract.id}`,
+            date: closed,
+            kindLabel: "平仓",
+            tone: realized >= 0 ? "pos" : "neg",
+            title: `${contract.symbol} · ${CONTRACT_SIDE_LABELS[contract.side]} ${formatLeverage(contract.leverageBps)}`,
+            detail: contract.exitPrice != null ? `平仓价 ${contract.exitPrice}` : "已平仓",
+            amount: realized,
+            currency: contract.currency,
+          })
+        }
+      }
+    }
+    for (const position of investmentPositionsQuery.data ?? []) {
+      const opened = position.createdAt.slice(0, 10)
+      if (opened >= from) {
+        items.push({
+          id: `position-open-${position.id}`,
+          date: opened,
+          kindLabel: "建仓",
+          tone: "neutral",
+          title: position.name || position.symbol,
+          detail: `数量 ${position.quantity}${
+            position.avgCostPrice != null
+              ? ` · 成本 ${currencySymbol(position.currency)}${fmt(Number(position.avgCostPrice))}`
+              : ""
+          }`,
+          amount: position.costBasisAmount != null ? Number(position.costBasisAmount) : null,
+          currency: position.currency,
+        })
+      }
+      if (position.status === "closed") {
+        const closed = position.updatedAt.slice(0, 10)
+        if (closed >= from) {
+          const realized = Number(position.realizedPnlAmount) || 0
+          items.push({
+            id: `position-close-${position.id}`,
+            date: closed,
+            kindLabel: "清仓",
+            tone: realized >= 0 ? "pos" : "neg",
+            title: position.name || position.symbol,
+            detail: "已实现盈亏",
+            amount: realized,
+            currency: position.currency,
+          })
+        }
+      }
+    }
+    return items.sort((a, b) => b.date.localeCompare(a.date))
+  }, [contractPositionsQuery.data, fmt, investmentPositionsQuery.data, today])
+
   return (
     <div className="relative grid h-full min-h-0 grid-cols-[minmax(500px,1.25fr)_minmax(320px,0.75fr)] overflow-hidden bg-[var(--surface-1)]">
       <ScrollArea className="min-h-0 border-r border-[var(--hair)]">
@@ -410,6 +515,74 @@ export function OverviewPage() {
                 <NetWorthTrend data={_netTrend} />
               </div>
             </div>
+          </section>
+
+          {/* ── 投资动态（最近一个月） ── */}
+          <section className="border-b border-[var(--hair-2)] py-5">
+            <div className="mb-2 flex items-baseline">
+              <SectionTitle icon="investments">投资 · 最近一个月</SectionTitle>
+              <Link
+                to="/investments"
+                className="ml-auto cursor-pointer text-[10.5px] text-[var(--accent)] transition-opacity hover:opacity-75"
+              >
+                查看投资 →
+              </Link>
+            </div>
+            {investmentActivity.length === 0 ? (
+              <EmptyState
+                compact
+                title="最近一个月没有投资动态"
+                hint="新建仓位、合约开平仓后会显示在这里"
+              />
+            ) : (
+              <div className="flex flex-col">
+                {investmentActivity.slice(0, 6).map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 py-[7px]">
+                    <span className="w-[44px] shrink-0 font-['IBM_Plex_Mono'] text-[10.5px] text-[var(--ink-4)]">
+                      {item.date.slice(5).replace("-", "/")}
+                    </span>
+                    <span
+                      className={`w-[38px] shrink-0 rounded-[3px] border border-[var(--hair)] py-px text-center text-[10px] ${
+                        item.tone === "neg"
+                          ? "text-[var(--red)]"
+                          : item.tone === "pos"
+                            ? "text-[var(--accent)]"
+                            : "text-[var(--ink-3)]"
+                      }`}
+                    >
+                      {item.kindLabel}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[12px] text-[var(--ink)]">
+                      {item.title}
+                      <span className="ml-2 text-[10.5px] text-[var(--ink-4)]">{item.detail}</span>
+                    </span>
+                    {item.amount != null && (
+                      <span
+                        className={`shrink-0 font-['IBM_Plex_Mono'] text-[12px] ${
+                          item.tone === "neg"
+                            ? "text-[var(--red)]"
+                            : item.tone === "pos"
+                              ? "text-[var(--accent)]"
+                              : "text-[var(--ink)]"
+                        }`}
+                      >
+                        {item.amount < 0 ? "−" : item.tone === "pos" || item.amount > 0 ? "+" : ""}
+                        {currencySymbol(item.currency)}
+                        {fmt(Math.abs(item.amount))}
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {investmentActivity.length > 6 && (
+                  <Link
+                    to="/investments"
+                    className="pt-1 text-right text-[11px] text-[var(--accent)] transition-opacity hover:opacity-75"
+                  >
+                    查看全部投资 →
+                  </Link>
+                )}
+              </div>
+            )}
           </section>
 
           {/* ── 区间收支 + 日柱 ── */}

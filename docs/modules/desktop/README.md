@@ -51,7 +51,10 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `dashboard/` - cross-layer overview that composes cashflow, assets, and obligations in a
   widened left summary workbench beside a persistent recent-cashflow table. Its cashflow section
   uses one shared date-range selector above equal-weight expense, income, and savings totals, with
-  clickable daily expense bars that open same-period cashflow detail drawers.
+  clickable daily expense bars that open same-period cashflow detail drawers. Below the net-worth
+  block sits a 投资动态 section: the last 30 days of investment activity (spot 建仓/清仓, contract
+  开仓/平仓/爆仓) derived from `investments.positions` and `contracts.positions` rows — there is
+  no investment event table, so dates come from `createdAt`/`updatedAt`/`openedAt`/`closedAt`.
 - `imports/` - imported statement and cashflow event views, including `AddTxModal` manual entry, which accepts a prefilled form from a voice cashflow intent. The cashflow list query pushes the page's date bounds into `cashflow.list` (`dateFrom`/`dateTo`, `LIST_LIMIT`) so SQLite filters by window — a fixed small limit would silently hide every row outside the newest window and make older custom ranges render as 「共 0 笔」. The toolbar order is fixed (类型 → 分类 → 时间 → 搜索) and has no 来源 filter: source is currently a single-value dimension (现金), and quick ranges live in the date field's own menu, so a separate preset select would be redundant.
 - `investments/` - trade-driven holdings with manual price quotes. List rows lead with the invested
   amount (spot: cost basis; leveraged: margin, marked 估 when estimated) so the headline number does
