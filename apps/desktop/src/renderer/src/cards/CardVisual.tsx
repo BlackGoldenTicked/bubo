@@ -5,6 +5,9 @@
  * @gotcha  Front and back are the same element rotated on the Y axis, not two stacked pages:
  *          a scan is an image, so the whole face is `object-fit: cover` and the placeholder
  *          must read like a real card (bank, last four, brand) when no scan exists yet.
+ *          The surface carries `bubo-flipcard--gilt`: a 1.5px metal-gradient hairline drawn by
+ *          a masked pseudo-element on each face, because a real `border` would shrink the
+ *          image box and a `background` ring would fight the per-brand gradient underneath.
  */
 
 import { Button } from "@heroui/react"
@@ -52,7 +55,7 @@ export function CardVisual({ card, frontUrl, backUrl, flipped, onFlip }: CardVis
 
   return (
     <div
-      className="bubo-flipcard"
+      className="bubo-flipcard bubo-flipcard--gilt"
       data-flipped={flipped}
       onClick={hasBack ? onFlip : undefined}
       role={hasBack ? "button" : undefined}

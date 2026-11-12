@@ -1235,6 +1235,39 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
 }
 
+/* Gilt edge — opt-in, used by the detail card only. A 1.5px metallic hairline that alternates
+   champagne highlights with bronze shadows, so the ring still reads as metal on both a dark
+   scan and a pale one. Deliberately no thick border, no bloom, no bevel, and no inner vignette:
+   gold turns cheap the moment it gets loud, and one hairline is all a real card has. */
+.bubo-flipcard--gilt .bubo-flipcard__face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    #fff7e0 0%,
+    #e8c882 12%,
+    #a8813a 26%,
+    #f7e6b4 40%,
+    #c9a256 54%,
+    #8a6a2d 68%,
+    #f6e8bb 82%,
+    #d9b878 92%,
+    #fff7e0 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
 /* ---------------------------------------------------------------------
    Wallet pile — the stack in the card view. Geometry (top / scale) is set
    per layer by the app from its depth; this only owns the motion and the
