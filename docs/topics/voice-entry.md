@@ -65,21 +65,31 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
 
 ## Semantic Category Mapping
 
-Category selection is two-layered, because "饮料" must land on a ledger category
+Category selection is three-layered, because "饮料" must land on a ledger category
 literally named "零食":
 
-1. **Prompt layer** (section 六 of the frozen prompt): classify by meaning before
-   spelling. Product words map onto the broader ledger concept (饮料/奶茶/咖啡/薯片/
-   雪糕 → 零食类), specific categories beat broad ones ("其它"), the direction must
-   match `flowKind`, and `categoryName`/`categoryId` must name the same list entry.
+1. **Category vocabulary** (`categories.description`): every category can carry a
+   free-text list of the concrete items it covers ("饮料、咖啡、雪糕"). It is edited in
+   设置 → 分类管理 → 包含内容 and reaches the model as that category's `示例`. When the
+   field is blank, `resolveCategoryExamples` falls back to `CATEGORY_EXAMPLE_DEFAULTS`,
+   which already describes the app's default categories (餐饮 / 交通 / 购物 / 娱乐 / 居住 /
+   通讯 / 订阅 / 收入) and the common personal ones (零食 / 三餐 / 彩票 / 数码软件 / 水电气 /
+   车相关 / 书影音 / 医疗健身 / 宠物 / 小金马 / 日常), so an existing ledger infers
+   categories before anyone fills the field. A user-entered list always wins over the
+   built-in one.
+2. **Prompt layer** (section 六 of the frozen prompt): classify by meaning before
+   spelling, and treat `示例` as the ledger's own taxonomy — a product or merchant that
+   appears in a category's example list belongs there (饮料/奶茶/咖啡/薯片/雪糕 →
+   零食类), specific categories beat broad ones ("其它"), the direction must match
+   `flowKind`, and `categoryName`/`categoryId` must name the same list entry.
    The same section maps enums for the other domains: 银行/支付宝/交易所 → `assetType`,
    代码/指数/基金 → `instrumentKind`, 每周/每月/包年 → `billingCycle`, 月供/分期 → `loan`.
-2. **Deterministic fallback** (`CATEGORY_KEYWORD_HINTS` in `voice-entry-rules.ts`):
+3. **Deterministic fallback** (`matchCategoryByKeywords` in `voice-entry-rules.ts`):
    only runs when the model returned no category. It scores categories of the right
-   direction by product words found in the title, note, and transcript, and picks the
-   best. A hint applies only when the ledger has a category whose name contains the
-   hint key, so renamed categories ("零嘴儿") are never hijacked — they stay empty
-   instead of guessing.
+   direction by product words found in the title, note, and transcript, using the same
+   example list plus `CATEGORY_KEYWORD_HINTS`, and picks the best. A category with
+   neither source is never guessed into: a renamed category with no vocabulary
+   ("零嘴儿") stays empty instead of being hijacked.
 
 ## Domains
 
@@ -102,13 +112,16 @@ The precedence lives in the frozen prompt, not in renderer heuristics.
 The system prompt is a single **frozen constant** (`VOICE_INTENT_SYSTEM_PROMPT`)
 holding the domain taxonomy, every domain's field list, the multi-record rules, and
 the hard rules. All
-per-call data — current time, display currency, categories, accounts, loans,
-subscriptions, positions, the utterance — goes into the **user turn as JSON**.
+per-call data — current time, display currency, categories with their `示例` lists,
+accounts, loans, subscriptions, positions, the utterance — goes into the **user turn as
+JSON**.
 
 That split is deliberate: both DeepSeek and Bailian bill repeated prefixes at a
 much lower rate (DeepSeek's context cache, Qwen's implicit prefix cache), and a
-byte-identical prefix is what makes those hits happen. A prompt that interpolates
-category names would miss the cache on every ledger edit.
+byte-identical prefix is what makes those hits happen. A prompt that interpolated
+category names or example lists would miss the cache on every ledger edit — which is
+exactly why adding a category extends the mapping through the user turn instead of the
+system prompt.
 
 Cache accounting is logged per call (`prompt` / `cached` token counts, read from
 either `prompt_cache_hit_tokens` or `prompt_tokens_details.cached_tokens`) so the
@@ -224,11 +237,33 @@ The model output is untrusted input. `voice-intent-rules.ts` (all domains) and
 - `warnings` surface in the sheet before navigation and stay visible in the
   prefilled form, so the user sees what the model was unsure about.
 
+## Diagnostics: "the category did not arrive"
+
+A missing category has four possible owners, and each one is logged at its own stage so
+the report "语音录入没有推理出分类" can be answered from evidence instead of a guess.
+
+| Stage            | Where it is logged                 | What it proves                                                                                                               |
+| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Vocabulary sent  | `parse.request.categoryVocabulary` | the ledger's `示例` lists actually reached the model (`名字(类型) ← 描述`), and the prompt sizes                             |
+| Model answer     | `parse.raw`                        | whether the model returned `categoryId`/`categoryName` at all, or answered in its own words                                  |
+| Pool attempts    | `parse.request.attempts`           | whether the pool model failed (403 quota, timeout) and DeepSeek carried the call                                             |
+| Normalization    | `parse.intents`                    | the per-record category that survived id/name matching and direction checks, plus `warnings`                                 |
+| Renderer handoff | `[renderer] handoff …`             | the id the form received, whether the local category list contains it, and that a null category falls back to the first chip |
+| Card highlight   | 记一笔 modal                       | chips compare `String(form.categoryId)`, so a highlighted chip means the id survived the whole chain                         |
+
+All of it lands in `<user data>/bubo-voice-trace.log` (`~/Library/Application Support/
+com.chaordex.bubo/bubo-voice-trace.log` on macOS), rotating at 1MB. The sidecar writes the
+parse stages; `voice.trace` appends the renderer's handoff lines to the same file. The
+capture sheet mirrors a condensed version into its own log area (vocabulary size, failed
+attempts, truncated raw answer, per-record category) and the review card now names each
+record's category, so an empty one is visible before the record is confirmed.
+
 ## Module Map
 
 - `packages/shared/src/contracts/voice/voice.contract.ts` - renderer-safe contracts, intent union.
 - `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen system prompt, message builder, per-domain normalization.
-- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization.
+- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization, category
+  example vocabulary (user description, built-in defaults, keyword fallback).
 - `packages/api/src/domain/voice/llm-pool-rules.ts` - pool filtering, ordering, and attempt-chain rules.
 - `packages/api/src/use-cases/voice/voice-intent-api.ts` - intent pipeline orchestration.
 - `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage.
@@ -238,6 +273,7 @@ The model output is untrusted input. `voice-intent-rules.ts` (all domains) and
 - `apps/desktop/src-tauri/src/speech.rs` - Apple Speech bridge behind `speech_recognize`.
 - `apps/desktop/src/tauri-sidecar/voice-settings-store.ts` - local credential and model-pool file.
 - `apps/desktop/src/tauri-sidecar/voice-service.ts` - sidecar implementation; assembles ledger context.
+- `apps/desktop/src/tauri-sidecar/voice-trace-log.ts` - append-only diagnostics file for parse and handoff stages.
 - `apps/desktop/src/tauri-sidecar/xlsx-reader.ts` - zero-dependency first-sheet xlsx reader.
 - `apps/desktop/src/tauri-sidecar/llm-models-import.ts` - workbook column mapping to pool entries.
 - `apps/desktop/src/renderer/src/voice/VoiceCaptureSheet.tsx` - global capture overlay: recorder, batch textarea, and the one-by-one review card.

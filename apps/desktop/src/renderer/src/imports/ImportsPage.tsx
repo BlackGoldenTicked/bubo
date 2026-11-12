@@ -486,8 +486,26 @@ export function ImportsPage() {
   const [voiceTxForm, setVoiceTxForm] = useState<TxForm | undefined>(undefined)
   const [editingTx, setEditingTx] = useState<Tx | null>(null)
 
+  const voiceTrace = useMutation(trpc.voice.trace.mutationOptions())
+
   // The global voice sheet hands cashflow intents here; the form still saves manually.
   useVoiceIntent("cashflow", (intent) => {
+    // Trace the handoff: this is where "the model did return a category" either survives
+    // into the form or dies on an id/side mismatch.
+    const localMatch = (categoriesQuery.data ?? []).find(
+      (category) => String(category.id) === String(intent.categoryId),
+    )
+    void voiceTrace
+      .mutateAsync({
+        lines: [
+          `handoff cashflow「${intent.title}」→ 记一笔弹窗：categoryId=${intent.categoryId ?? "null"} ` +
+            `categoryName=${intent.categoryName ?? "null"} 本地命中=${localMatch ? `${localMatch.name}(${localMatch.id})` : "无"}`,
+          intent.categoryId == null
+            ? "分类为空：弹窗会回落到分类列表第一项，视觉上像“没有选中”"
+            : "分类已写入表单，应高亮对应分类卡片",
+        ],
+      })
+      .catch(() => undefined)
     setVoiceTxForm({
       flowKind: intent.flowKind,
       amount: intent.amount,

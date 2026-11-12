@@ -7,6 +7,7 @@
 
 import type { Result } from "@bubo/shared"
 import type {
+  AppendVoiceTraceInput,
   ImportVoiceLlmModelsInput,
   ParseVoiceIntentInput,
   RemoveVoiceLlmModelInput,
@@ -23,6 +24,8 @@ export interface VoiceService {
   saveSettings(input: SaveVoiceSettingsInput): Result<VoiceSettingsSnapshot>
   transcribeEntry(input: TranscribeVoiceInput): Promise<Result<TranscribeVoiceResult>>
   parseIntent(input: ParseVoiceIntentInput): Promise<Result<VoiceIntentParseResult>>
+  /** Append renderer-side trace lines to the voice diagnostics file. */
+  appendTrace(input: AppendVoiceTraceInput): Result<null>
   listLlmModels(): VoiceLlmPoolEntryView[]
   importLlmModels(input: ImportVoiceLlmModelsInput): Result<VoiceLlmPoolEntryView[]>
   removeLlmModel(input: RemoveVoiceLlmModelInput): Result<VoiceLlmPoolEntryView[]>

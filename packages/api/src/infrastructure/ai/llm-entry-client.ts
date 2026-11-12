@@ -29,6 +29,8 @@ export interface VoiceLlmRequest {
 export interface VoiceLlmResult {
   payload: unknown
   model: string
+  /** The model's answer exactly as it arrived, kept for the voice trace log. */
+  raw: string
   /** Prompt-cache accounting when the provider reports it. */
   usage?: {
     promptTokens: number
@@ -86,6 +88,7 @@ export async function parseEntryJson(
     return {
       payload: JSON.parse(content),
       model: config.model,
+      raw: content,
       usage: readUsage((completion as { usage?: unknown }).usage),
     }
   } catch {

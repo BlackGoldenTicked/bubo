@@ -56,12 +56,15 @@ interface CategoryForm {
   name: string
   categoryKind: string
   color: string
+  /** Concrete items this category covers; fed to the voice prompt as the model's 示例. */
+  description: string
 }
 
 const EMPTY_CATEGORY_FORM: CategoryForm = {
   name: "",
   categoryKind: "expense",
   color: "#8a9590",
+  description: "",
 }
 
 interface CategoryStats {
@@ -142,6 +145,7 @@ function CategoryModal({
             name: category.name,
             categoryKind: kindOf(category),
             color: category.color ?? "#8a9590",
+            description: category.description ?? "",
           }
         : EMPTY_CATEGORY_FORM,
     )
@@ -181,6 +185,17 @@ function CategoryModal({
                     validate: (value) => value.trim().length > 0 || "请输入分类名称",
                   })}
                 />
+              </FormField>
+              <FormField label="包含内容（供语音自动归类）">
+                <textarea
+                  rows={2}
+                  placeholder="例如：饮料、咖啡、奶茶、雪糕、薯片"
+                  className="w-full resize-y rounded-[6px] border border-[var(--hair-2)] bg-[var(--surface-1)] px-2 py-1.5 text-[12px] leading-[1.7] text-[var(--ink)] outline-none placeholder:text-[var(--ink-5)] focus-visible:border-[var(--accent)]"
+                  {...register("description")}
+                />
+                <div className="mt-1.5 text-[11px] leading-normal text-[var(--ink-4)]">
+                  用顿号分隔这类常买的项目。语音录入时，模型按这份清单把「饮料」这类具体说法归到本分类。
+                </div>
               </FormField>
               <FormField label="类型" required>
                 <div className="flex flex-wrap gap-2">
@@ -258,6 +273,9 @@ function CategoryRow({
           <div className="truncate text-[13.5px] font-medium text-[var(--ink)]">
             {category.name}
           </div>
+          {category.description ? (
+            <div className="truncate text-[11px] text-[var(--ink-4)]">{category.description}</div>
+          ) : null}
         </div>
       </div>
       <KindBadge kind={kind} archived={category.archived} />
@@ -406,6 +424,7 @@ export function CategoriesPage() {
       name: form.name.trim(),
       categoryKind: form.categoryKind,
       color: form.color || null,
+      description: form.description.trim() || null,
     }
     if (editingCategory) {
       await updateCategory.mutateAsync({ id: editingCategory.id, ...input })

@@ -8,7 +8,11 @@
  */
 
 import type { Result } from "@bubo/shared"
-import type { VoiceIntentParseResult, VoiceLlmPoolEntry } from "@bubo/shared/contracts"
+import type {
+  VoiceIntentParseResult,
+  VoiceIntentTrace,
+  VoiceLlmPoolEntry,
+} from "@bubo/shared/contracts"
 import type { VoiceAsrConfig } from "../../infrastructure/ai/bailian-asr-client"
 import { parseEntryJson, type VoiceLlmConfig } from "../../infrastructure/ai/llm-entry-client"
 import {
@@ -107,13 +111,21 @@ export async function parseVoiceIntent(
 
     let llmResult: Awaited<ReturnType<typeof parseEntryJson>> | null = null
     let lastError: unknown = null
+    const attempts: VoiceIntentTrace["attempts"] = []
     for (const attempt of chain) {
       try {
         llmResult = await parseEntryJson(attempt, messages)
+        attempts.push({ provider: attempt.provider, model: attempt.model, ok: true })
         break
       } catch (error) {
         lastError = error
         const message = error instanceof Error ? error.message : String(error)
+        attempts.push({
+          provider: attempt.provider,
+          model: attempt.model,
+          ok: false,
+          error: message,
+        })
         console.error(
           `[voice] intent attempt failed (${attempt.provider}/${attempt.model}): ${message}`,
         )
@@ -141,8 +153,32 @@ export async function parseVoiceIntent(
       models: { asr: asrModel, llm: llmResult.model },
       timings: { asrMs, llmMs },
       usage: llmResult.usage,
+      trace: buildIntentTrace(context, messages, llmResult, attempts),
     })
   } catch (error) {
     return fail(error)
+  }
+}
+
+const MAX_TRACE_RAW_CHARS = 4000
+
+/** Diagnostics only: the vocabulary that went out, the answer that came back. */
+function buildIntentTrace(
+  context: VoiceIntentContext,
+  messages: { system: string; user: string },
+  llmResult: { raw: string },
+  attempts: VoiceIntentTrace["attempts"],
+): VoiceIntentTrace {
+  return {
+    categories: context.categories.map((category) => ({
+      id: String(category.id),
+      name: category.name,
+      kind: String(category.kind),
+      示例: category.examples ?? null,
+    })),
+    raw: llmResult.raw.slice(0, MAX_TRACE_RAW_CHARS),
+    systemPromptChars: messages.system.length,
+    userPromptChars: messages.user.length,
+    attempts,
   }
 }

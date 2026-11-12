@@ -27,8 +27,9 @@
   type/brand/side enums, CRUD inputs, and `SaveCardImageInput` metadata. Only the last
   four digits may cross this boundary; image bytes never do.
 - `contracts/voice/voice.contract.ts` - the five-domain `VoiceIntent` union, the
-  batch parse result (`intents: VoiceIntent[]`, one element per record), and masked
-  provider settings; keys never cross this boundary.
+  batch parse result (`intents: VoiceIntent[]`, one element per record), the parse
+  diagnostics (`trace`: category vocabulary, raw model answer, per-attempt outcomes),
+  and masked provider settings; keys never cross this boundary.
 - `ipc/index.ts` - ledger-change events emitted by the CLI or desktop background
   maintenance and the local socket path helper used for CLI commit refresh
   notifications.

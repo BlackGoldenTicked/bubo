@@ -413,6 +413,8 @@ export interface CurrentRates {
 export interface CategorySummary {
   id: BuboId
   name: string
+  /** Concrete items this category covers, used as voice-prompt vocabulary. */
+  description?: string | null
   parentId?: BuboId | null
   categoryKind: string
   kind: string
@@ -431,6 +433,7 @@ export interface ListCategoriesInput {
 
 export interface CreateCategoryInput {
   name: string
+  description?: string | null
   parentId?: BuboId | null
   categoryKind?: string
   kind?: string
@@ -443,6 +446,7 @@ export interface CreateCategoryInput {
 export interface UpdateCategoryInput {
   id: BuboId
   name?: string
+  description?: string | null
   parentId?: BuboId | null
   categoryKind?: string
   kind?: string

@@ -15,7 +15,7 @@ import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useAtom } from "jotai"
 import { AppIcon, type AppIconName } from "@bubo/ui"
-import type { VoiceIntent } from "@bubo/shared/contracts"
+import type { VoiceIntent, VoiceIntentParseResult } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
 import { MAX_RECORDING_MS, VoiceRecorder, type VoiceRecording } from "@/lib/voice/audioRecorder"
@@ -80,11 +80,14 @@ function seconds(ms: number): string {
 function summarize(intent: VoiceIntent): string {
   switch (intent.domain) {
     case "cashflow":
-      return `${intent.flowKind === "income" ? "收入" : "支出"} ${intent.amount || "（金额待填）"} · ${intent.title}`
+      return (
+        `${intent.flowKind === "income" ? "收入" : "支出"} ${intent.amount || "（金额待填）"} · ${intent.title}` +
+        ` · 分类 ${intent.categoryName ?? "未识别"}`
+      )
     case "loan":
       return `${intent.name} · 月供 ${intent.paymentAmount || "（待填）"}`
     case "subscription":
-      return `${intent.name} · ${intent.amount || "（待填）"} / ${intent.billingCycle}`
+      return `${intent.name} · ${intent.amount || "（待填）"} / ${intent.billingCycle} · 分类 ${intent.categoryName ?? "未识别"}`
     case "asset":
       return `${intent.accountName} · ${intent.valueAmount || "（待填）"}`
     case "investment":
@@ -93,6 +96,13 @@ function summarize(intent: VoiceIntent): string {
       return "未能判断要记录的对象"
   }
 }
+
+function clip(text: string, max: number): string {
+  return text.length <= max ? text : `${text.slice(0, max)}…（共 ${text.length} 字）`
+}
+
+const TRACE_FILE_HINT =
+  "详细日志：~/Library/Application Support/com.chaordex.bubo/bubo-voice-trace.log"
 
 export function VoiceCaptureSheet() {
   const [open, setOpen] = useAtom(voiceCaptureOpenAtom)
@@ -120,6 +130,33 @@ export function VoiceCaptureSheet() {
 
   const transcribe = useMutation(trpc.voice.transcribe.mutationOptions())
   const parseIntent = useMutation(trpc.voice.parseIntent.mutationOptions())
+
+  /**
+   * Mirror the parse diagnostics into the log area: which category vocabulary went out,
+   * what the model actually answered, and how each record's category came out.
+   */
+  const appendTrace = useCallback(
+    (result: VoiceIntentParseResult) => {
+      const trace = result.trace
+      if (!trace) return
+      const withExamples = trace.categories.filter((category) => category.示例).length
+      append(`分类词表：${trace.categories.length} 个，带示例 ${withExamples} 个`)
+      for (const attempt of trace.attempts) {
+        if (attempt.ok) continue
+        append(`模型弃用：${attempt.provider}/${attempt.model} — ${attempt.error ?? ""}`, "warn")
+      }
+      append(`模型原始返回：${clip(trace.raw, 220)}`)
+      result.intents.forEach((intent, index) => {
+        if (intent.domain !== "cashflow" && intent.domain !== "subscription") return
+        append(
+          `第 ${index + 1} 笔分类：${intent.categoryName ?? "未识别（模型没给，兜底也没命中）"}`,
+          intent.categoryName ? "ok" : "warn",
+        )
+      })
+      append(TRACE_FILE_HINT)
+    },
+    [append],
+  )
 
   /** Shared tail for both input paths: queue every record, auto-hand a single one. */
   const handleIntents = useCallback(
@@ -192,13 +229,14 @@ export function VoiceCaptureSheet() {
       try {
         const result = await parseIntent.mutateAsync({ transcript })
         append(`解析完成：${result.models.llm}（${seconds(result.timings.llmMs)}）`, "ok")
+        appendTrace(result)
         handleIntents(result.intents)
       } catch (error) {
         append(`解析失败：${error instanceof Error ? error.message : String(error)}`, "error")
         setPhase("error")
       }
     },
-    [append, handleIntents, parseIntent, transcribe],
+    [append, appendTrace, handleIntents, parseIntent, transcribe],
   )
 
   /** Text path: no microphone, no ASR — the pasted block goes straight to the model. */
@@ -212,12 +250,13 @@ export function VoiceCaptureSheet() {
     try {
       const result = await parseIntent.mutateAsync({ transcript: value })
       append(`解析完成：${result.models.llm}（${seconds(result.timings.llmMs)}）`, "ok")
+      appendTrace(result)
       handleIntents(result.intents)
     } catch (error) {
       append(`解析失败：${error instanceof Error ? error.message : String(error)}`, "error")
       setPhase("error")
     }
-  }, [append, handleIntents, parseIntent, text])
+  }, [append, appendTrace, handleIntents, parseIntent, text])
 
   const stopRecording = useCallback(() => {
     const recorder = recorderRef.current

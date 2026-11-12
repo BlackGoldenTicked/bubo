@@ -3,9 +3,10 @@
  * @role    Domain layer between one utterance and the five business domains bubo can prefill.
  * @deps    Shared voice contracts, asset/investment vocabulary, and the cashflow draft rules.
  * @gotcha  The system prompt must stay byte-identical across calls: it is the prompt-cache prefix,
- *          so ledger data (categories, accounts, loans…) goes into the user message instead.
- *          Ids and enums are re-validated here against the ledger context; a hallucinated id is
- *          dropped with a warning rather than trusted, and no amount is ever invented.
+ *          so ledger data (categories with their example lists, accounts, loans…) goes into the
+ *          user message instead. Ids and enums are re-validated here against the ledger context;
+ *          a hallucinated id is dropped with a warning rather than trusted, and no amount is
+ *          ever invented.
  */
 
 import type {
@@ -199,11 +200,13 @@ export const VOICE_INTENT_SYSTEM_PROMPT = [
   "## 六、字段与分类的语义映射",
   "1. 分类必须先按语义归类，再回落到字面：用户说的是具体商品/商户（饮料、奶茶、薯片、雪糕、可乐），而账本分类是较宽的概念（如「零食」），就应当归入语义最接近的那一个，不要因为字面不同就留空。",
   "   常见归类：饮料/奶茶/咖啡/薯片/坚果/甜品 → 零食类；早饭/午饭/晚饭/外卖/食堂 → 三餐类；打车/地铁/公交/加油/停车 → 交通或车相关类；药/体检/挂号/健身 → 医疗健身类；话费/流量/宽带/软件 → 通讯数码类；书/电影/演出/游戏 → 书影音类；猫粮/狗粮/兽医 → 宠物类。",
-  "2. 只能从用户消息给出的分类列表中选；列表里的名字和示例不同，就选语义最接近的那个，绝不新造分类。",
-  "3. 具体优先：列表里同时有更具体的分类（如「零食」）和更宽泛的（如「其它」「日常」）时，优先具体的；只有确实没有对应概念时才选宽泛分类，实在没有就留空并在 warnings 说明。",
-  "4. categoryName 要写列表中那个分类的**原名**，categoryId 写它的 id，两者必须指向同一个分类；flowKind=income 时只能选收入类分类，expense 只能选支出类分类。",
-  "5. title 要保留原文里的商品名或商户名（如“可乐”“星巴克”“Netflix”），它既是用户核对时的依据，也是分类兜底匹配的线索。",
-  "6. 其它域同样按语义映射枚举值：",
+  "2. 「可用分类」里带 `示例` 字段的，列出该分类**实际包含**的具体项目，例如「零食」→ 饮料、咖啡、雪糕；「车相关」→ 打车、出租车、停车费、加油、充电。这是该账本自己的归类口径，归类时以它为首要依据：",
+  "   原话里的商品、商户、服务出现在哪个分类的示例里，就归入那个分类；命中多个时选示例最贴近、语义最具体的那个；示例没覆盖的说法，再按第 1 条按语义最接近归类。",
+  "3. 只能从用户消息给出的分类列表中选；列表里的名字和示例不同，就选语义最接近的那个，绝不新造分类。",
+  "4. 具体优先：列表里同时有更具体的分类（如「零食」）和更宽泛的（如「其它」「日常」）时，优先具体的；只有确实没有对应概念时才选宽泛分类，实在没有就留空并在 warnings 说明。",
+  "5. categoryName 要写列表中那个分类的**原名**，categoryId 写它的 id，两者必须指向同一个分类；flowKind=income 时只能选收入类分类，expense 只能选支出类分类。",
+  "6. title 要保留原文里的商品名或商户名（如“可乐”“星巴克”“Netflix”），它既是用户核对时的依据，也是分类兜底匹配的线索。",
+  "7. 其它域同样按语义映射枚举值：",
   '   - asset：银行/储蓄卡/借记卡 → "bank"；支付宝/微信/现金 → "wallet"/"cash"；券商/股票账户 → "brokerage"；交易所/钱包/币 → "crypto"；房/公寓 → "real_estate"；车 → "vehicle"；信用卡欠款/花呗待还 → "liability"。',
   '   - investment：六位代码或沪深/美股代码 → "stock"；指数/ETF/标普/沪深300 → "etf"；场外基金 → "fund"；债券/国债 → "bond"；BTC/ETH/币 → "crypto"。"买了/买入/加仓" → side="buy" 且 action="open"；"卖了/卖出/减仓/清仓" → side="sell"。',
   '   - subscription：每周/一周 → "weekly"；每月/月度 → "monthly"；每年/年度/包年 → "yearly"；"每季度/自定义" → "custom"，并在 intervalCount 记录间隔。',
@@ -227,6 +230,9 @@ export function buildVoiceIntentMessages(context: VoiceIntentContext): VoiceInte
       id: String(category.id),
       name: category.name,
       kind: category.kind,
+      // Per-ledger vocabulary: what this category actually covers, so "饮料" can land on
+      // "零食" even when the ledger never spells the product out anywhere else.
+      ...(category.examples ? { 示例: category.examples } : {}),
     })),
     已有账户: context.assets.map((asset) => ({
       id: asset.id,

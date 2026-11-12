@@ -134,6 +134,22 @@ export type VoiceIntent =
   | VoiceInvestmentIntent
   | VoiceUnknownIntent
 
+/**
+ * Diagnostics for one parse: what vocabulary went out, what the model said back, and
+ * which pool attempts were burned before the answer arrived. Display-only — no parser
+ * decision reads it.
+ */
+export interface VoiceIntentTrace {
+  /** Category vocabulary actually sent, with the resolved 示例 list per category. */
+  categories: { id: string; name: string; kind: string; 示例: string | null }[]
+  /** Raw model answer before normalization, truncated for display. */
+  raw: string
+  systemPromptChars: number
+  userPromptChars: number
+  /** Every pool attempt in order, so a silent fallback to DeepSeek is visible. */
+  attempts: { provider: string; model: string; ok: boolean; error?: string }[]
+}
+
 export interface VoiceIntentParseResult {
   transcript: string
   /**
@@ -155,6 +171,13 @@ export interface VoiceIntentParseResult {
     promptTokens: number
     cachedTokens: number
   }
+  /** Present on every parse; used by the capture sheet log and the trace file. */
+  trace?: VoiceIntentTrace
+}
+
+/** One renderer-side trace line, appended to the same file the sidecar writes. */
+export interface AppendVoiceTraceInput {
+  lines: string[]
 }
 
 export interface VoiceProviderStatus {

@@ -418,6 +418,22 @@ describe("semantic category mapping", () => {
     expect(intent.categoryName).toBeNull()
   })
 
+  it("falls back to a custom category through its own example list", () => {
+    const custom = context({
+      categories: [
+        { id: "cat-kid", name: "小金马", kind: "expense", examples: "疫苗、衣服、玩具" },
+        { id: "cat-food", name: "三餐", kind: "expense" },
+      ],
+    })
+    const [intent] = normalizeVoiceIntents(
+      { intents: [{ domain: "cashflow", flowKind: "expense", amount: "260", title: "孩子疫苗" }] },
+      { ...custom, transcript: "给孩子打疫苗 260" },
+    )
+
+    if (intent?.domain !== "cashflow") throw new Error("expected cashflow")
+    expect(intent.categoryName).toBe("小金马")
+  })
+
   it("never borrows an income category for an expense", () => {
     const [intent] = normalizeVoiceIntents(
       {
@@ -443,6 +459,7 @@ describe("semantic category mapping", () => {
     expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("字段与分类的语义映射")
     expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("饮料/奶茶/咖啡")
     expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("具体优先")
+    expect(VOICE_INTENT_SYSTEM_PROMPT).toContain("示例")
   })
 })
 
@@ -469,5 +486,20 @@ describe("buildVoiceIntentMessages", () => {
     expect(payload["主货币"]).toBe("CNY")
     expect(JSON.stringify(payload["已有账户"])).toContain("招商银行")
     expect(JSON.stringify(payload["已有贷款"])).toContain("建行房贷")
+  })
+
+  it("sends each category's example list, so added categories extend the prompt", () => {
+    const { user } = buildVoiceIntentMessages(
+      context({
+        categories: [
+          { id: "cat-kid", name: "小金马", kind: "expense", examples: "孩子的疫苗、衣服、玩具" },
+          { id: "cat-food", name: "三餐", kind: "expense" },
+        ],
+      }),
+    )
+    const payload = JSON.parse(user) as { 可用分类: Record<string, unknown>[] }
+
+    expect(payload["可用分类"][0]["示例"]).toBe("孩子的疫苗、衣服、玩具")
+    expect(payload["可用分类"][1]["示例"]).toBeUndefined()
   })
 })

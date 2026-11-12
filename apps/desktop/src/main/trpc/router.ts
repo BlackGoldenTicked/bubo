@@ -8,6 +8,7 @@
 import { TRPCError } from "@trpc/server"
 import type { BuboApi } from "@bubo/api"
 import type {
+  AppendVoiceTraceInput,
   CardImageData,
   CardImageRefInput,
   CardSummary,
@@ -632,6 +633,9 @@ export const appRouter = router({
         async ({ ctx, input }): Promise<TranscribeVoiceResult> =>
           unwrap(await ctx.voice.transcribeEntry(input)),
       ),
+    trace: publicProcedure
+      .input((v) => v as AppendVoiceTraceInput)
+      .mutation(({ ctx, input }): null => unwrap(ctx.voice.appendTrace(input ?? { lines: [] }))),
     models: router({
       list: publicProcedure.query(({ ctx }): VoiceLlmPoolEntryView[] => ctx.voice.listLlmModels()),
       import: publicProcedure

@@ -14,6 +14,11 @@ export interface VoiceCategoryOption {
   name: string
   kind: string
   parentName?: string | null
+  /**
+   * Concrete items the category covers ("饮料、咖啡、雪糕"), sent to the model as the
+   * category's 示例. User-entered descriptions win; see `resolveCategoryExamples`.
+   */
+  examples?: string | null
 }
 
 export interface VoiceEntryParseContext {
@@ -39,14 +44,77 @@ export function localDateKey(date: Date): string {
   return formatLocalDateTime(date).slice(0, 10)
 }
 
-/** Keep the prompt small and stable: archived categories never reach the model. */
+/**
+ * Built-in example lists keyed by a fragment of a ledger category name. They are the
+ * defaults for the category `description` field, so a ledger that never filled it still
+ * teaches the model what "零食" or "车相关" covers. Matched both ways (name contains key
+ * or key contains name) so "话费数码软件" also picks up the "数码软件" entry.
+ */
+export const CATEGORY_EXAMPLE_DEFAULTS: Readonly<Record<string, string>> = {
+  零食: "饮料、咖啡、奶茶、雪糕、冰淇淋、薯片、坚果、甜品",
+  三餐: "早饭、午饭、晚饭、夜宵、外卖、食堂、餐厅",
+  餐饮: "早饭、午饭、晚饭、夜宵、外卖、食堂、餐厅、聚餐",
+  彩票: "福彩、体彩、刮刮乐、竞猜",
+  数码软件: "软件、各类会员、话费、流量、云盘等虚拟消费",
+  通讯: "话费、流量、宽带、软件会员",
+  水电气: "水费、电费、燃气费",
+  车相关: "打车、出租车、停车费、车险、加油、充电",
+  交通: "打车、地铁、公交、加油、停车费、高铁、机票",
+  书影音: "买书、电影票、音乐、专辑、演出",
+  娱乐: "电影、演出、游戏、会员、聚会",
+  医疗健身: "看病、买药、体检、健身、跑步装备、按摩",
+  宠物: "猫粮、狗粮、宠物零食、玩具、宠物医院",
+  小金马: "孩子的疫苗、衣服、玩具、车、生活用品",
+  住房: "房租、房贷、中介费、装修、家具、家电",
+  居住: "房租、物业费、水电燃气、家具、家电、维修",
+  日常: "日用品、纸巾、洗发水、洗衣液、超市",
+  购物: "日用品、衣服、数码、超市、化妆品",
+  订阅: "会员、软件、云盘、自动续费",
+  收入: "工资、奖金、红包、利息、报销",
+}
+
+/** Split a description like "孩子的疫苗、咖啡，雪糕等" into keyword tokens. */
+function splitExampleTokens(text: string): string[] {
+  return text
+    .split(/[、，,；;／/\s]+/)
+    .flatMap((phrase) => phrase.replace(/等.*$/, "").split("的"))
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2)
+}
+
+/**
+ * Resolve the example list for one category: the user's description when it is set,
+ * otherwise the built-in default that matches the name. Never invents a category.
+ */
+export function resolveCategoryExamples(name: string, description?: string | null): string | null {
+  const typed = (description ?? "").trim()
+  if (typed.length > 0) return typed
+  const match = Object.entries(CATEGORY_EXAMPLE_DEFAULTS).find(
+    ([key]) => name.includes(key) || key.includes(name),
+  )
+  return match ? match[1] : null
+}
+
+/**
+ * Keep the prompt small and stable: archived categories never reach the model.
+ * Callers may pass either a ledger row (raw `description`) or an already-built option
+ * (`examples`); a present example list is never overwritten by the built-in default.
+ */
 export function buildVoiceCategoryOptions(
-  categories: readonly { id: BuboId; name: string; kind: string; archived?: boolean }[],
+  categories: readonly (VoiceCategoryOption & {
+    archived?: boolean
+    description?: string | null
+  })[],
 ): VoiceCategoryOption[] {
   return categories
     .filter((category) => !category.archived)
     .slice(0, MAX_CATEGORY_OPTIONS)
-    .map((category) => ({ id: category.id, name: category.name, kind: category.kind }))
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      kind: category.kind,
+      examples: category.examples ?? resolveCategoryExamples(category.name, category.description),
+    }))
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -148,6 +216,8 @@ export const CATEGORY_KEYWORD_HINTS: Readonly<Record<string, readonly string[]>>
  * Deterministic fallback: score every category of the right direction by how much of the
  * utterance its hints cover. Longer hits win, so "奶茶" beats a stray "饭". Returns null
  * when nothing matches, which keeps the category empty instead of guessing.
+ * Hints come from the static table plus the category's own example list (built-in default
+ * or user description), so a custom category like "小金马" is matchable too.
  */
 export function matchCategoryByKeywords(
   text: string,
@@ -162,10 +232,8 @@ export function matchCategoryByKeywords(
 
   for (const category of categories) {
     if (category.kind !== kind) continue
-    const hints = Object.entries(CATEGORY_KEYWORD_HINTS).find(
-      ([key]) => category.name.includes(key) || key.includes(category.name),
-    )?.[1]
-    if (!hints) continue
+    const hints = categoryHints(category)
+    if (hints.length === 0) continue
 
     let score = 0
     for (const hint of hints) {
@@ -178,6 +246,16 @@ export function matchCategoryByKeywords(
   }
 
   return best
+}
+
+/** Static table hints for the name plus the category's own examples, de-duplicated. */
+function categoryHints(category: VoiceCategoryOption): string[] {
+  const staticHints =
+    Object.entries(CATEGORY_KEYWORD_HINTS).find(
+      ([key]) => category.name.includes(key) || key.includes(category.name),
+    )?.[1] ?? []
+  const exampleHints = splitExampleTokens(category.examples ?? "")
+  return [...new Set<string>([...staticHints, ...exampleHints])]
 }
 
 function findCategory(

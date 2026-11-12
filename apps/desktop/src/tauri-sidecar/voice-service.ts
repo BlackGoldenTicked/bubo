@@ -21,12 +21,14 @@ import {
 import { readFileSync } from "node:fs"
 import type { Result } from "@bubo/shared"
 import type {
+  AppendVoiceTraceInput,
   ImportVoiceLlmModelsInput,
   ParseVoiceIntentInput,
   RemoveVoiceLlmModelInput,
   SaveVoiceSettingsInput,
   TranscribeVoiceInput,
   TranscribeVoiceResult,
+  VoiceIntent,
   VoiceIntentParseResult,
   VoiceLlmPoolEntryView,
   VoiceSettingsSnapshot,
@@ -35,6 +37,7 @@ import type { VoiceService } from "../main/trpc/voice-service"
 import { parseLlmModelsSheet } from "./llm-models-import"
 import { readFirstSheetRows } from "./xlsx-reader"
 import type { VoiceSettingsStore } from "./voice-settings-store"
+import type { VoiceTraceLog } from "./voice-trace-log"
 
 function fail<T = never>(message: string): Result<T> {
   return { success: false, error: message }
@@ -48,6 +51,8 @@ function readFileAsBuffer(filePath: string): Buffer {
 export interface SidecarVoiceServiceOptions {
   settings: VoiceSettingsStore
   getApi: () => BuboApi
+  /** Append-only diagnostics file; optional so tests can omit it. */
+  trace?: VoiceTraceLog
 }
 
 export class SidecarVoiceService implements VoiceService {
@@ -140,10 +145,12 @@ export class SidecarVoiceService implements VoiceService {
       ? currencyResult.data.displayCurrency
       : (input.currency ?? "CNY")
 
+    // Descriptions ride along: the pipeline turns them into each category's 示例 list.
     const categories: VoiceCategoryOption[] = categoriesResult.data.map((category) => ({
       id: category.id,
       name: category.name,
       kind: category.kind,
+      description: category.description ?? null,
     }))
 
     // Optional context: a missing list must degrade to an empty vocabulary, never fail the parse.
@@ -188,7 +195,7 @@ export class SidecarVoiceService implements VoiceService {
         currency: position.currency,
       }))
 
-    return parseVoiceIntent({
+    const result = await parseVoiceIntent({
       audioBase64: input.audioBase64,
       mimeType: input.mimeType,
       transcript: transcript || null,
@@ -204,5 +211,73 @@ export class SidecarVoiceService implements VoiceService {
       llmPool: settings.llmModels,
       llm: settings.llm,
     })
+    this.logParse(transcript, result)
+    return result
   }
+
+  /** Renderer-side lines (handoff, form prefill) land in the same trace file. */
+  appendTrace(input: AppendVoiceTraceInput): Result<null> {
+    try {
+      for (const line of input.lines ?? []) {
+        const text = typeof line === "string" ? line.trim() : ""
+        if (text.length > 0) this.options.trace?.append("renderer", text)
+      }
+      return { success: true, data: null }
+    } catch (error) {
+      return fail(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  /**
+   * Record what the model answered and how each record's category came out. This is the
+   * file to read when a category does not reach the form: it separates "the model never
+   * returned one" from "the id did not survive normalization".
+   */
+  private logParse(transcript: string, result: Result<VoiceIntentParseResult>): void {
+    const trace = this.options.trace
+    if (!trace) return
+    if (!result.success) {
+      trace.append("server", "parse.failed", { transcript, error: result.error })
+      return
+    }
+    const data = result.data
+    trace.append("server", "parse.request", {
+      transcript,
+      model: data.models.llm,
+      llmMs: data.timings.llmMs,
+      attempts: data.trace?.attempts ?? [],
+      promptChars: data.trace
+        ? { system: data.trace.systemPromptChars, user: data.trace.userPromptChars }
+        : null,
+      categoryVocabulary: (data.trace?.categories ?? []).map(
+        (category) => `${category.name}(${category.kind}) ← ${category.示例 ?? "无示例"}`,
+      ),
+    })
+    trace.append("server", "parse.raw", data.trace?.raw ?? "(未记录原始返回)")
+    trace.append("server", "parse.intents", data.intents.map(summarizeIntent))
+  }
+}
+
+/** Compact per-record line for the trace file, category fields first. */
+function summarizeIntent(intent: VoiceIntent): Record<string, unknown> {
+  const base = { domain: intent.domain, warnings: intent.warnings }
+  if (intent.domain === "cashflow") {
+    return {
+      ...base,
+      title: intent.title,
+      amount: intent.amount,
+      categoryId: intent.categoryId,
+      categoryName: intent.categoryName,
+    }
+  }
+  if (intent.domain === "subscription") {
+    return {
+      ...base,
+      name: intent.name,
+      amount: intent.amount,
+      categoryId: intent.categoryId,
+      categoryName: intent.categoryName,
+    }
+  }
+  return base
 }

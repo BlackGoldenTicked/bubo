@@ -12,6 +12,9 @@ export const categories = sqliteTable(
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
+    // Free-text list of the concrete items a category covers ("饮料、咖啡、雪糕").
+    // It is vocabulary for the voice intent prompt, not accounting data.
+    description: text("description"),
     parentId: text("parent_id"),
     categoryKind: text("category_kind", {
       enum: ["expense", "income", "transfer", "asset_movement", "debt", "adjustment", "neutral"],

@@ -291,6 +291,7 @@ export abstract class ReferenceApiRepository extends BuboApiBase {
         .values({
           id,
           name: input.name,
+          description: input.description ?? null,
           parentId: input.parentId == null ? null : toSqlId(input.parentId),
           categoryKind: kind,
           color: input.color ?? null,
@@ -312,6 +313,7 @@ export abstract class ReferenceApiRepository extends BuboApiBase {
     try {
       const set: Partial<CategoryInsert> = { updatedAt: nowIso() }
       if (input.name !== undefined) set.name = input.name
+      if (input.description !== undefined) set.description = input.description
       if (input.parentId !== undefined)
         set.parentId = input.parentId == null ? null : toSqlId(input.parentId)
       if (input.categoryKind !== undefined || input.kind !== undefined)

@@ -12,6 +12,7 @@ import { CardImageStore } from "./card-image-store"
 import { SidecarCardService } from "./card-service"
 import { TauriLedgerStore } from "./ledger-store"
 import { SidecarVoiceService } from "./voice-service"
+import { VoiceTraceLog } from "./voice-trace-log"
 import { VoiceSettingsStore } from "./voice-settings-store"
 
 type SidecarRequest = {
@@ -62,6 +63,7 @@ async function main(): Promise<void> {
   const voice = new SidecarVoiceService({
     settings: new VoiceSettingsStore(requiredEnvironment("BUBO_SIDECAR_USER_DATA_DIR")),
     getApi: () => ledgerStore.getApi(),
+    trace: new VoiceTraceLog(requiredEnvironment("BUBO_SIDECAR_USER_DATA_DIR")),
   })
 
   const cards = new SidecarCardService({

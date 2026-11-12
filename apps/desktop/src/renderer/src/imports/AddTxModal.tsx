@@ -130,6 +130,7 @@ export function AddTxModal({
   const {
     control,
     formState: { errors, isSubmitting },
+    getValues,
     handleSubmit,
     register,
     reset,
@@ -164,14 +165,15 @@ export function AddTxModal({
 
   useEffect(() => {
     if (!open) return
-    if (categoryOptions.length === 0) {
-      if (form.categoryId != null) setValue("categoryId", null)
-      return
-    }
-    if (form.categoryId == null) {
-      setValue("categoryId", categoryOptions[0]?.id ?? null)
-    }
-  }, [categoryOptions, form.categoryId, open, setValue])
+    // Read the live form value, not this render's `watch()` snapshot: the effect above
+    // resets the form to `initial` in the same commit, so a stale `null` here would
+    // overwrite a voice-prefilled category with the first chip ("三餐").
+    if (getValues("categoryId") != null) return
+    // The category query may still be in flight right after a voice handoff navigates
+    // here; this effect re-runs when the options arrive, so never clear a prefilled id.
+    const fallback = categoryOptions[0]?.id
+    if (fallback != null) setValue("categoryId", fallback)
+  }, [categoryOptions, getValues, open, setValue])
 
   function setFlowKind(flowKind: TxForm["flowKind"]) {
     if (form.flowKind === flowKind) return

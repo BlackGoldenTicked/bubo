@@ -17,10 +17,10 @@ presentation mappers.
 - `packages/api/src/sqlite/` - transitional compatibility re-exports for old internal import paths.
 - `packages/api/src/use-cases/agent-ledger/agent-ledger-api.ts` - guarded agent ledger patch facade.
 - `packages/api/src/infrastructure/db/repositories/agent-ledger-api.repository.ts` - rule-checked agent patch persistence.
-- `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, and a typed intent array (one element per record, capped at 20).
+- `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, and a typed intent array (one element per record, capped at 20). It returns a `trace` (category vocabulary, raw model answer, per-attempt outcomes) that the sidecar writes to the voice trace log.
 - `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage so the renderer can log recognition and reasoning separately.
 - `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt (domain taxonomy, per-record dates with date-line inheritance, cross-domain batches), per-domain normalization, and the batch parser (`normalizeVoiceIntents`).
-- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization, plus `CATEGORY_KEYWORD_HINTS` / `matchCategoryByKeywords` (product-word → ledger category fallback guarded on the category name).
+- `packages/api/src/domain/voice/voice-entry-rules.ts` - cashflow draft normalization, plus the category vocabulary: `categories.description` → each category's `示例` (`resolveCategoryExamples`, with `CATEGORY_EXAMPLE_DEFAULTS` for blank descriptions) and the `CATEGORY_KEYWORD_HINTS` / `matchCategoryByKeywords` product-word fallback fed by the same lists.
 - `packages/api/src/domain/voice/llm-pool-rules.ts` - pure Bailian free-tier pool ordering and attempt-chain rules.
 - `packages/api/src/infrastructure/ai/bailian-asr-client.ts` - Bailian (DashScope) ASR client over the OpenAI-compatible endpoint.
 - `packages/api/src/infrastructure/ai/llm-entry-client.ts` - OpenAI-compatible JSON completion client shared by pool models and DeepSeek; it forwards a provider's `extraBody` verbatim so vendor-specific switches (thinking mode, cache hints) stay at the settings boundary.

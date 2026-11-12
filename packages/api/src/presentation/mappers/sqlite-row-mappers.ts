@@ -79,6 +79,7 @@ export function mapCategory(row: CategoryRow): CategorySummary {
   return {
     id: row.id,
     name: row.name,
+    description: row.description ?? null,
     parentId: row.parentId,
     categoryKind: row.categoryKind,
     kind: row.categoryKind,

@@ -25,6 +25,8 @@ Drizzle row -> presentation mapper -> API contract -> sidecar tRPC -> Tauri rend
   forecast windows are projected by the browser-safe shared rule, not by mapping
   legacy `subscription_occurrences` rows.
 - Keep DTO changes aligned with `packages/api/src/index.ts` and renderer callers.
+  Category rows now carry `description` (the item list used as voice-prompt
+  vocabulary); it is stored state, so mappers pass it through untouched.
 - Loan occurrence status is persisted forecast metadata. Presentation mappers
   must not turn elapsed due dates into cashflow or asset mutations; the renderer
   derives projected progress from dates.

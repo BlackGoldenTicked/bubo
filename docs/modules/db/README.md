@@ -34,6 +34,9 @@ handle used by the Tauri Node sidecar, CLI, and API package.
   store only a generated file name under the sidecar's `card-images` folder, never bytes
   (see [ADR 0026](../../decisions/0026-cards-are-identity-not-balances.md)).
 - Budgets, categories, subscriptions, and loans support planning and review workflows.
+  `categories.description` is a free-text list of the items a category covers
+  ("饮料、咖啡、雪糕") used only as voice-prompt vocabulary; it never affects amounts or
+  reporting (see [voice entry](../../topics/voice-entry.md#semantic-category-mapping)).
 - Subscription forecasts are derived from `subscriptions` at read time and are not persisted.
   `subscription_occurrences` remains temporarily in the schema only as an ignored compatibility
   table for existing ledgers. Loan occurrence rows remain forecast artifacts; passing a due date may
