@@ -1,4 +1,4 @@
-# 0008. Publish Releases From CI Before Matrix Uploads
+# 0029. Publish Releases From CI Before Matrix Uploads
 
 - Status: accepted
 - Date: 2026-08-04

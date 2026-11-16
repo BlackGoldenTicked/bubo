@@ -203,11 +203,9 @@ Update `apps/desktop/src/renderer/src/env.d.ts` whenever the `window.bubo` contr
   multi-select controls. Leaving the selection empty means an overall expense
   budget; detail-page transaction lists must use the bound category ids returned
   by budget progress so they match the backend used amount.
-- Desktop tests, CLI development, and sidecar packaging depend on the Node 22 ABI for `better-sqlite3`.
-- Releases start with a human/AI-authored note in
-  `apps/web/components/releases/ReleaseTimeline.tsx`; the release script refuses
-  to continue unless the first note and the single `latest` badge match the
-  target version.
+- Desktop tests and sidecar packaging depend on the Node 22 ABI for `better-sqlite3`.
+- Releases have no changelog file to edit: `pnpm release` requires a clean
+  worktree, and the GitHub Release body is the tag's generated notes.
 - Updater releases require the long-lived bubo signing key. Keep only its
   public key in `tauri.conf.json`; CI secrets hold the encrypted private key and
   password. The macOS release job must build both `app` and `dmg`, because the

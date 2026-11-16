@@ -142,17 +142,16 @@ restarts it. Existing app data is untouched.
 
 ## Release
 
-Add the new first entry in
-`apps/web/components/releases/ReleaseTimeline.tsx` and move the single
-`badge: "latest"` marker to it, then run from `main`:
+Run from a clean `main`:
 
 ```bash
 pnpm release 0.2.2
 ```
 
-The script bumps root/desktop/web/CLI versions plus Tauri JSON/Cargo versions,
-runs checks, commits, pushes `main`, tags `v<version>`, and waits for GitHub
-Actions. CI creates the GitHub Release, builds target-native Node sidecars,
+The script bumps root/desktop versions plus Tauri JSON/Cargo versions, runs the
+local checks, commits, pushes `main`, tags `v<version>`, and waits for GitHub
+Actions. The GitHub Release body comes from the tag's generated notes, so there
+is no changelog file to edit first. CI creates the GitHub Release, builds target-native Node sidecars,
 creates Tauri DMG/NSIS installers, signs/notarizes where configured, and uploads
 them. Automatic update discovery is currently disabled: the rename to bubo
 removed `plugins.updater.endpoints` because no bubo release repository exists
@@ -162,8 +161,8 @@ Release CI requires `TAURI_SIGNING_PRIVATE_KEY` and
 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`; retain a secure offline backup of the
 matching bubo updater key.
 
-Supported release flags include `--dry-run`, `--no-publish`, `--no-npm`,
-`--no-cask`, `--no-wait`, and `--no-checks`.
+Supported release flags include `--dry-run`, `--no-publish`, `--no-cask`,
+`--no-wait`, and `--no-checks`.
 
 ## Voice Entry Keys
 

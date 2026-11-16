@@ -1,6 +1,6 @@
 # 0008. Use Content-Addressed R2 Images With Inline ThumbHash
 
-- Status: accepted
+- Status: superseded (the blog and its image pipeline were removed)
 - Date: 2026-07-14
 
 ## Context

@@ -17,11 +17,11 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0001   | Keep Finance Layers Asymmetric                       | Accepted | 2026-06-14 |
 | 0002   | Separate Demo Ledger And Personal Starter Ledger     | Accepted | 2026-06-15 |
 | 0003   | Desktop App Icon Assets                              | Accepted | 2026-06-16 |
-| 0004   | Agent Ledger Patches                                 | Accepted | 2026-06-16 |
-| 0005   | Local CLI Commit Refresh Socket                      | Accepted | 2026-06-18 |
-| 0006   | Add Flutter Mobile App                               | Accepted | 2026-06-27 |
-| 0007   | Build The Web Blog With Velite                       | Accepted | 2026-07-14 |
-| 0008   | Content-Address Blog Images                          | Accepted | 2026-07-14 |
+| 0004   | Agent Ledger Patches                                 | Superseded | 2026-06-16 |
+| 0005   | Local CLI Commit Refresh Socket                      | Partial | 2026-06-18 |
+| 0006   | Add Flutter Mobile App                               | Superseded | 2026-06-27 |
+| 0007   | Build The Web Blog With Velite                       | Superseded | 2026-07-14 |
+| 0008   | Content-Address Blog Images                          | Superseded | 2026-07-14 |
 | 0009   | Derive Loan Progress From Due Dates                  | Accepted | 2026-07-27 |
 | 0010   | Project Subscriptions At Read Time                   | Accepted | 2026-08-07 |
 | 0011   | Migrate The Desktop Runtime To Tauri                 | Accepted | 2026-08-08 |
@@ -42,3 +42,6 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0026   | Cards Are Identity, Not Balances                     | Accepted | 2026-11-07 |
 | 0027   | Menu-Bar Residency With A Quick Capture Window       | Accepted | 2026-11-08 |
 | 0028   | Adopt GPL-3.0 Because The Lumno Style Is GPL-Derived | Accepted | 2026-11-09 |
+| 0029   | Publish Releases From CI Before Matrix Uploads       | Accepted | 2026-08-04 |
+
+0029 carries an earlier date than 0028: it was renumbered from a duplicate `0008` slot.
