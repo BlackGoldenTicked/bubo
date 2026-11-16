@@ -60,10 +60,9 @@ See [ADR 0017](decisions/0017-unify-renderer-states-failures-and-copy-language.m
 ## Shared Contract Changes
 
 `packages/shared` interfaces are also constructed as object literals outside the
-API/mapper path: test fixtures in `apps/desktop/**/__tests__`, API tests, and the
-web marketing mocks under `apps/web/appmock`. Adding or tightening a field on a
-contract breaks those literals with "missing properties" only at full type
-check time.
+API/mapper path: test fixtures in `apps/desktop/**/__tests__` and API tests.
+Adding or tightening a field on a contract breaks those literals with "missing
+properties" only at full type check time.
 
 - After changing a contract interface, search for its distinctive field names,
   not just the type name, and fix every literal construction site.
@@ -110,7 +109,7 @@ Generated files and ambient tool declarations should be excluded in `check-docs.
 - [ ] Tauri command, Node sidecar, and renderer boundaries remain intact.
 - [ ] SQLite access goes through the Drizzle-backed API layer.
 - [ ] Shared contract changes also fixed every literal construction site
-      (tests, API tests, web mocks).
+      (tests, API tests).
 - [ ] Relevant module docs and file headers are updated.
 - [ ] Tests or manual verification cover the changed behavior.
 - [ ] `pnpm check-docs` has no hard failures.

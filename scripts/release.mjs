@@ -3,7 +3,7 @@
  * @purpose One-command bubo release automation.
  * @role    Bumps versions, commits, pushes main, tags, waits for CI, and publishes the release.
  * @deps    Node built-ins plus external git/gh/pnpm commands.
- * @gotcha  The human/AI-authored release note must already be the first entry in ReleaseTimeline.tsx.
+ * @gotcha  The GitHub Release body comes from the tag's generated notes; nothing here writes copy.
  */
 
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
@@ -14,15 +14,10 @@ import { execFileSync } from "node:child_process"
 const REPO = env("BUBO_RELEASE_REPO", "BlackGoldenTicked/bubo")
 const OWNER = env("BUBO_RELEASE_OWNER", "BlackGoldenTicked")
 const MAIN_BRANCH = env("BUBO_RELEASE_BRANCH", "main")
-const NOTES_FILE = env(
-  "BUBO_RELEASE_NOTES_FILE",
-  "apps/web/components/releases/ReleaseTimeline.tsx",
-)
 const VERSION_FILES = env("BUBO_RELEASE_VERSION_FILES", [
   "package.json",
   "apps/desktop/package.json",
   "apps/desktop/src-tauri/tauri.conf.json",
-  "apps/web/package.json",
   "packages/cli/package.json",
 ])
 const CARGO_VERSION_FILE = env(
@@ -71,7 +66,6 @@ let originalGhUser = ""
 main()
 
 function main() {
-  validateReleaseNotes(version)
   ensureBranch()
   ensureInitialWorktree()
   ensureTagDoesNotExist(tag)
@@ -86,7 +80,7 @@ function main() {
 
   if (!noChecks) runQualityGates()
 
-  mut("git", ["add", NOTES_FILE, ...VERSION_FILES, CARGO_VERSION_FILE, CARGO_LOCK_FILE])
+  mut("git", ["add", ...VERSION_FILES, CARGO_VERSION_FILE, CARGO_LOCK_FILE])
   mut("git", ["commit", "-m", `chore(release): ${tag}`])
   mut("git", ["push", "origin", MAIN_BRANCH])
   mut("git", ["tag", tag])
@@ -114,31 +108,6 @@ function main() {
   info(`Release pipeline finished for ${tag}.`)
 }
 
-function validateReleaseNotes(expectedVersion) {
-  const text = readFileSync(NOTES_FILE, "utf8")
-  const releaseData = text.slice(text.indexOf("export const RELEASES"))
-  const versions = [...releaseData.matchAll(/version:\s*["']([^"']+)["']/g)].map(
-    (match) => match[1],
-  )
-  if (versions[0] !== expectedVersion) {
-    fail(
-      `${NOTES_FILE} first release version is ${versions[0] ?? "missing"}, expected ${expectedVersion}.`,
-    )
-  }
-
-  const latestMatch = releaseData.match(
-    /version:\s*["']([^"']+)["'][\s\S]*?badge:\s*["']latest["']/,
-  )
-  if (!latestMatch || latestMatch[1] !== expectedVersion) {
-    fail(`${NOTES_FILE} must move badge: "latest" to version ${expectedVersion}.`)
-  }
-
-  const latestCount = [...releaseData.matchAll(/badge:\s*["']latest["']/g)].length
-  if (latestCount !== 1) {
-    fail(`${NOTES_FILE} must contain exactly one badge: "latest" entry; found ${latestCount}.`)
-  }
-}
-
 function ensureBranch() {
   const branch = sh("git", ["branch", "--show-current"])
   if (branch !== MAIN_BRANCH) {
@@ -155,19 +124,14 @@ function ensureInitialWorktree() {
   const changed = sh("git", ["status", "--short", "--untracked-files=all"])
     .split("\n")
     .filter(Boolean)
-  const allowed = new Set([NOTES_FILE])
-  const unexpected = changed.filter((line) => {
-    const file = line.replace(/^[ MADRCU?!]{1,2}\s+/, "").trim()
-    return !allowed.has(file)
-  })
-  if (unexpected.length > 0 && !dryRun) {
+  if (changed.length > 0 && !dryRun) {
     fail(
-      `Unexpected uncommitted files before release:\n${unexpected.join(
+      `Unexpected uncommitted files before release:\n${changed.join(
         "\n",
-      )}\nOnly ${NOTES_FILE} should be dirty before running pnpm release.`,
+      )}\nThe worktree must be clean before running pnpm release.`,
     )
   }
-  if (unexpected.length > 0) info(`[dry-run] Unexpected dirty files:\n${unexpected.join("\n")}`)
+  if (changed.length > 0) info(`[dry-run] Unexpected dirty files:\n${changed.join("\n")}`)
 }
 
 function ensureTagDoesNotExist(tagName) {
@@ -446,9 +410,7 @@ Flags:
   --no-checks    Skip local check-docs/format/lint/build gates.
 
 Before running:
-  1. Add the new first entry in ${NOTES_FILE}.
-  2. Move badge: "latest" to that new entry.
-  3. Run on ${MAIN_BRANCH}: pnpm release <version>.
+  Run on a clean ${MAIN_BRANCH}: pnpm release <version>.
 `)
 }
 

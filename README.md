@@ -89,8 +89,6 @@ React renderer ──► window.bubo adapter ──► narrow Rust commands (Tau
 - Renderer: React 19, TanStack Router/Query, Jotai, Tailwind v4, HeroUI, plus hand-drawn
   primitives in `packages/ui`.
 - Business layer: TypeScript packages (`api`, `db`, `shared`, `ui`).
-- `apps/web` is the Next.js marketing site. Blog content is intentionally **not** part of this
-  repository.
 
 The sidecar owns the only SQLite connection, so the renderer can never reach the database
 directly. Card scans are plain files; the database stores file names only.
