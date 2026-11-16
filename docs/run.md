@@ -5,7 +5,6 @@
 - Node.js 22 for workspace tools, tests, CLI development, and sidecar packaging.
 - `pnpm@10.12.1`.
 - Rust stable and platform Tauri prerequisites for desktop builds.
-- Flutter stable for `apps/mobile`.
 - Production data identity: `com.chaordex.bubo`.
 
 ### When the host default differs
@@ -217,21 +216,3 @@ The workspace CLI runs directly on Node 22 and uses the same
 `better-sqlite3` ABI as the sidecar. Use `pnpm --silent bubo-cli ...` when
 another program parses its JSON stdout.
 
-## Mobile App
-
-```bash
-cd apps/mobile
-flutter pub get
-flutter run
-flutter analyze
-flutter test
-```
-
-The mobile development fixture lives in the mobile sandbox and does not open
-the user's desktop ledger.
-
-## Blog
-
-The blog content and its R2 image pipeline are **not part of this repository** — they live in
-a private project next to it (`bubo-blog-private`). `apps/web` ships the marketing site only;
-its routes, navigation, and sitemap no longer reference `/blog`.

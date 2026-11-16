@@ -88,8 +88,7 @@ React renderer ──► window.bubo adapter ──► narrow Rust commands (Tau
 - Desktop shell: Tauri v2 (Rust) with a bundled Node 22 sidecar.
 - Renderer: React 19, TanStack Router/Query, Jotai, Tailwind v4, HeroUI, plus hand-drawn
   primitives in `packages/ui`.
-- Business layer: TypeScript packages (`api`, `db`, `shared`, `ui`, `cli`).
-- Mobile: a Flutter shell under `apps/mobile` (early; desktop is the reference surface).
+- Business layer: TypeScript packages (`api`, `db`, `shared`, `ui`).
 - `apps/web` is the Next.js marketing site. Blog content is intentionally **not** part of this
   repository.
 

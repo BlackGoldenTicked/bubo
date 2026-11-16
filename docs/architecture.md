@@ -32,8 +32,6 @@ desktop history navigation.
 
 - `apps/desktop` owns the Tauri shell, bundled Node sidecar, React renderer,
   routes, resources, and desktop packaging.
-- `apps/mobile` owns the Flutter Android/iOS shell and does not open the user's
-  desktop SQLite directory.
 - `apps/web` owns the Next.js marketing site and public release notes.
 - `packages/api` owns product use cases, domain rules, repositories, and
   renderer-facing mappers.

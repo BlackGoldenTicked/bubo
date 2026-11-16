@@ -1,6 +1,6 @@
 # 0006. Add Flutter Mobile App
 
-- Status: accepted
+- Status: superseded (the Flutter shell was removed; bubo is desktop-only)
 - Date: 2026-06-27
 
 ## Context
