@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Partially superseded: the CLI producer was removed; the desktop-side change socket remains.
 
 ## Date
 

@@ -16,7 +16,7 @@ handle used by the Tauri Node sidecar, CLI, and API package.
 
 - Ledger metadata and settings tables describe the database itself.
 - `cashflow_events` describes past cashflow, including rows materialized from
-  agent-assisted imports. Import source metadata should live on imported
+  imported statements. Import source metadata should live on imported
   cashflow records so the app can deduplicate by source.
 - `asset_snapshots` describes present assets and liabilities.
 - `investment_positions`, `investment_transactions`, and `price_quotes` describe the

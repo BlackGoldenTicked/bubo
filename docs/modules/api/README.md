@@ -15,8 +15,6 @@ presentation mappers.
 - `packages/api/src/use-cases/` - facade-compatible use-case wrappers for reference data, imports, cashflow, assets, subscriptions, loans, budgets, links, and dashboard workflows. These files must not import Drizzle, `@bubo/db`, or access `this.db` directly.
 - `packages/api/src/infrastructure/db/repositories/*-api.repository.ts` - Drizzle-backed persistence implementations that support the facade-compatible use-case wrappers.
 - `packages/api/src/sqlite/` - transitional compatibility re-exports for old internal import paths.
-- `packages/api/src/use-cases/agent-ledger/agent-ledger-api.ts` - guarded agent ledger patch facade.
-- `packages/api/src/infrastructure/db/repositories/agent-ledger-api.repository.ts` - rule-checked agent patch persistence.
 - `packages/api/src/use-cases/voice/voice-intent-api.ts` - system-wide voice intent pipeline: transcript, pooled reasoning, and a typed intent array (one element per record, capped at 20). It returns a `trace` (category vocabulary, raw model answer, per-attempt outcomes) that the sidecar writes to the voice trace log.
 - `packages/api/src/use-cases/voice/voice-transcribe-api.ts` - ASR-only stage so the renderer can log recognition and reasoning separately.
 - `packages/api/src/domain/voice/voice-intent-rules.ts` - frozen cacheable system prompt (domain taxonomy, per-record dates with date-line inheritance, cross-domain batches), per-domain normalization, and the batch parser (`normalizeVoiceIntents`).
@@ -56,12 +54,9 @@ presentation mappers.
 - `cashflow/cashflow-api.ts` - past cashflow event queries, mutations, and monthly income/expense/net trend summaries.
 - `dashboard/dashboard-api.ts` - cross-layer dashboard composition without requiring reconciliation.
 - `imports/imports-api.ts` - legacy imported statement records and transaction review
-  surfaces while direct agent-assisted cashflow import is introduced.
+  surfaces.
 - `investments/investments-api.ts` - trade-driven investment positions, manual price
   quotes, and materialized account market value for net worth.
-- `agent-ledger/agent-ledger-api.ts` - business-level patch operations for AI
-  agents, including category ensure, cashflow creation, and cashflow
-  classification.
 - `voice/voice-intent-api.ts` - turns one recorded utterance into a typed intent
   for cashflow, asset, investment, subscription, or loan through pooled ASR and
   reasoning, then DeepSeek as the floor. It never persists anything; each page
@@ -141,10 +136,6 @@ The personal starter seed should be idempotent and conservative. It should only 
 - Cashflow-to-obligation binding (`bindCashflowEvents` / `listLinkedCashflowEvents` / `unbindCashflowEvent`) records the deduction link in `object_links` (`fromType` `subscription`/`loan` → `toType` `cashflow_event`, `linkType` `confirmed_matches`). Binding is idempotent (existing owner/event pairs are skipped) and strictly explanatory: it must not change forecast pressure, net worth, or any cashflow aggregate.
 - Keep platform-specific statement parsing outside durable product code when a
   local agent command can normalize the source into imported cashflow records.
-- Agent write workflows should submit business-level patch operations, not raw
-  SQLite table mutations.
-- `pnpm bubo-cli apply-patch` is provided by `@bubo/cli` for agents; it calls
-  the guarded API patch method rather than exposing SQLite.
 - Cashflow writes validate category direction. Expense cashflow can only use
   expense categories, income cashflow can only use income categories, and agent
   classification infers the expected category kind from the target event.

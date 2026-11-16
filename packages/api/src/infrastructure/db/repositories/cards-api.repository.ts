@@ -22,7 +22,7 @@ import type {
   UpdateCardInput,
 } from "../../../index"
 import type { BuboId } from "../../../index"
-import { AgentLedgerApiRepository } from "./agent-ledger-api.repository"
+import { LinksApiRepository } from "./links-api.repository"
 import { fail, newId, normalizeCurrency, nowIso, ok, toSqlId } from "../../../shared/api-helpers"
 
 const MAX_LAST4 = 4
@@ -46,7 +46,7 @@ function normalizeOrder(value: number | null | undefined): number | undefined {
   return Math.trunc(value)
 }
 
-export abstract class CardsApiRepository extends AgentLedgerApiRepository {
+export abstract class CardsApiRepository extends LinksApiRepository {
   private mapCardImage(row: CardImageRow): CardImageSummary {
     return {
       side: row.side as CardSide,

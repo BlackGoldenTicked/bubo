@@ -1,6 +1,6 @@
 # 0004. Agent Ledger Patches
 
-- Status: accepted
+- Status: superseded (the CLI and its guarded patch layer were removed; the desktop app owns all writes)
 - Date: 2026-06-16
 
 ## Context

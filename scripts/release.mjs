@@ -18,7 +18,6 @@ const VERSION_FILES = env("BUBO_RELEASE_VERSION_FILES", [
   "package.json",
   "apps/desktop/package.json",
   "apps/desktop/src-tauri/tauri.conf.json",
-  "packages/cli/package.json",
 ])
 const CARGO_VERSION_FILE = env(
   "BUBO_RELEASE_CARGO_VERSION_FILE",
@@ -28,8 +27,6 @@ const CARGO_LOCK_FILE = env("BUBO_RELEASE_CARGO_LOCK_FILE", "apps/desktop/src-ta
 const TAP_REPO = env("BUBO_RELEASE_TAP_REPO", "")
 const CASK_PATH = env("BUBO_RELEASE_CASK_PATH", "Casks/bubo.rb")
 const CASK_ASSET_NAME = env("BUBO_RELEASE_DMG", "bubo-${version}-arm64.dmg")
-const NPM_PACKAGE = env("BUBO_RELEASE_NPM_PACKAGE", "@barrysongdev4real/bubo-cli")
-const NPM_PACKAGE_DIR = env("BUBO_RELEASE_NPM_PACKAGE_DIR", "packages/cli/npm")
 const TAURI_CONFIG_FILE = env(
   "BUBO_RELEASE_TAURI_CONFIG_FILE",
   "apps/desktop/src-tauri/tauri.conf.json",
@@ -42,7 +39,6 @@ const flags = new Set(args.filter((arg) => arg.startsWith("--")))
 const dryRun = flags.has("--dry-run")
 const noPublish = flags.has("--no-publish")
 const noCask = flags.has("--no-cask") || !TAP_REPO
-const noNpm = flags.has("--no-npm")
 const noWait = flags.has("--no-wait")
 const noChecks = flags.has("--no-checks")
 
@@ -90,10 +86,6 @@ function main() {
     waitForReleaseWorkflow(tag)
   }
 
-  if (!noNpm) {
-    publishNpmPackage(version)
-  }
-
   if (!noCask) {
     updateHomebrewCask(version)
   } else if (!TAP_REPO) {
@@ -102,7 +94,6 @@ function main() {
 
   validateRemoteRelease(tag)
   validateUpdaterManifest(tag, version)
-  validateNpmPackage(version)
   if (!noCask) validateCask(version)
 
   info(`Release pipeline finished for ${tag}.`)
@@ -193,17 +184,6 @@ function findReleaseRun(tagName) {
     if (!dryRun) sleepSync(5000)
   }
   fail(`Could not find Release workflow run for ${tagName}.`)
-}
-
-function publishNpmPackage(nextVersion) {
-  const existing = shAllowFailure("npm", ["view", `${NPM_PACKAGE}@${nextVersion}`, "version"])
-  if (existing === nextVersion) {
-    info(`Skipping npm publish: ${NPM_PACKAGE}@${nextVersion} already exists.`)
-    return
-  }
-
-  mut("pnpm", ["-F", NPM_PACKAGE, "build"])
-  mut("npm", ["publish", NPM_PACKAGE_DIR, "--access", "public"])
 }
 
 function updateHomebrewCask(nextVersion) {
@@ -328,14 +308,6 @@ function minisignKeyId(encodedEnvelope) {
   return raw.subarray(2, 10).toString("hex")
 }
 
-function validateNpmPackage(nextVersion) {
-  if (noNpm || dryRun) return
-  const published = sh("npm", ["view", `${NPM_PACKAGE}@${nextVersion}`, "version"])
-  if (published !== nextVersion) {
-    fail(`npm validation failed: ${NPM_PACKAGE}@${nextVersion} returned ${published || "missing"}.`)
-  }
-}
-
 function validateCask(nextVersion) {
   if (dryRun) return
   const content = sh("gh", ["api", `repos/${TAP_REPO}/contents/${CASK_PATH}`, "--jq", ".content"])
@@ -405,7 +377,6 @@ Flags:
   --dry-run      Print write operations without changing files or remotes.
   --no-publish   Skip remote GitHub Release validation.
   --no-cask      Skip Homebrew cask update.
-  --no-npm       Skip publishing ${NPM_PACKAGE} to npm.
   --no-wait      Do not wait for GitHub Actions.
   --no-checks    Skip local check-docs/format/lint/build gates.
 

@@ -166,7 +166,6 @@ export interface BuboApi {
     id: BuboId
     includeInAnalytics: boolean
   }): Promise<Result<CashflowEventSummary>>
-  applyAgentLedgerPatch(input: AgentLedgerPatchInput): Promise<Result<AgentLedgerPatchResult>>
   getCashflowSummary(input?: CashflowSummaryInput): Promise<Result<CashflowSummary>>
   getCashflowBreakdown(input?: CashflowBreakdownInput): Promise<Result<CashflowBreakdownRow[]>>
   getMonthlyCashflowTrend(
@@ -694,83 +693,6 @@ export interface UpdateCashflowEventInput {
   categoryId?: BuboId | null
   includeInAnalytics?: boolean
   status?: ActiveStatus
-}
-
-export type AgentLedgerOperation =
-  | AgentEnsureCategoryOperation
-  | AgentCreateCashflowOperation
-  | AgentClassifyCashflowOperation
-
-export interface AgentLedgerPatchInput {
-  dryRun?: boolean
-  operations: AgentLedgerOperation[]
-}
-
-export interface AgentEnsureCategoryOperation {
-  op: "category.ensure"
-  name: string
-  categoryKind?: string
-  color?: string | null
-  icon?: string | null
-  displayOrder?: number
-}
-
-export interface AgentCreateCashflowOperation {
-  op: "cashflow.create"
-  sourceKind?: "manual" | "import" | "system"
-  sourceName?: string | null
-  sourceExternalId?: string | null
-  sourceFileHash?: string | null
-  importedAt?: string | null
-  eventDate: string
-  occurredAt?: string | null
-  title?: string | null
-  counterparty?: string | null
-  description?: string | null
-  userNote?: string | null
-  amount: string
-  currency?: string
-  direction: Direction
-  flowKind: CashflowKind
-  categoryId?: BuboId | null
-  categoryName?: string | null
-  categoryKind?: string
-  paymentMethod?: string | null
-  accountHint?: string | null
-  includeInAnalytics?: boolean
-  classificationSource?: "manual" | "rule" | "system" | "imported"
-  tagIds?: BuboId[]
-}
-
-export interface AgentClassifyCashflowOperation {
-  op: "cashflow.classify"
-  id?: BuboId
-  sourceName?: string | null
-  sourceExternalId?: string | null
-  categoryId?: BuboId | null
-  categoryName?: string | null
-  categoryKind?: string
-  classificationSource?: "manual" | "rule" | "system" | "imported"
-}
-
-export interface AgentLedgerPatchResult {
-  dryRun: boolean
-  created: number
-  updated: number
-  skipped: number
-  conflicts: number
-  warnings: string[]
-  operations: AgentLedgerOperationResult[]
-}
-
-export interface AgentLedgerOperationResult {
-  index: number
-  op: AgentLedgerOperation["op"]
-  action: "create" | "update" | "skip" | "conflict" | "reject"
-  targetType?: "category" | "cashflow"
-  targetId?: BuboId
-  message: string
-  warnings?: string[]
 }
 
 export interface CashflowSummaryInput {

@@ -230,43 +230,6 @@ importers:
         specifier: ^4.0.18
         version: 4.1.7(@types/node@24.12.4)(@vitest/ui@4.1.7)(jsdom@27.4.0(@noble/hashes@1.8.0))(msw@2.14.6(@types/node@24.12.4)(typescript@5.8.3))(vite@8.0.14(@types/node@24.12.4)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.22.3))
 
-  packages/cli:
-    dependencies:
-      '@bubo/api':
-        specifier: workspace:*
-        version: link:../api
-      '@bubo/db':
-        specifier: workspace:*
-        version: link:../db
-      '@bubo/shared':
-        specifier: workspace:*
-        version: link:../shared
-      better-sqlite3:
-        specifier: ^12.4.1
-        version: 12.10.0
-      commander:
-        specifier: ^13.1.0
-        version: 13.1.0
-      drizzle-orm:
-        specifier: ^0.37.0
-        version: 0.37.0(@types/better-sqlite3@7.6.13)(@types/react@19.2.15)(better-sqlite3@12.10.0)(react@19.2.6)
-    devDependencies:
-      '@types/better-sqlite3':
-        specifier: ^7.6.13
-        version: 7.6.13
-      '@types/node':
-        specifier: ^24.10.1
-        version: 24.12.4
-      esbuild:
-        specifier: ^0.28.1
-        version: 0.28.1
-      tsx:
-        specifier: ^4.22.3
-        version: 4.22.3
-      typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
-
   packages/config: {}
 
   packages/db:
@@ -2924,10 +2887,6 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  commander@13.1.0:
-    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
-    engines: {node: '>=18'}
 
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
@@ -6526,8 +6485,6 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
-
-  commander@13.1.0: {}
 
   commander@2.20.3:
     optional: true

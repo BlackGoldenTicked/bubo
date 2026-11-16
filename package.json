@@ -34,7 +34,6 @@
     "format:check": "oxfmt . --check",
     "typecheck": "turbo check-types",
     "test": "vitest run",
-    "bubo-cli": "pnpm -F @barrysongdev4real/bubo-cli bubo-cli --",
     "seed:demo": "pnpm -F desktop seed:demo",
     "package": "pnpm -F desktop package",
     "package:app": "pnpm -F desktop package:app",

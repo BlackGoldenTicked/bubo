@@ -42,7 +42,7 @@ renderer, routing, local app resources, and desktop packaging configuration.
 - `apps/desktop/scripts/build-tauri-sidecar.mjs` - maps Rust host triples to self-contained Node 22 sidecars.
 - `apps/desktop/pkg.sidecar.config.cjs` - includes the dynamic `better-sqlite3` native binding in the sidecar.
 - `.github/workflows/release.yml` - tag-triggered Tauri DMG/NSIS build and upload pipeline.
-- `scripts/release.mjs` - release automation entrypoint behind `pnpm release <version>`; validates the web release note, bumps package versions, commits, pushes `main`, tags, waits for CI, validates the published release, and publishes `@barrysongdev4real/bubo-cli` to npm.
+- `scripts/release.mjs` - release automation entrypoint behind `pnpm release <version>`; bumps package versions, commits, pushes `main`, tags, waits for CI, and validates the published release and updater manifest.
 
 ## Renderer Feature Map
 
@@ -141,13 +141,9 @@ file reveal, signed updates, relaunch, and the manual download fallback. The
 sidecar receives external CLI refresh hints and the renderer polls the narrow
 Rust drain command while subscribed.
 
-Developer and agent scripts can call the `@bubo/cli` workspace package through
-`pnpm bubo-cli ...` to inspect a ledger or apply a guarded agent ledger patch
-through the API layer.
-
 When the desktop app is running, it also opens a local ledger-change socket in
-the app data directory. Successful CLI `--commit` commands send a best-effort
-`ledger.changed` event to that socket; the sidecar queues events only
+the app data directory. A local writer that commits to the ledger outside the
+app sends a best-effort `ledger.changed` event to that socket; the sidecar queues events only
 when the changed database path matches the current active ledger. The renderer
 then invalidates React Query state so open screens refetch without reloading.
 

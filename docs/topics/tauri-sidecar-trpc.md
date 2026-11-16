@@ -48,7 +48,7 @@ double-navigate.
 
 ## External CLI Refresh
 
-The sidecar owns a local ledger-change socket used by `bubo-cli` after a
+The sidecar owns a local ledger-change socket used by external local writers after a
 successful `--commit`. The socket is a refresh hint only. Accepted events whose
 database path matches the active ledger are queued in memory; the renderer
 polls a narrow Rust drain command while `window.bubo.onLedgerChanged` has a

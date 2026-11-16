@@ -2,7 +2,7 @@
 
 ## Environment
 
-- Node.js 22 for workspace tools, tests, CLI development, and sidecar packaging.
+- Node.js 22 for workspace tools, tests, and sidecar packaging.
 - `pnpm@10.12.1`.
 - Rust stable and platform Tauri prerequisites for desktop builds.
 - Production data identity: `com.chaordex.bubo`.
@@ -202,17 +202,3 @@ pnpm -F desktop build:demo
 
 The seed command is dry-run unless explicitly told to write by its own flags.
 The build command regenerates the committed packaged demo ledger.
-
-## bubo CLI
-
-```bash
-pnpm bubo-cli ledger-info
-pnpm bubo-cli list-budget-periods --status active
-pnpm bubo-cli budget-progress --budget-period-id <id>
-pnpm bubo-cli apply-patch patch.json --dry-run
-```
-
-The workspace CLI runs directly on Node 22 and uses the same
-`better-sqlite3` ABI as the sidecar. Use `pnpm --silent bubo-cli ...` when
-another program parses its JSON stdout.
-
