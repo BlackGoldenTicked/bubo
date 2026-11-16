@@ -72,7 +72,7 @@ and the settings categories page; the settings Tailwind conversion covered
 56 inline styles down to 1, the shared `Modal.Dialog` width convention).
 
 The durable decisions are recorded in
-[ADR 0017](../decisions/0017-unify-renderer-states-failures-and-copy-language.md).
+[ADR 0017](../../decisions/0017-unify-renderer-states-failures-and-copy-language.md).
 
 Verification: `oxfmt --check` on changed files, `pnpm check-types`, `pnpm lint`,
 `pnpm test` (110 passed), `pnpm build`, and `check-docs` all green. Known

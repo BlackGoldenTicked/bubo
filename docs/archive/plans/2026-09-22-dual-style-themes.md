@@ -121,7 +121,7 @@ compatibility, theme/style state, settings style row, and the hand-drawn
 button/card/field/checkbox/switch/select/combobox/menu/modal/drawer/notice/
 spinner/segmented primitives with settings as the migrated pilot surface).
 Phases 3-5 are open; see
-[ADR 0019](../decisions/0019-dual-visual-languages-and-drawn-primitives.md).
+[ADR 0019](../../decisions/0019-dual-visual-languages-and-drawn-primitives.md).
 Checkboxes below are ticked as each phase closes.
 
 ### Phase 1 - theme architecture and tokens

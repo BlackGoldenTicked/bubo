@@ -77,7 +77,7 @@ each phase can end in a verified, runnable state.
 
 ## Migration Status
 
-Plan: [2026-09-22-dual-style-themes.md](../plans/2026-09-22-dual-style-themes.md).
+Plan: [2026-09-22-dual-style-themes.md](../archive/plans/2026-09-22-dual-style-themes.md).
 Landed in `9f34745`:
 
 - Phase 1 (theme state, `tokens.css`, alias layer, settings style row) — done.

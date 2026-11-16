@@ -5,6 +5,16 @@ hold, and what do they look like?** It is identity data — a debit card is not 
 credit card is not a liability until a statement exists — so cards never touch cashflow, asset
 snapshots, or net worth (see [ADR 0026](../decisions/0026-cards-are-identity-not-balances.md)).
 
+## Key Files
+
+- `cards/CardsPage.tsx` - the card wallet route: bank-grouped list, detail pane, archive/restore, and scan upload. The route has **no page header** (no title strip, no totals, no toolbar button): the wallet list owns the only 添加卡片 action at its foot, and the route name comes from the top navigation. Rows are grouped into collapsible bank sections (heaviest bank first, then by name) and each row shows the front scan as its thumbnail, falling back to the card's colour. Its create/edit dialog uses the `@bubo/ui` Modal primitive (not HeroUI's raw one, whose overlay renders in flow and lands off-screen); the form can pick 正面/反面 scans before the card exists, and the page imports them right after the row is written.
+- `cards/CardVisual.tsx` - renders one flippable card surface; the detail card carries the `--gilt` gold hairline (see [ui](../modules/ui/)), while pile faces stay plain so the stack keeps reading as paper. `cardFaceBackground` / `CardFacePlaceholder` are exported from it so a pile face and the detail face cannot drift.
+- `cards/CardStackList.tsx`, `cards/CardFormModal.tsx`, `cards/useCardScan.ts` - the image-first piles, the identity-only form (620px wide, every select names its own placeholder such as `月份` / `年份` / `选择卡组织`), and the per-face scan query both views share.
+- `lib/desktop-runtime.ts` - intercepts `cards.attachImage` to open the native image dialog (PNG/JPG/WebP) and forwards only the chosen path — unless the caller already picked one. `pickCardImage` exposes the same picker plus a preview from the Rust `read_image_preview` command, which the card form uses.
+- `apps/desktop/src/main/trpc/card-service.ts` - runtime-neutral card service contract for the router.
+- `apps/desktop/src/tauri-sidecar/card-service.ts` - copies a picked scan, persists its metadata, and removes the copy if the row write fails.
+- `apps/desktop/src/tauri-sidecar/card-image-store.ts` - owns `<user data>/card-images`: extension allow-list (PNG/JPG/WebP), 20MB cap, generated file names, and data-URL reads.
+
 ## Data Model
 
 | Table         | Holds                                                                                                                    | Never holds                    |

@@ -4,6 +4,14 @@ bubo keeps a **wallet icon in the macOS menu bar** and can record a thought with
 main window. The two features are one shell: the tray keeps the process alive, the shortcut opens
 a small capture window, and saving closes it again.
 
+## Key Files
+
+- `apps/desktop/src-tauri/src/shell.rs` - tray icon and menu, close-to-tray behaviour, the reused `quick-capture` window, and global-shortcut registration. The capture window is placed under the menu-bar icon when macOS reports it, otherwise docked under the menu bar on that side, and any position the user drags to is persisted in `quick-window.json`. The same shortcut toggles recording (`quick-capture:start` / `quick-capture:toggle`).
+- `quick/QuickCapturePage.tsx` - the menu-bar capture window: auto-records, parses through `voice.parseIntent`, shows a save card, writes through the domain mutation, then hides. Asset/investment intents are handed to the main window over `bubo://voice-intent`.
+- `routes/__root.tsx` - short-circuits `#/quick-capture` to that page, so the capture window never mounts the shell, navigation, or the in-app voice sheet.
+- `settings/ShortcutSection.tsx` - records the capture shortcut by **pressing it** (no typing) and always displays the combination the OS actually registered; Fn is rejected with an explanation because macOS reserves it.
+- `lib/shortcut.ts` - maps a `KeyboardEvent` to the `Modifier+KeyCode` string the Rust side registers, and renders it as ⌃⌥⇧⌘ symbols.
+
 ## Window Lifecycle
 
 | Action                  | Result                                           |

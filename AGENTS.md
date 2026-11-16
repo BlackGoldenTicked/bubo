@@ -56,7 +56,7 @@ project. Plane is a prerequisite before coding and a hard delivery gate, not an 
 ## Workflow
 
 1. Read the relevant module doc in [docs/modules/](docs/modules/) plus any linked topic docs and file headers.
-2. For broad or risky work, write a plan in [docs/plans/](docs/plans/) before changing code.
+2. For broad or risky work, write a plan under [docs/archive/plans/](docs/archive/plans/) before changing code (copy `_plan.md`); plans are one-shot records and are not kept in sync afterwards.
 3. Change code according to [docs/conventions.md](docs/conventions.md), keeping edits scoped.
 4. Sync nearby docs: file headers for changed source files, the matching module doc, and an ADR in [docs/decisions/](docs/decisions/) for durable architecture decisions.
 5. Run the smallest meaningful verification from [docs/testing.md](docs/testing.md), then broaden to `pnpm check-types`, `pnpm test`, and `pnpm build` when feasible.
@@ -102,6 +102,9 @@ Ratchet rule: when an agent mistake reveals a repeatable risk, add a test, lint 
 - Voice entry: [docs/topics/voice-entry.md](docs/topics/voice-entry.md)
 - Card wallet: [docs/topics/cards.md](docs/topics/cards.md)
 - Menu bar and quick capture: [docs/topics/menu-bar-capture.md](docs/topics/menu-bar-capture.md)
+- Desktop runtime (shell, window, `window.bubo`, updates): [docs/topics/desktop-runtime.md](docs/topics/desktop-runtime.md)
+- Renderer surfaces and conventions: [docs/topics/renderer-surfaces.md](docs/topics/renderer-surfaces.md)
+- Build and release: [docs/topics/desktop-build.md](docs/topics/desktop-build.md)
 - Runtime and IPC: [docs/architecture.md](docs/architecture.md), [docs/topics/tauri-sidecar-trpc.md](docs/topics/tauri-sidecar-trpc.md)
 - Native sidecar and ABI: [docs/topics/tauri-node-sidecar.md](docs/topics/tauri-node-sidecar.md)
 - Modules: [desktop](docs/modules/desktop/), [api](docs/modules/api/), [db](docs/modules/db/), [shared](docs/modules/shared/), [ui](docs/modules/ui/), [hooks](docs/modules/hooks/)
@@ -109,6 +112,5 @@ Ratchet rule: when an agent mistake reveals a repeatable risk, add a test, lint 
 - Runbook: [docs/run.md](docs/run.md)
 - Conventions and terms: [docs/conventions.md](docs/conventions.md)
 - Testing and validation: [docs/testing.md](docs/testing.md)
-- Specs: [docs/specs/](docs/specs/)
-- Plans: [docs/plans/](docs/plans/)
 - Decisions: [docs/decisions/](docs/decisions/)
+- Archive (plans and early sketches, unmaintained): [docs/archive/](docs/archive/)
