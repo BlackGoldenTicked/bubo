@@ -1301,13 +1301,14 @@
 }
 
 /* ---------------------------------------------------------------------
-   Save glow — the "record landed" feedback for a successful save. A wide
-   multi-hue bloom rises from the bottom edge, spreads toward every side,
-   and fades out; a thin flare rides the front and a full-window wash keeps
-   the light on the edges. Only `opacity` and `transform` are animated and
-   the blur is static, so the whole thing stays on the compositor: no
-   layout, no repaint per frame. The spectrum is decorative light, not a
-   semantic token, so it intentionally uses literal hue stops.
+   Save glow — the "record landed" feedback for a successful save. A curved
+   multi-hue crest sweeps the whole window from the bottom edge to above the
+   top, a soft bloom trails it, and a colour vignette lingers on the edges.
+   Only `opacity` and `transform` animate and the blur is static, so the whole
+   effect stays on the compositor: no layout, no per-frame repaint. The
+   spectrum is decorative light, not a semantic token, hence literal stops.
+   No `mix-blend-mode` and no `contain` on the host: WebKit drops blend-over-
+   blur layers and size containment can collapse a full-viewport fixed box.
    --------------------------------------------------------------------- */
 .bubo-save-glow {
   position: fixed;
@@ -1317,6 +1318,60 @@
   pointer-events: none;
 }
 
+/* The wavefront itself: an oversized rounded sheet whose crest crosses the
+   window diagonally. 220vw wide so the arcs still cover both side edges. */
+.bubo-save-glow__wave {
+  position: absolute;
+  left: 50%;
+  bottom: -160vh;
+  width: 220vw;
+  height: 170vh;
+  border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+  background: linear-gradient(
+    100deg,
+    rgba(255, 118, 198, 0.58) 0%,
+    rgba(186, 108, 255, 0.6) 17%,
+    rgba(84, 198, 255, 0.58) 36%,
+    rgba(110, 255, 214, 0.54) 54%,
+    rgba(255, 218, 122, 0.6) 73%,
+    rgba(255, 138, 104, 0.56) 100%
+  );
+  filter: blur(30px) saturate(1.2);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: bubo-save-glow-wave 1250ms cubic-bezier(0.3, 0.66, 0.2, 1) forwards;
+}
+
+/* Dark surfaces need a touch more luminance for the same read; this stays a
+   filter override rather than a blend mode, which WebKit composites unreliably
+   over a blurred layer. */
+:root[data-theme="dark"] .bubo-save-glow__wave {
+  filter: blur(30px) saturate(1.35) brightness(1.22);
+}
+
+:root[data-theme="dark"] .bubo-save-glow__bloom {
+  filter: blur(26px) saturate(1.45) brightness(1.2);
+}
+
+@keyframes bubo-save-glow-wave {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, 0, 0) rotate(-4deg) scale(1.02);
+  }
+  10% {
+    opacity: 0.95;
+  }
+  58% {
+    opacity: 0.9;
+    transform: translate3d(-50%, -96vh, 0) rotate(-2deg) scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-50%, -172vh, 0) rotate(0deg) scale(1.1);
+  }
+}
+
+/* Soft light that trails the crest so the wave reads as light, not paint. */
 .bubo-save-glow__bloom {
   position: absolute;
   left: 50%;
@@ -1326,101 +1381,92 @@
   transform-origin: 50% 100%;
   opacity: 0;
   background:
-    radial-gradient(52% 62% at 50% 92%, rgba(96, 214, 255, 0.72), transparent 70%),
-    radial-gradient(46% 56% at 26% 96%, rgba(142, 92, 255, 0.66), transparent 72%),
-    radial-gradient(46% 56% at 74% 96%, rgba(255, 96, 190, 0.6), transparent 72%),
-    radial-gradient(34% 40% at 50% 100%, rgba(255, 214, 128, 0.76), transparent 74%);
+    radial-gradient(52% 62% at 50% 92%, rgba(96, 214, 255, 0.78), transparent 70%),
+    radial-gradient(46% 56% at 26% 96%, rgba(142, 92, 255, 0.7), transparent 72%),
+    radial-gradient(46% 56% at 74% 96%, rgba(255, 96, 190, 0.64), transparent 72%),
+    radial-gradient(34% 40% at 50% 100%, rgba(255, 214, 128, 0.8), transparent 74%);
   filter: blur(26px) saturate(1.32);
   will-change: transform, opacity;
-  animation: bubo-save-glow-bloom 1500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: bubo-save-glow-bloom 1450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes bubo-save-glow-bloom {
   0% {
     opacity: 0;
-    transform: translate3d(-50%, 0, 0) scale(0.86, 0.55);
+    transform: translate3d(-50%, 0, 0) scale(0.9, 0.6);
   }
   14% {
-    opacity: 0.95;
+    opacity: 1;
   }
-  42% {
-    opacity: 0.82;
-    transform: translate3d(-50%, -22vh, 0) scale(1.06, 1);
+  46% {
+    opacity: 0.86;
+    transform: translate3d(-50%, -26vh, 0) scale(1.08, 1.02);
   }
-  72% {
-    opacity: 0.34;
-    transform: translate3d(-50%, -34vh, 0) scale(1.22, 1.25);
+  74% {
+    opacity: 0.38;
+    transform: translate3d(-50%, -40vh, 0) scale(1.24, 1.28);
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, -40vh, 0) scale(1.34, 1.45);
+    transform: translate3d(-50%, -48vh, 0) scale(1.36, 1.48);
   }
 }
 
+/* Thin bright line riding the crest; it sells the "front" of the wave. */
 .bubo-save-glow__flare {
   position: absolute;
   left: 50%;
-  bottom: -8vh;
-  width: 120vw;
-  height: 26vh;
+  bottom: -10vh;
+  width: 150vw;
+  height: 30vh;
   opacity: 0;
   background: radial-gradient(
     50% 55% at 50% 50%,
-    rgba(255, 255, 255, 0.85),
-    rgba(160, 230, 255, 0.5) 35%,
+    rgba(255, 255, 255, 0.95),
+    rgba(160, 230, 255, 0.6) 35%,
     transparent 72%
   );
-  filter: blur(14px);
+  filter: blur(12px);
   will-change: transform, opacity;
-  animation: bubo-save-glow-flare 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  animation: bubo-save-glow-flare 1050ms cubic-bezier(0.3, 0.66, 0.2, 1) forwards;
 }
 
 @keyframes bubo-save-glow-flare {
   0% {
     opacity: 0;
-    transform: translate3d(-50%, 0, 0) scale(0.7, 0.4);
+    transform: translate3d(-50%, 0, 0) scale(0.74, 0.42) rotate(-3deg);
   }
-  18% {
-    opacity: 0.9;
+  16% {
+    opacity: 0.95;
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, -56vh, 0) scale(1.5, 0.5);
+    transform: translate3d(-50%, -104vh, 0) scale(1.5, 0.5) rotate(0deg);
   }
 }
 
+/* Colour left behind on the edges: clear in the middle, tinted at the rim. */
 .bubo-save-glow__wash {
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: linear-gradient(
-    to top,
-    rgba(140, 196, 255, 0.3),
-    rgba(180, 150, 255, 0.12) 30%,
-    transparent 68%
-  );
+  background:
+    radial-gradient(120% 96% at 50% 50%, transparent 42%, rgba(132, 176, 255, 0.34) 100%),
+    radial-gradient(70% 40% at 50% 108%, rgba(255, 178, 214, 0.4), transparent 70%);
   will-change: opacity;
-  animation: bubo-save-glow-wash 1200ms ease-out forwards;
+  animation: bubo-save-glow-wash 1600ms ease-out forwards;
 }
 
 @keyframes bubo-save-glow-wash {
   0% {
     opacity: 0;
   }
-  22% {
+  26% {
     opacity: 1;
   }
   100% {
     opacity: 0;
   }
-}
-
-/* No mix-blend-mode on purpose: WebKit composites blend + filter: blur()
-   unreliably (the layer can drop out entirely), so the light relies on
-   saturated alpha stops instead. Dark surfaces read it as glow because the
-   stops are bright and the base is black. */
-:root[data-theme="dark"] .bubo-save-glow__bloom {
-  filter: blur(26px) saturate(1.45) brightness(1.25);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1443,6 +1489,7 @@
   .bubo-busy-dot,
   .bubo-flipcard__inner,
   .bubo-pile__layer,
+  .bubo-save-glow__wave,
   .bubo-save-glow__bloom,
   .bubo-save-glow__flare,
   .bubo-save-glow__wash {

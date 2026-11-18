@@ -43,25 +43,37 @@ describe("mutationTriggersSaveGlow", () => {
 
 describe("playSaveGlow", () => {
   const store = appStore
+  // The coalescing window lives in module state, so each test needs its own clock
+  // slot; resetting to the same instant would look like a burst to the guard.
+  let clock = Date.UTC(2026, 10, 18, 6, 0, 0)
 
   beforeEach(() => {
+    clock += 5_000
     store.set(saveGlowNonceAtom, 0)
     vi.useFakeTimers()
-    vi.setSystemTime(new Date("2026-11-18T06:00:00Z"))
+    vi.setSystemTime(new Date(clock))
   })
 
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  it("bumps the nonce once per burst so a voice batch flashes a single time", () => {
-    playSaveGlow()
-    playSaveGlow()
-    playSaveGlow()
+  it("bumps the nonce once per burst so a voice batch sweeps a single time", () => {
+    playSaveGlow({ delayMs: 0 })
+    playSaveGlow({ delayMs: 0 })
+    playSaveGlow({ delayMs: 0 })
     expect(store.get(saveGlowNonceAtom)).toBe(1)
 
     vi.advanceTimersByTime(800)
-    playSaveGlow()
+    playSaveGlow({ delayMs: 0 })
     expect(store.get(saveGlowNonceAtom)).toBe(2)
+  })
+
+  it("defers playback so the closing dialog cannot sit on top of the wave", () => {
+    playSaveGlow()
+    expect(store.get(saveGlowNonceAtom)).toBe(0)
+
+    vi.advanceTimersByTime(300)
+    expect(store.get(saveGlowNonceAtom)).toBe(1)
   })
 })

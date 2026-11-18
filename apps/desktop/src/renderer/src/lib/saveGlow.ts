@@ -3,8 +3,10 @@
  * @role    Renderer-side one-shot signal between mutations and the `SaveGlow` overlay.
  * @deps    The shared renderer jotai store and the save-glow nonce atom.
  * @gotcha  Saves arrive in bursts (a voice batch fires one mutation per record), so calls inside
- *          a short window are coalesced: one bloom per user action, not one per row. The overlay
- *          itself is pure CSS on the compositor; nothing here touches layout.
+ *          a short window are coalesced: one sweep per user action, not one per row. A save almost
+ *          always closes its dialog in the same tick, so playback is deferred by default — sweeping
+ *          under a still-mounted dialog reads as "the light belongs to the dialog", not the window.
+ *          The overlay itself is pure CSS on the compositor; nothing here touches layout.
  */
 
 import { appStore } from "./state/store"
@@ -27,7 +29,9 @@ const SAVE_DOMAINS = new Set([
 const SAVE_VERB = /^(create|update|upsert|add|record|convert)/
 
 const COALESCE_MS = 700
-let lastPlayedAt = 0
+/** Let the save dialog finish closing so the wave covers the page, not the dialog. */
+const DEFAULT_DELAY_MS = 260
+let lastScheduledAt = 0
 
 function flattenKey(key: unknown): string[] {
   if (!Array.isArray(key)) return []
@@ -42,9 +46,15 @@ export function mutationTriggersSaveGlow(mutationKey: unknown): boolean {
   return SAVE_DOMAINS.has(domain) && SAVE_VERB.test(verb)
 }
 
-export function playSaveGlow(): void {
+export function playSaveGlow(options: { delayMs?: number } = {}): void {
   const now = Date.now()
-  if (now - lastPlayedAt < COALESCE_MS) return
-  lastPlayedAt = now
-  appStore.set(saveGlowNonceAtom, (nonce) => nonce + 1)
+  if (now - lastScheduledAt < COALESCE_MS) return
+  lastScheduledAt = now
+  const delayMs = options.delayMs ?? DEFAULT_DELAY_MS
+  const fire = () => appStore.set(saveGlowNonceAtom, (nonce) => nonce + 1)
+  if (delayMs <= 0) {
+    fire()
+    return
+  }
+  window.setTimeout(fire, delayMs)
 }

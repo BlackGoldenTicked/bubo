@@ -195,7 +195,7 @@ export function SettingsPage() {
                 onChange={(value) => setTheme(THEME_VALUES[value] ?? "system")}
               />
             </Row>
-            <LinkRow note="点击播放" onClick={() => playSaveGlow()}>
+            <LinkRow note="点击播放" onClick={() => playSaveGlow({ delayMs: 0 })}>
               保存动效预览
             </LinkRow>
           </SettingsGroup>
