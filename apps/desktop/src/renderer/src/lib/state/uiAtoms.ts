@@ -24,6 +24,9 @@ export type ThemeStyle = "bubo" | "lumno"
 /** When true, every money amount renders masked (for demos, screenshots, or onlookers). */
 export const amountsHiddenAtom = atomWithStorage<boolean>("bubo.amountsHidden", false)
 
+/** Bumped by `playSaveGlow()` to replay the save glow; 0 means "never played". */
+export const saveGlowNonceAtom = atom<number>(0)
+
 /** Global voice capture overlay; transient, so it is a plain in-memory atom. */
 export const voiceCaptureOpenAtom = atom<boolean>(false)
 

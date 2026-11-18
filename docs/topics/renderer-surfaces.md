@@ -39,6 +39,7 @@ The renderer (`apps/desktop/src/renderer/src`) is where product behaviour is vis
 - `apps/desktop/src/renderer/index.html` - renderer entry HTML carrying the pre-paint theme boot script.
 - `components/charts/` - renderer chart components; SVG text inherits the UI face through `var(--font-ui)` rather than naming a font family, so the bundled IBM Plex faces (Latin) plus the platform CJK fallback apply inside charts too.
 - `components/layout/` - desktop shell, title bar, persistent top navigation, and banners; nav tabs carry a semantic icon from `@bubo/ui`'s `AppIcon` set alongside their label.
+- `components/layout/SaveGlow.tsx` paints the save light: a bottom-up colour bloom that spreads and fades after a record lands. It is driven by `lib/saveGlow.ts`, which the global mutation cache calls for record-creating tRPC paths (`cashflow.create`, `subscriptions.update`, `assets.addSnapshot`, …) and coalesces within 700ms so a voice batch flashes once instead of once per row.
 - `components/layout/TopNavigation.tsx` carries the 卡片 entry as the last primary tab, using the semantic `cards` glyph.
 - `components/ui/` - renderer-local UI atoms, including `EmptyState` (optionally icon-led) that are more product-shaped than `@bubo/ui`, including `CurrencySelect` (autocomplete currency picker over the common-currency set), `MoneyAmount` (currency-aware amount with hide-amounts masking), `BackButton` (the one ghost back affordance — text variant `← 返回X` or icon-only — shared by every detail page/panel), `QueryState`/`QuerySkeleton`/`QueryErrorState` (shared pending/error states over a structural query shape), and `EmptyState` (title + hint + optional action, with a `compact` variant for small panes).
 - `components/ui/BankSelect.tsx` - the card form's 发卡银行 control: a `@bubo/ui` Combobox over `COMMON_BANKS` that filters by name and alias (农行 → 农业银行) and shows each option's kind tag. `allowCustom` keeps 村镇银行/信用社 saveable, so the field is a searchable picker, not a closed enum.
@@ -72,6 +73,9 @@ capture surfaces (`quick/QuickCapturePage.tsx`, `settings/ShortcutSection.tsx`,
   i18n layer. Query pending/failure renders through `components/ui/QueryState.tsx`
   (or `QuerySkeleton`/`QueryErrorState` for partial regions) and empty states
   through `components/ui/EmptyState.tsx`, not inline 加载中 / 加载失败 text.
+- Save feedback has one global path too: `MutationCache.onSuccess` in `lib/trpc.ts` decides from
+  the mutation key whether the save glow replays (`lib/saveGlow.ts`), so pages never call it
+  themselves and a batch save cannot fire one bloom per record.
 - Mutation failures toast through one global path only: the `MutationCache.onError`
   in `lib/trpc.ts` calls `reportActionError` (`lib/reportError.ts`), which dedupes
   by error identity. Callers that need extra handling must reuse

@@ -13,12 +13,18 @@ import type { AppRouter } from "../../../main/trpc/router"
 import { installQueryClientPerfLogger } from "./debug/perf"
 import { ipcTRPCLink } from "./ipc-trpc-link"
 import { reportActionError } from "./reportError"
+import { mutationTriggersSaveGlow, playSaveGlow } from "./saveGlow"
 
 export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     // One global failure path: any mutation rejection surfaces as a toast, and
     // reportActionError dedupes errors that also pass through a caller.
     onError: (error) => reportActionError(error),
+    // One global save path too: record-creating mutations replay the light bloom,
+    // coalesced so a voice batch flashes once instead of once per row.
+    onSuccess: (_data, _variables, _context, mutation) => {
+      if (mutationTriggersSaveGlow(mutation.options.mutationKey)) playSaveGlow()
+    },
   }),
   defaultOptions: {
     queries: {

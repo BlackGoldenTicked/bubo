@@ -15,6 +15,7 @@ import { DemoLedgerBanner } from "../components/layout/DemoLedgerBanner"
 import { AppUpdateTracker } from "../components/layout/AppUpdateTracker"
 import { GlobalConfirmModal } from "../components/ui/ConfirmModal"
 import { VoiceCaptureSheet } from "../voice/VoiceCaptureSheet"
+import { SaveGlow } from "../components/layout/SaveGlow"
 import { QuickCapturePage } from "../quick/QuickCapturePage"
 import { deliverVoiceIntent } from "../lib/voice/intentHandoff"
 import type { VoiceIntent } from "@bubo/shared/contracts"
@@ -92,6 +93,7 @@ function RootLayout() {
       <AppUpdateTracker />
       <GlobalConfirmModal />
       <VoiceCaptureSheet />
+      <SaveGlow />
     </TitleBar>
   )
 }

@@ -31,6 +31,15 @@
 - `lib/utils.ts` - class-name merging helper.
 - `styles/*.css` - the token contract and the per-style primitive forms. Tokens cover surfaces, ink, brand and semantic colors, shape, elevation, inset highlights, and motion durations/easings. The `html` background paint prevents a first-frame flash, and a zero-specificity `:where(...):focus-visible` outline styles raw interactive elements without overriding a primitive's own focus treatment. Desktop window dragging is declared explicitly by the Tauri title-bar component rather than by global runtime-specific selectors.
 
+## Save Glow
+
+`styles/primitives.css` owns the `bubo-save-glow*` classes the renderer mounts after a successful
+save (`components/layout/SaveGlow.tsx`, triggered by `lib/saveGlow.ts`). Three layers — a wide
+multi-hue bloom, a thin flare riding its front, and a full-window wash — carry a literal spectrum
+rather than semantic tokens, because this is decorative light, not a product colour. Only
+`opacity` and `transform` animate and the blur is static, so the whole effect stays on the
+compositor; `prefers-reduced-motion` in the same file disables all three animation names.
+
 ## Date Surfaces
 
 - `DateInput.tsx` is the only single-date control: it wraps HeroUI `DatePicker`/`Calendar`, stores
