@@ -31,9 +31,9 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
   -> pool models in order, then DeepSeek as the final floor
   -> pure per-domain normalization (ids re-validated, amounts never guessed)
   -> VoiceIntent
-  -> deliver to the matching page + navigate
-  -> page opens its own create modal with the intended fields filled
-  -> user confirms through that page's existing mutation
+  -> single record: deliver to the matching page + navigate, page opens its own modal
+     | several records: tiled batch window, 保存全部 writes cashflow in one action
+  -> non-cashflow records keep their page form and its existing mutation
 ```
 
 ## Batch And Text Input
@@ -45,22 +45,26 @@ global capture sheet (top-bar 语音 button or ⌘⇧V)
   instructed to emit one element per record — never to merge amounts or keep only the
   largest. `normalizeVoiceIntents` preserves source order, drops malformed items with
   a logged error, and caps the batch at `MAX_VOICE_INTENTS` (20).
-- **One-by-one confirmation**: a batch is queued and the sheet reviews the head only
-  ("第 1 / N 笔待确认") with 确认并填入 / 跳过 / 全部跳过. Confirming hands that one
-  record to its page and keeps the rest queued; the top-bar 语音 button shows the
-  pending count, and reopening the sheet resumes the queue.
+- **Tiled review with one-click save**: a batch is queued and the capture window widens
+  into `VoiceBatchReview` — every pending record is a card, all expanded at once, two per
+  row (`docs/decisions/0030-*`). Cashflow cards are editable inline (项目 / 金额 / 日期 /
+  来源 / 分类 / 备注) and 保存全部 writes them in one action through `cashflow.create`;
+  the rest of the queue (loan, subscription, asset, investment) keeps its own page form
+  behind a per-card 填入表单. Saved intents leave the queue before the window closes, so
+  the top-bar badge never counts records that already exist.
 - **Multi-date batches**: every record carries its own date. The prompt states that a
   standalone date line ("10月3日", "2026/10/03 周六", "昨天") is inherited by the detail
   lines below it until a new date line appears; a row with its own date wins. Only rows
   with no date in scope fall back to "now" (with a warning), and month/day-only values
   are resolved against the current year nearest to today.
-- **Cross-domain batches**: records keep source order across domains. Confirming one
-  hands only that record to its page; a mixed batch (three expenses plus a balance
-  update plus a trade) drains domain by domain.
-- **Auto-advance**: closing a voice-prefilled form calls `continueVoiceQueue(domain, wasVoicePrefilled)`.
-  It first feeds the next record of the same domain into that page; when only other
-  domains remain it reopens the sheet on the next review card instead of leaving it
-  behind the top-bar badge. Hand-opened forms never advance the batch.
+- **Cross-domain batches**: records keep source order across domains in one tiled list.
+  Cashflow cards save in place; a mixed batch (three expenses plus a balance update plus
+  a trade) then finishes the non-cashflow cards one form at a time, in spoken order.
+- **Auto-advance for form-based records**: closing a voice-prefilled form calls
+  `continueVoiceQueue(domain, wasVoicePrefilled)`. It first feeds the next record of the
+  same domain into that page; when only other domains remain it reopens the tiled window
+  instead of leaving the batch behind the top-bar badge. Hand-opened forms never advance
+  the batch.
 - A single-record input keeps the fast path: parse → deliver → navigate, no review step.
 
 ## Semantic Category Mapping
@@ -276,7 +280,8 @@ record's category, so an empty one is visible before the record is confirmed.
 - `apps/desktop/src/tauri-sidecar/voice-trace-log.ts` - append-only diagnostics file for parse and handoff stages.
 - `apps/desktop/src/tauri-sidecar/xlsx-reader.ts` - zero-dependency first-sheet xlsx reader.
 - `apps/desktop/src/tauri-sidecar/llm-models-import.ts` - workbook column mapping to pool entries.
-- `apps/desktop/src/renderer/src/voice/VoiceCaptureSheet.tsx` - global capture overlay: recorder, batch textarea, and the one-by-one review card.
+- `apps/desktop/src/renderer/src/voice/VoiceCaptureSheet.tsx` - global capture overlay: recorder, batch textarea, and the host of the tiled review window.
+- `apps/desktop/src/renderer/src/voice/VoiceBatchReview.tsx` + `batchDrafts.ts` - tiled batch cards, inline cashflow edits, and 保存全部.
 - `apps/desktop/src/renderer/src/lib/voice/audioRecorder.ts` - microphone to WAV.
 - `apps/desktop/src/renderer/src/lib/voice/intentHandoff.ts` - domain-scoped intent bus plus the ordered confirmation queue.
 - `apps/desktop/src/renderer/src/lib/voice/useVoiceIntent.ts` - per-page intent hook.

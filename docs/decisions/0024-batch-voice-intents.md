@@ -1,6 +1,6 @@
 # 0024. Batch Voice Intents With One-By-One Confirmation
 
-- Status: Accepted
+- Status: Superseded by [0030](0030-tiled-batch-review.md) — the batch is reviewed tiled and can be saved in one action
 - Date: 2026-11-06
 
 ## Context

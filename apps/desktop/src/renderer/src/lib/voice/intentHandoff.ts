@@ -4,8 +4,9 @@
  * @deps    Shared voice contracts only.
  * @gotcha  Delivery is domain-scoped and order-preserving: an intent goes to a live listener of
  *          its own domain, otherwise it waits in the queue until that page subscribes. A batch is
- *          confirmed one item at a time, so every queue mutation is immutable — the UI reads it
- *          through `useSyncExternalStore`, and mutating in place would leave the badge stale.
+ *          reviewed tiled (all cards at once) and may save several cashflow records in one go, so
+ *          every queue mutation is immutable — the UI reads it through `useSyncExternalStore`,
+ *          and mutating in place would leave the badge stale.
  */
 
 import type { VoiceIntent, VoiceIntentDomain } from "@bubo/shared/contracts"
@@ -34,7 +35,7 @@ export function deliverVoiceIntent(intent: VoiceIntent): void {
   emitQueue()
 }
 
-/** Append a parsed batch; the sheet then confirms its head one item at a time. */
+/** Append a parsed batch; the sheet then shows every card in the tiled review window. */
 export function queueVoiceIntents(intents: readonly VoiceIntent[]): void {
   if (intents.length === 0) return
   pending = [...pending, ...intents]
@@ -47,7 +48,14 @@ export function peekQueuedIntents(): VoiceIntent[] {
 
 /** Remove one intent because the user skipped it. */
 export function dropQueuedVoiceIntent(intent: VoiceIntent): void {
-  const next = pending.filter((item) => item !== intent)
+  dropQueuedVoiceIntents([intent])
+}
+
+/** Remove a set of intents at once (batch save, bulk skip) with a single notification. */
+export function dropQueuedVoiceIntents(intents: readonly VoiceIntent[]): void {
+  if (intents.length === 0) return
+  const removing = new Set<VoiceIntent>(intents)
+  const next = pending.filter((item) => !removing.has(item))
   if (next.length === pending.length) return
   pending = next
   emitQueue()

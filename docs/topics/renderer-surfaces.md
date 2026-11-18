@@ -49,10 +49,10 @@ The renderer (`apps/desktop/src/renderer/src`) is where product behaviour is vis
 - `main.tsx` mounts `I18nProvider locale="zh-CN"`, which is what makes every react-aria surface Chinese and Monday-first; removing it silently reverts the whole app to en-US.
 - `routes/` - TanStack Router route modules; `routeTree.gen.ts` is generated and intentionally excluded from file-header enforcement.
 - `routes/__root.tsx` replays `.bubo-route-enter` on every navigation without remounting the subtree, so page transitions animate while queries and scroll state survive.
-- `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V): recorder, batch textarea (parses text without ASR), and a one-by-one review card for multi-record results. The review card names each record's category, and the log area mirrors the parse trace (vocabulary size, failed pool attempts, raw model answer, per-record category) so a missing category is explainable without a debugger.
+- `voice/VoiceCaptureSheet.tsx` is the global capture overlay (top-bar button and ⌘⇧V): recorder, batch textarea (parses text without ASR), and — for multi-record results — the window widens into `voice/VoiceBatchReview.tsx`, a tiled grid where every card is expanded and cashflow records can be edited and saved in one action. Each card names its category, and the log area mirrors the parse trace (vocabulary size, failed pool attempts, raw model answer, per-record category) so a missing category is explainable without a debugger.
 - `lib/voice/audioRecorder.ts` captures microphone audio and encodes 16 kHz mono PCM WAV base64 for the voice entry mutation.
 - `lib/voice/intentHandoff.ts` is the domain-scoped intent bus plus the ordered confirmation queue.
-- `lib/voice/voiceQueueControl.ts` continues a batch after a save: same-domain next record first, otherwise it reopens the capture sheet so mixed-domain batches keep the one-by-one flow (hand-opened forms never advance it).
+- `lib/voice/voiceQueueControl.ts` continues a batch after a save: same-domain next record first, otherwise it reopens the capture sheet so mixed-domain batches keep the tiled flow (hand-opened forms never advance it).
 - `lib/voice/useVoiceIntent.ts` subscribes one feature page to its own domain and prefills that page's form.
 
 Card wallet surfaces (`cards/CardsPage.tsx`, `CardVisual.tsx`, `CardStackList.tsx`,

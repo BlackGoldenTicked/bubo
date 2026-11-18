@@ -37,11 +37,12 @@ Record durable architecture and product-model decisions here so agents do not re
 | 0021   | Prefer macOS System Speech Recognition               | Accepted   | 2026-11-05 |
 | 0022   | Bailian Free-Tier Model Pool Before DeepSeek         | Accepted   | 2026-11-05 |
 | 0023   | System-Level Voice Entry Through Domain Intents      | Accepted   | 2026-11-05 |
-| 0024   | Batch Voice Intents With One-By-One Confirmation     | Accepted   | 2026-11-06 |
+| 0024   | Batch Voice Intents With One-By-One Confirmation     | Superseded | 2026-11-06 |
 | 0025   | Chinese-First Date Surfaces                          | Accepted   | 2026-11-06 |
 | 0026   | Cards Are Identity, Not Balances                     | Accepted   | 2026-11-07 |
 | 0027   | Menu-Bar Residency With A Quick Capture Window       | Accepted   | 2026-11-08 |
 | 0028   | Adopt GPL-3.0 Because The Lumno Style Is GPL-Derived | Accepted   | 2026-11-09 |
 | 0029   | Publish Releases From CI Before Matrix Uploads       | Accepted   | 2026-08-04 |
+| 0030   | Tiled Batch Review With One-Click Save               | Accepted   | 2026-11-18 |
 
 0029 carries an earlier date than 0028: it was renumbered from a duplicate `0008` slot.

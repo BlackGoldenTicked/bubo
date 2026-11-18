@@ -1,12 +1,13 @@
 /**
- * @purpose Capture one utterance or a pasted block of text, then confirm the parsed records one by one.
+ * @purpose Capture one utterance or a pasted block of text, then review the parsed records in a tiled window.
  * @role    System-level voice entry surface mounted in the root layout.
  * @deps    tRPC transcribe/parseIntent, the browser recorder, HeroUI modal primitives, the router,
  *          and the domain-scoped intent queue.
- * @gotcha  The model only proposes intents, and one input may produce several. Every record goes
- *          into the queue and is confirmed individually, so a batch never collapses into one
- *          entry. Text input sends `transcript` directly and skips ASR entirely. Nothing here
- *          writes to the ledger; the target page's own mutation stays the only writer.
+ * @gotcha  The model only proposes intents, and one input may produce several. Every record enters
+ *          the queue and a batch is reviewed tiled (`VoiceBatchReview`), so it never collapses into
+ *          one entry; saving a batch happens there, not here. Text input sends `transcript` directly
+ *          and skips ASR entirely. A single record keeps the prefill-and-navigate fast path, where
+ *          the target page's own mutation stays the only writer.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -14,17 +15,18 @@ import { Button, Modal } from "@heroui/react"
 import { useMutation } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useAtom } from "jotai"
-import { AppIcon, type AppIconName } from "@bubo/ui"
+import { AppIcon } from "@bubo/ui"
 import type { VoiceIntent, VoiceIntentParseResult } from "@bubo/shared/contracts"
 import { trpc } from "@/lib/trpc"
 import { voiceCaptureOpenAtom } from "@/lib/state/uiAtoms"
 import { MAX_RECORDING_MS, VoiceRecorder, type VoiceRecording } from "@/lib/voice/audioRecorder"
 import {
   confirmQueuedIntent,
-  dropQueuedVoiceIntent,
+  dropQueuedVoiceIntents,
   queueVoiceIntents,
 } from "@/lib/voice/intentHandoff"
 import { useVoiceIntentQueue } from "@/lib/voice/useVoiceIntent"
+import { VoiceBatchReview } from "./VoiceBatchReview"
 
 type Phase = "idle" | "recording" | "working" | "review" | "done" | "error"
 
@@ -42,24 +44,6 @@ const DOMAIN_ROUTE = {
   asset: "/assets",
   investment: "/investments",
 } as const
-
-const DOMAIN_LABEL: Record<VoiceIntent["domain"], string> = {
-  cashflow: "流水",
-  loan: "贷款",
-  subscription: "订阅",
-  asset: "资产",
-  investment: "投资",
-  unknown: "未识别",
-}
-
-const DOMAIN_ICON: Record<VoiceIntent["domain"], AppIconName> = {
-  cashflow: "cashflow",
-  loan: "loans",
-  subscription: "subscriptions",
-  asset: "assets",
-  investment: "investments",
-  unknown: "warning",
-}
 
 const HINT =
   "“中午吃饭花了三十八块五” · “招行卡里有八万” · “买十股苹果每股一百八” · “房贷月供五千八”"
@@ -108,7 +92,6 @@ export function VoiceCaptureSheet() {
   const [open, setOpen] = useAtom(voiceCaptureOpenAtom)
   const navigate = useNavigate()
   const queue = useVoiceIntentQueue()
-  const head = queue[0] ?? null
   const recorderRef = useRef<VoiceRecorder | null>(null)
   const logIdRef = useRef(0)
   const logRef = useRef<HTMLDivElement | null>(null)
@@ -339,30 +322,38 @@ export function VoiceCaptureSheet() {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [setOpen])
 
-  const confirmHead = useCallback(() => {
-    if (!head || head.domain === "unknown") return
-    append(`确认：${summarize(head)}`, "ok")
-    confirmQueuedIntent(head)
-    void navigate({ to: DOMAIN_ROUTE[head.domain] })
-    setOpen(false)
-  }, [append, head, navigate, setOpen])
+  /** Hand one record to its own page form (non-cashflow cards keep that path). */
+  const fillIntent = useCallback(
+    (intent: VoiceIntent) => {
+      if (intent.domain === "unknown") return
+      append(`填入表单：${summarize(intent)}`, "ok")
+      confirmQueuedIntent(intent)
+      void navigate({ to: DOMAIN_ROUTE[intent.domain] })
+      setOpen(false)
+    },
+    [append, navigate, setOpen],
+  )
 
-  const skipHead = useCallback(() => {
-    if (!head) return
-    append(`已跳过：${summarize(head)}`, "warn")
-    dropQueuedVoiceIntent(head)
-    if (queue.length === 1) setPhase("done")
-  }, [append, head, queue.length])
+  const handleBatchSaved = useCallback(
+    (saved: number, remaining: number) => {
+      append(`已保存 ${saved} 笔流水`, "ok")
+      if (remaining > 0) return
+      setPhase("done")
+      setOpen(false)
+    },
+    [append, setOpen],
+  )
 
   const skipAll = useCallback(() => {
-    for (const intent of queue) dropQueuedVoiceIntent(intent)
-    append(`已跳过剩余 ${queue.length} 笔`, "warn")
+    const count = queue.length
+    dropQueuedVoiceIntents(queue)
+    append(`已跳过剩余 ${count} 笔`, "warn")
     setPhase("done")
   }, [append, queue])
 
   const isRecording = phase === "recording"
   const isBusy = phase === "working"
-  const reviewing = phase === "review" && head != null
+  const reviewing = phase === "review" && queue.length > 0
   const actionLabel = isRecording ? "停止并识别" : isBusy ? "处理中…" : "开始说话"
 
   const toneClass: Record<LogLine["tone"], string> = {
@@ -380,7 +371,7 @@ export function VoiceCaptureSheet() {
       }}
     >
       <Modal.Container>
-        <Modal.Dialog style={{ maxWidth: 480 }}>
+        <Modal.Dialog style={{ maxWidth: reviewing ? 900 : 480 }}>
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Heading>
@@ -390,45 +381,19 @@ export function VoiceCaptureSheet() {
               </span>
             </Modal.Heading>
             <p style={{ fontSize: 12, color: "var(--ink-4)", marginTop: 2 }}>
-              说一句话，或粘贴一段文本；多笔记录会逐条确认后填入对应页面
+              {reviewing
+                ? "所有待保存记录平铺如下，可直接改字段并一键保存流水；其它类型用「填入表单」逐条确认"
+                : "说一句话，或粘贴一段文本；多笔记录会平铺展开后统一确认"}
             </p>
           </Modal.Header>
           <Modal.Body>
             {reviewing ? (
-              <div className="rounded-[8px] border border-[var(--hair-2)] bg-[var(--surface-2)] p-3">
-                <div className="flex items-center justify-between text-[11px] text-[var(--ink-4)]">
-                  <span className="flex items-center gap-1.5 text-[var(--ink-3)]">
-                    <AppIcon name={DOMAIN_ICON[head.domain]} size={13} />
-                    {DOMAIN_LABEL[head.domain]}
-                  </span>
-                  <span>第 1 / {queue.length} 笔待确认</span>
-                </div>
-                <div className="mt-1.5 text-[13px] leading-relaxed text-[var(--ink)]">
-                  {summarize(head)}
-                </div>
-                {head.warnings.length > 0 && (
-                  <ul className="mt-1.5 flex flex-col gap-0.5">
-                    {head.warnings.map((warning) => (
-                      <li key={warning} className="text-[11px] text-[var(--red)]">
-                        {warning}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-2.5 flex items-center gap-2">
-                  <Button size="sm" variant="primary" onPress={confirmHead}>
-                    确认并填入
-                  </Button>
-                  <Button size="sm" variant="outline" onPress={skipHead}>
-                    跳过
-                  </Button>
-                  {queue.length > 1 && (
-                    <Button size="sm" variant="ghost" onPress={skipAll}>
-                      全部跳过
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <VoiceBatchReview
+                intents={queue}
+                onFill={fillIntent}
+                onSkipAll={skipAll}
+                onSaved={handleBatchSaved}
+              />
             ) : (
               <>
                 <div className="flex items-center gap-2.5">
