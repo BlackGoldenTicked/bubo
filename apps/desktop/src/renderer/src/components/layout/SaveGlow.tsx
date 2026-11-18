@@ -12,7 +12,6 @@
 import { useEffect, useState } from "react"
 import { useAtomValue } from "jotai"
 import { saveGlowNonceAtom } from "@/lib/state/uiAtoms"
-import { SAVE_GLOW_DIALOG_MS } from "@/lib/saveGlow"
 import { GlowWaveCanvas, supportsShaderGlow } from "./GlowWaveCanvas"
 
 /** Longest page layer is the 1600ms wash; the extra frames avoid clipping the tail. */
@@ -53,15 +52,12 @@ export function SaveGlow() {
  * the reference look (noise-warped chromatic front); the CSS layers are only the fallback for a
  * webview without WebGL, so the two are never drawn together.
  */
-export function DialogSaveGlow() {
+export function DialogSaveGlow({ onStart }: { onStart?: (durationMs: number) => void }) {
   const [useShader, setUseShader] = useState(supportsShaderGlow)
   return (
     <span className="bubo-save-glow bubo-save-glow--dialog" aria-hidden="true">
       {useShader ? (
-        <GlowWaveCanvas
-          durationMs={SAVE_GLOW_DIALOG_MS}
-          onUnavailable={() => setUseShader(false)}
-        />
+        <GlowWaveCanvas onStart={onStart} onUnavailable={() => setUseShader(false)} />
       ) : (
         <GlowLayers />
       )}

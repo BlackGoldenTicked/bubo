@@ -33,8 +33,27 @@ const SAVE_DOMAINS = new Set([
 const SAVE_VERB = /^(create|update|upsert|add|record|convert)/
 const DIALOG_OWNED_PATHS = new Set(["cashflow.create", "cashflow.update"])
 
-/** How long a dialog keeps itself open after a save so the full vertical sweep can finish. */
+/**
+ * Fallback length when the surface has not been measured yet: the diagonal of the reference
+ * dialog (400x600) at the tuned speed. Real playback asks `saveGlowDurationMs` for its own size.
+ */
 export const SAVE_GLOW_DIALOG_MS = 3000
+
+/** Diagonal of the dialog the pace was tuned on, in CSS pixels. */
+const REFERENCE_DIAGONAL = Math.hypot(400, 600)
+
+/**
+ * The sweep covers the surface diagonal, so a bigger panel must take longer to keep the same
+ * perceived speed. Returns milliseconds, clamped so a tiny dialog still reads as a sweep and a
+ * large one never drags.
+ */
+export function saveGlowDurationMs(size?: { width: number; height: number }): number {
+  if (!size) return SAVE_GLOW_DIALOG_MS
+  const diagonal = Math.hypot(size.width, size.height)
+  if (!Number.isFinite(diagonal) || diagonal <= 0) return SAVE_GLOW_DIALOG_MS
+  const scaled = (SAVE_GLOW_DIALOG_MS * diagonal) / REFERENCE_DIAGONAL
+  return Math.round(Math.min(3600, Math.max(1600, scaled)))
+}
 
 const COALESCE_MS = 700
 /** Let the save dialog finish closing so the wave covers the page, not the dialog. */

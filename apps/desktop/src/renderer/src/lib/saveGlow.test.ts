@@ -9,7 +9,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { saveGlowNonceAtom } from "./state/uiAtoms"
 import { appStore } from "./state/store"
-import { mutationTriggersSaveGlow, playSaveGlow } from "./saveGlow"
+import { mutationTriggersSaveGlow, playSaveGlow, saveGlowDurationMs } from "./saveGlow"
 
 /** tRPC's mutation key is a nested array: [["cashflow","create"]]. */
 function key(...path: string[]): unknown[] {
@@ -78,5 +78,28 @@ describe("playSaveGlow", () => {
 
     vi.advanceTimersByTime(300)
     expect(store.get(saveGlowNonceAtom)).toBe(1)
+  })
+})
+
+describe("saveGlowDurationMs", () => {
+  it("keeps the tuned pace for the reference dialog", () => {
+    expect(saveGlowDurationMs({ width: 400, height: 600 })).toBe(3000)
+  })
+
+  it("scales with the surface diagonal instead of a fixed three seconds", () => {
+    const small = saveGlowDurationMs({ width: 300, height: 400 })
+    const large = saveGlowDurationMs({ width: 900, height: 700 })
+    expect(small).toBeLessThan(3000)
+    expect(large).toBeGreaterThan(3000)
+  })
+
+  it("clamps so a tiny panel still sweeps and a big one never drags", () => {
+    expect(saveGlowDurationMs({ width: 80, height: 60 })).toBe(1600)
+    expect(saveGlowDurationMs({ width: 4000, height: 3000 })).toBe(3600)
+  })
+
+  it("falls back to the tuned default without a usable size", () => {
+    expect(saveGlowDurationMs()).toBe(3000)
+    expect(saveGlowDurationMs({ width: 0, height: 0 })).toBe(3000)
   })
 })

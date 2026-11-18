@@ -142,6 +142,7 @@ export function AddTxModal({
   } = useForm<TxForm>({ defaultValues: initial ?? emptyTxForm() })
   const form = watch()
   const [celebrating, setCelebrating] = useState(false)
+  const [glowMs, setGlowMs] = useState(SAVE_GLOW_DIALOG_MS)
 
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === String(form.categoryId)),
@@ -207,12 +208,20 @@ export function AddTxModal({
       // The global mutation handler already toasted the failure; stay open to retry.
       return
     }
+    setGlowMs(SAVE_GLOW_DIALOG_MS)
     setCelebrating(true)
-    window.setTimeout(() => {
+  }
+
+  // Keep the panel open exactly as long as the sweep needs: the shader reports its measured
+  // duration once it knows the dialog size, which replaces the fallback above.
+  useEffect(() => {
+    if (!celebrating) return
+    const timer = window.setTimeout(() => {
       setCelebrating(false)
       handleClose()
-    }, SAVE_GLOW_DIALOG_MS)
-  }
+    }, glowMs)
+    return () => window.clearTimeout(timer)
+  }, [celebrating, glowMs])
 
   return (
     <Modal.Backdrop
@@ -386,7 +395,7 @@ export function AddTxModal({
               取消
             </Button>
           </Modal.Footer>
-          {celebrating && <DialogSaveGlow />}
+          {celebrating && <DialogSaveGlow onStart={setGlowMs} />}
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

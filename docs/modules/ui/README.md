@@ -35,9 +35,11 @@
 
 `styles/primitives.css` owns the `bubo-save-glow*` classes. The dialog variant prefers a WebGL
 canvas (`components/layout/GlowWaveCanvas.tsx`): a fragment shader runs the reference's **vertical**
-mode — a near-horizontal front climbs from the bottom edge, bent by noise, with the iridescent
-palette indexed along x (colour flows sideways while the wave rises), a chromatic rim and a colour
-film left behind. The full run is `SAVE_GLOW_DIALOG_MS` (3s) and the dialog closes when it ends.
+mode — a wide, noise-bent front climbs from the bottom edge while the iridescent palette indexes
+along x (colour flows sideways) and shifts with the distance from the crest, so the rainbow fans
+out in every direction. A chromatic rim, a halo and a fading colour film finish it, and the tail
+fades completely. Run time comes from the surface diagonal (`saveGlowDurationMs`), not a fixed
+three seconds: the reference dialog is 3s and every other size scales from it.
 Gradient stops alone read as a flat sheet, which is why the CSS layers are only the fallback for a
 webview without WebGL; the two are never drawn at the same time. There are two mounts of the same light
 (`components/layout/SaveGlow.tsx`): `SaveGlow` covers the page for saves that have no dialog of

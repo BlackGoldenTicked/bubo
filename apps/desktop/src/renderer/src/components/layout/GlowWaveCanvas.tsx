@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef } from "react"
+import { saveGlowDurationMs } from "@/lib/saveGlow"
 
 const VERTEX = `
 attribute vec2 aPos;
@@ -99,33 +100,40 @@ void main() {
 
   float yy = uv.y + undul;
   float d = yy - front;          // > 0 above the front (untouched), < 0 already swept
+  float ad = abs(d);             // distance from the crest, either side
   float d2 = yy - front * 0.72;  // softer band trailing behind
 
-  float rimC = exp(-pow(d / 0.028, 2.0));
-  float rimR = exp(-pow((d - 0.013) / 0.019, 2.0));
-  float rimB = exp(-pow((d + 0.013) / 0.019, 2.0));
-  float halo = exp(-pow(d / 0.135, 2.0));
-  float band2 = exp(-pow(d2 / 0.22, 2.0));
+  // Wide crest with a chromatic edge; halo and spread are the light bleeding outward.
+  float rimC = exp(-pow(d / 0.045, 2.0));
+  float rimR = exp(-pow((d - 0.020) / 0.030, 2.0));
+  float rimB = exp(-pow((d + 0.020) / 0.030, 2.0));
+  float halo = exp(-pow(d / 0.260, 2.0));
+  float spread = exp(-pow(ad / 0.520, 2.0));
+  float band2 = exp(-pow(d2 / 0.340, 2.0));
 
-  float trail = smoothstep(0.0, -0.55, d);
-  float filmFade = 1.0 - smoothstep(0.62, 1.0, p);
+  float trail = smoothstep(0.0, -0.85, d);
+  float filmFade = 1.0 - smoothstep(0.58, 1.0, p);
 
-  // Hue runs along x, so the ribbon flows sideways while it climbs.
-  float hue = uv.x * 0.85 + yy * 0.2 + p * 0.55;
+  // Hue runs along x for the sideways flow, and shifts with |d| so the colours fan out
+  // from the crest in every direction instead of staying inside the band.
+  float hue = uv.x * 0.7 + yy * 0.15 + p * 0.5 + ad * 1.9 + band2 * 0.2;
   vec3 base = palette(hue);
   vec3 rimCol = vec3(palette(hue + 0.04).r, palette(hue).g, palette(hue - 0.04).b);
 
-  vec3 col = rimCol * (rimC * 1.15 + rimR * 0.8 + rimB * 0.8);
-  col += base * halo * 0.6;
-  col += palette(hue + 0.18) * band2 * 0.28;
-  col += base * trail * 0.5 * filmFade;
+  vec3 col = rimCol * (rimC * 1.1 + rimR * 0.8 + rimB * 0.8);
+  col += base * halo * 0.55;
+  col += palette(hue + 0.22) * spread * 0.3;
+  col += palette(hue + 0.18) * band2 * 0.26;
+  col += base * trail * 0.42 * filmFade;
 
   float alpha = clamp(
-    rimC * 0.95 + rimR * 0.7 + rimB * 0.7 + halo * 0.42 + band2 * 0.3 + trail * 0.52 * filmFade,
+    rimC * 0.95 + rimR * 0.7 + rimB * 0.7 +
+      halo * 0.5 + spread * 0.26 + band2 * 0.22 + trail * 0.42 * filmFade,
     0.0,
     1.0
   );
-  alpha *= 1.0 - smoothstep(0.9, 1.0, p);
+  // Long fade at the end: the tail must leave nothing behind.
+  alpha *= 1.0 - smoothstep(0.72, 1.0, p);
 
   gl_FragColor = vec4(col, alpha);
 }
@@ -155,14 +163,16 @@ export function supportsShaderGlow(): boolean {
 }
 
 interface Props {
-  /** Total run time; the caller unmounts at the same mark. */
-  durationMs: number
+  /** Called with the measured run time so the caller can keep the surface open long enough. */
+  onStart?: (durationMs: number) => void
   /** Called when the context, shader, or program cannot be created, so the caller can fall back. */
   onUnavailable?: () => void
 }
 
-export function GlowWaveCanvas({ durationMs, onUnavailable }: Props) {
+export function GlowWaveCanvas({ onStart, onUnavailable }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const onStartRef = useRef(onStart)
+  onStartRef.current = onStart
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -216,6 +226,9 @@ export function GlowWaveCanvas({ durationMs, onUnavailable }: Props) {
     let lastWidth = 0
     let lastHeight = 0
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const rect = canvas.getBoundingClientRect()
+    const durationMs = saveGlowDurationMs({ width: rect.width, height: rect.height })
+    onStartRef.current?.(durationMs)
 
     function size() {
       const rect = canvas!.getBoundingClientRect()
@@ -251,7 +264,7 @@ export function GlowWaveCanvas({ durationMs, onUnavailable }: Props) {
       gl.deleteShader(vertex)
       gl.deleteShader(fragment)
     }
-  }, [durationMs, onUnavailable])
+  }, [onUnavailable])
 
   return (
     <canvas

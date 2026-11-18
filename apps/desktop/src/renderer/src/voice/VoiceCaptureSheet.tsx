@@ -102,6 +102,7 @@ export function VoiceCaptureSheet() {
   const [log, setLog] = useState<LogLine[]>([])
   const [text, setText] = useState("")
   const [celebrating, setCelebrating] = useState(false)
+  const [glowMs, setGlowMs] = useState(SAVE_GLOW_DIALOG_MS)
   const supported = VoiceRecorder.isSupported()
 
   const append = useCallback((line: string, tone: LogLine["tone"] = "info") => {
@@ -342,15 +343,23 @@ export function VoiceCaptureSheet() {
     (saved: number, remaining: number) => {
       append(`已保存 ${saved} 笔流水`, "ok")
       if (remaining > 0) return
+      setGlowMs(SAVE_GLOW_DIALOG_MS)
       setCelebrating(true)
-      window.setTimeout(() => {
-        setCelebrating(false)
-        setPhase("done")
-        setOpen(false)
-      }, SAVE_GLOW_DIALOG_MS)
     },
     [append, setOpen],
   )
+
+  // The shader reports its measured duration, so a wide batch window stays open longer than a
+  // narrow form and the sweep is never cut in half.
+  useEffect(() => {
+    if (!celebrating) return
+    const timer = window.setTimeout(() => {
+      setCelebrating(false)
+      setPhase("done")
+      setOpen(false)
+    }, glowMs)
+    return () => window.clearTimeout(timer)
+  }, [celebrating, glowMs, setOpen])
 
   const skipAll = useCallback(() => {
     const count = queue.length
@@ -508,7 +517,7 @@ export function VoiceCaptureSheet() {
               关闭
             </Button>
           </Modal.Footer>
-          {celebrating && <DialogSaveGlow />}
+          {celebrating && <DialogSaveGlow onStart={setGlowMs} />}
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>
