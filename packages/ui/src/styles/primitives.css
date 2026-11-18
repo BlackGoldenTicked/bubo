@@ -1361,19 +1361,19 @@
 }
 
 .bubo-save-glow--dialog .bubo-save-glow__wave {
-  animation-duration: 900ms;
+  animation-duration: 2900ms;
 }
 
 .bubo-save-glow--dialog .bubo-save-glow__bloom {
-  animation-duration: 1000ms;
+  animation-duration: 2600ms;
 }
 
 .bubo-save-glow--dialog .bubo-save-glow__flare {
-  animation-duration: 760ms;
+  animation-duration: 2700ms;
 }
 
 .bubo-save-glow--dialog .bubo-save-glow__wash {
-  animation-duration: 1150ms;
+  animation-duration: 3000ms;
 }
 
 /* The wavefront itself: an oversized rounded sheet whose crest crosses the

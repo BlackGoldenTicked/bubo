@@ -33,8 +33,8 @@ const SAVE_DOMAINS = new Set([
 const SAVE_VERB = /^(create|update|upsert|add|record|convert)/
 const DIALOG_OWNED_PATHS = new Set(["cashflow.create", "cashflow.update"])
 
-/** How long a dialog keeps itself open after a save so the wave can finish. */
-export const SAVE_GLOW_DIALOG_MS = 1150
+/** How long a dialog keeps itself open after a save so the full vertical sweep can finish. */
+export const SAVE_GLOW_DIALOG_MS = 3000
 
 const COALESCE_MS = 700
 /** Let the save dialog finish closing so the wave covers the page, not the dialog. */

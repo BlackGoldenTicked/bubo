@@ -22,17 +22,17 @@ void main() {
 `
 
 /**
- * One pass: a domain-warped wavefront around `uOrigin`, an iridescent palette indexed by
- * angle/radius/progress, a bright rim split into R/G/B offsets (chromatic aberration), a second
- * softer front trailing behind it, and a film of colour that fades as the front leaves.
- * Distances are in units of surface height, so the same constants work for any panel size.
+ * One pass, vertical mode: a soft horizontal front sweeps bottom-to-top, its boundary bent by
+ * noise so it never reads as a straight line. The rim carries an iridescent palette indexed by x
+ * (so the colour flows sideways along the wave), split into R/G/B offsets for a chromatic edge, a
+ * wide halo sits behind it, and a colour film stays in the region the wave already passed.
+ * `uProgress` drives both the position and the hue drift over the full run.
  */
 const FRAGMENT = `
 precision highp float;
 
 varying vec2 vUv;
 uniform vec2 uRes;
-uniform vec2 uOrigin;
 uniform float uProgress;
 
 float hash(vec2 p) {
@@ -83,45 +83,49 @@ vec3 palette(float t) {
 }
 
 void main() {
-  vec2 p = (vUv - uOrigin) * vec2(uRes.x / max(uRes.y, 1.0), 1.0);
-  float r = length(p);
-  float ang = atan(p.y, p.x);
+  vec2 uv = vUv;
+  float p = clamp(uProgress, 0.0, 1.0);
+  // Slow at both ends: 3 seconds of travel should not snap at the start.
+  float ease = p * p * (3.0 - 2.0 * p);
+  float front = mix(-0.12, 1.2, ease);
 
-  float prog = clamp(uProgress, 0.0, 1.0);
-  float ease = 1.0 - pow(1.0 - prog, 2.2);
-  float front = mix(-0.06, 1.15, ease);
+  // Vertical mode: the boundary is a near-horizontal line, bent by noise + a slow sine.
+  float n1 = fbm(vec2(uv.x * 3.2, p * 1.9));
+  float n2 = fbm(vec2(uv.x * 7.4 + 11.0, p * 3.2));
+  float undul =
+    (n1 - 0.5) * 0.14 +
+    (n2 - 0.5) * 0.045 +
+    sin(uv.x * 6.2831 * 0.85 + p * 4.2) * 0.022;
 
-  // Organic boundary: noise bends the radius so the front never reads as a circle.
-  float warp = (fbm(p * 3.6 + vec2(prog * 2.6, prog * 1.5)) - 0.5) * 0.3;
-  float rr = r + warp;
+  float yy = uv.y + undul;
+  float d = yy - front;          // > 0 above the front (untouched), < 0 already swept
+  float d2 = yy - front * 0.72;  // softer band trailing behind
 
-  float bandA = rr - front;
-  float bandB = rr - front * 0.74;
+  float rimC = exp(-pow(d / 0.028, 2.0));
+  float rimR = exp(-pow((d - 0.013) / 0.019, 2.0));
+  float rimB = exp(-pow((d + 0.013) / 0.019, 2.0));
+  float halo = exp(-pow(d / 0.135, 2.0));
+  float band2 = exp(-pow(d2 / 0.22, 2.0));
 
-  float rimA = exp(-pow(bandA / 0.055, 2.0));
-  float rimA_R = exp(-pow((bandA - 0.028) / 0.045, 2.0));
-  float rimA_B = exp(-pow((bandA + 0.028) / 0.045, 2.0));
-  float rimB = exp(-pow(bandB / 0.11, 2.0));
+  float trail = smoothstep(0.0, -0.55, d);
+  float filmFade = 1.0 - smoothstep(0.62, 1.0, p);
 
-  // Colour trailing behind the front, thinning out as the wave leaves.
-  float trail = smoothstep(-0.01, -0.34, bandA) * (1.0 - smoothstep(-0.95, -0.42, bandA));
-  float sheen = smoothstep(0.0, -0.55, bandA) * 0.14;
-
-  float hue = ang * 0.17 + rr * 0.62 + prog * 1.15;
+  // Hue runs along x, so the ribbon flows sideways while it climbs.
+  float hue = uv.x * 0.85 + yy * 0.2 + p * 0.55;
   vec3 base = palette(hue);
-  vec3 rimCol = vec3(palette(hue + 0.05).r, palette(hue).g, palette(hue - 0.05).b);
+  vec3 rimCol = vec3(palette(hue + 0.04).r, palette(hue).g, palette(hue - 0.04).b);
 
-  vec3 col = rimCol * (rimA_R * 1.25 + rimA * 0.9 + rimA_B * 1.25);
-  col += base * trail * 1.05;
-  col += palette(hue * 0.7 + 0.3) * rimB * 0.32;
-  col += palette(hue * 0.55) * sheen;
+  vec3 col = rimCol * (rimC * 1.15 + rimR * 0.8 + rimB * 0.8);
+  col += base * halo * 0.6;
+  col += palette(hue + 0.18) * band2 * 0.28;
+  col += base * trail * 0.5 * filmFade;
 
   float alpha = clamp(
-    rimA_R * 0.85 + rimA * 0.8 + rimA_B * 0.85 + trail * 0.92 + rimB * 0.3 + sheen,
+    rimC * 0.95 + rimR * 0.7 + rimB * 0.7 + halo * 0.42 + band2 * 0.3 + trail * 0.52 * filmFade,
     0.0,
     1.0
   );
-  alpha *= 1.0 - smoothstep(0.86, 1.0, prog);
+  alpha *= 1.0 - smoothstep(0.9, 1.0, p);
 
   gl_FragColor = vec4(col, alpha);
 }
@@ -153,16 +157,12 @@ export function supportsShaderGlow(): boolean {
 interface Props {
   /** Total run time; the caller unmounts at the same mark. */
   durationMs: number
-  /** Where the wave leaves from, in 0..1 canvas space (origin at bottom-left). */
-  origin?: { x: number; y: number }
   /** Called when the context, shader, or program cannot be created, so the caller can fall back. */
   onUnavailable?: () => void
 }
 
-export function GlowWaveCanvas({ durationMs, origin, onUnavailable }: Props) {
+export function GlowWaveCanvas({ durationMs, onUnavailable }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const originX = origin?.x ?? 0.5
-  const originY = origin?.y ?? 0.86
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -206,9 +206,7 @@ export function GlowWaveCanvas({ durationMs, origin, onUnavailable }: Props) {
     gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0)
 
     const uRes = gl.getUniformLocation(program, "uRes")
-    const uOrigin = gl.getUniformLocation(program, "uOrigin")
     const uProgress = gl.getUniformLocation(program, "uProgress")
-    gl.uniform2f(uOrigin, originX, originY)
     gl.uniform1f(uProgress, 0)
     gl.enable(gl.BLEND)
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
@@ -253,7 +251,7 @@ export function GlowWaveCanvas({ durationMs, origin, onUnavailable }: Props) {
       gl.deleteShader(vertex)
       gl.deleteShader(fragment)
     }
-  }, [durationMs, originX, originY, onUnavailable])
+  }, [durationMs, onUnavailable])
 
   return (
     <canvas
