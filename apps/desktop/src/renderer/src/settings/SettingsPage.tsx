@@ -17,6 +17,7 @@ import { ShortcutSection } from "./ShortcutSection"
 import { LinkRow, Row, SegTabs, SettingsGroup, Toggle } from "./components"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
+import { playSaveGlow } from "@/lib/saveGlow"
 import {
   amountsHiddenAtom,
   themePreferenceAtom,
@@ -194,6 +195,9 @@ export function SettingsPage() {
                 onChange={(value) => setTheme(THEME_VALUES[value] ?? "system")}
               />
             </Row>
+            <LinkRow note="点击播放" onClick={() => playSaveGlow()}>
+              保存动效预览
+            </LinkRow>
           </SettingsGroup>
 
           {/* 分类 */}

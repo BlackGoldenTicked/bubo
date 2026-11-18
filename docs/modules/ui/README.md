@@ -39,6 +39,8 @@ multi-hue bloom, a thin flare riding its front, and a full-window wash — carry
 rather than semantic tokens, because this is decorative light, not a product colour. Only
 `opacity` and `transform` animate and the blur is static, so the whole effect stays on the
 compositor; `prefers-reduced-motion` in the same file disables all three animation names.
+Two constraints are load-bearing in WebKit: no `mix-blend-mode` (blend over `filter: blur()` can drop
+the layer) and no `contain: strict` on the full-viewport host (size containment collapses it).
 
 ## Date Surfaces
 

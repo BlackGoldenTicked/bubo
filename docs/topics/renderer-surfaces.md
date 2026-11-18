@@ -75,7 +75,12 @@ capture surfaces (`quick/QuickCapturePage.tsx`, `settings/ShortcutSection.tsx`,
   through `components/ui/EmptyState.tsx`, not inline 加载中 / 加载失败 text.
 - Save feedback has one global path too: `MutationCache.onSuccess` in `lib/trpc.ts` decides from
   the mutation key whether the save glow replays (`lib/saveGlow.ts`), so pages never call it
-  themselves and a batch save cannot fire one bloom per record.
+  themselves and a batch save cannot fire one bloom per record. Settings → 外观 keeps a
+  「保存动效预览」 row that plays it on demand.
+- Jotai has exactly one store: `lib/state/store.ts` exports `appStore`, `TRPCProvider` passes it to
+  `<JotaiProvider store={…}>`, and any imperative write outside React (`saveGlow`, voice queue
+  control) targets the same instance. `getDefaultStore()` is a _different_ store and its writes are
+  invisible to the UI — that is why the save glow silently did nothing when it wrote the default one.
 - Mutation failures toast through one global path only: the `MutationCache.onError`
   in `lib/trpc.ts` calls `reportActionError` (`lib/reportError.ts`), which dedupes
   by error identity. Callers that need extra handling must reuse

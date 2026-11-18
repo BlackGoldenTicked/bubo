@@ -1312,10 +1312,9 @@
 .bubo-save-glow {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 200;
   overflow: hidden;
   pointer-events: none;
-  contain: strict;
 }
 
 .bubo-save-glow__bloom {
@@ -1327,11 +1326,12 @@
   transform-origin: 50% 100%;
   opacity: 0;
   background:
-    radial-gradient(52% 62% at 50% 92%, rgba(120, 220, 255, 0.55), transparent 70%),
-    radial-gradient(46% 56% at 26% 96%, rgba(150, 110, 255, 0.5), transparent 72%),
-    radial-gradient(46% 56% at 74% 96%, rgba(255, 120, 200, 0.45), transparent 72%),
-    radial-gradient(34% 40% at 50% 100%, rgba(255, 220, 150, 0.6), transparent 74%);
+    radial-gradient(52% 62% at 50% 92%, rgba(96, 214, 255, 0.72), transparent 70%),
+    radial-gradient(46% 56% at 26% 96%, rgba(142, 92, 255, 0.66), transparent 72%),
+    radial-gradient(46% 56% at 74% 96%, rgba(255, 96, 190, 0.6), transparent 72%),
+    radial-gradient(34% 40% at 50% 100%, rgba(255, 214, 128, 0.76), transparent 74%);
   filter: blur(26px) saturate(1.32);
+  will-change: transform, opacity;
   animation: bubo-save-glow-bloom 1500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1371,6 +1371,7 @@
     transparent 72%
   );
   filter: blur(14px);
+  will-change: transform, opacity;
   animation: bubo-save-glow-flare 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }
 
@@ -1392,7 +1393,13 @@
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: linear-gradient(to top, rgba(150, 200, 255, 0.16), transparent 62%);
+  background: linear-gradient(
+    to top,
+    rgba(140, 196, 255, 0.3),
+    rgba(180, 150, 255, 0.12) 30%,
+    transparent 68%
+  );
+  will-change: opacity;
   animation: bubo-save-glow-wash 1200ms ease-out forwards;
 }
 
@@ -1408,10 +1415,12 @@
   }
 }
 
-/* Additive light reads as light on a dark surface; on a light one the same
-   stops would wash out, so the dark theme gets screen blending. */
-:root[data-theme="dark"] .bubo-save-glow {
-  mix-blend-mode: screen;
+/* No mix-blend-mode on purpose: WebKit composites blend + filter: blur()
+   unreliably (the layer can drop out entirely), so the light relies on
+   saturated alpha stops instead. Dark surfaces read it as glow because the
+   stops are bright and the base is black. */
+:root[data-theme="dark"] .bubo-save-glow__bloom {
+  filter: blur(26px) saturate(1.45) brightness(1.25);
 }
 
 @media (prefers-reduced-motion: reduce) {

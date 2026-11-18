@@ -53,4 +53,7 @@ Fresh installs start on the demo ledger, while the personal ledger is already pr
 - Do not overwrite `bubo.sqlite3` when it already exists; that file is user data, even if the starter seed changes later.
 - New non-demo ledgers created from settings use the same personal starter seed as `bubo.sqlite3`.
 - Keep the desktop-visible app name `bubo` and production identifier `com.chaordex.bubo` stable so existing data stays in place; development uses `com.chaordex.bubo.dev`.
+- Jotai has one store (`lib/state/store.ts` → `appStore`): `TRPCProvider` passes it to the provider,
+  and imperative writes outside React must use it. `getDefaultStore()` is a different store, so its
+  updates never reach the UI.
 - Handwritten desktop source files carry AI headers. Generated files such as `routeTree.gen.ts` and ambient Vite declarations are skipped in `check-docs.config.json`.

@@ -7,8 +7,8 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { getDefaultStore } from "jotai"
 import { saveGlowNonceAtom } from "./state/uiAtoms"
+import { appStore } from "./state/store"
 import { mutationTriggersSaveGlow, playSaveGlow } from "./saveGlow"
 
 /** tRPC's mutation key is a nested array: [["cashflow","create"]]. */
@@ -42,7 +42,7 @@ describe("mutationTriggersSaveGlow", () => {
 })
 
 describe("playSaveGlow", () => {
-  const store = getDefaultStore()
+  const store = appStore
 
   beforeEach(() => {
     store.set(saveGlowNonceAtom, 0)

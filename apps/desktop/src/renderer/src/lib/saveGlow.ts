@@ -1,13 +1,13 @@
 /**
  * @purpose Trigger the save-glow overlay from any successful save.
  * @role    Renderer-side one-shot signal between mutations and the `SaveGlow` overlay.
- * @deps    Jotai's default store and the save-glow nonce atom.
+ * @deps    The shared renderer jotai store and the save-glow nonce atom.
  * @gotcha  Saves arrive in bursts (a voice batch fires one mutation per record), so calls inside
  *          a short window are coalesced: one bloom per user action, not one per row. The overlay
  *          itself is pure CSS on the compositor; nothing here touches layout.
  */
 
-import { getDefaultStore } from "jotai"
+import { appStore } from "./state/store"
 import { saveGlowNonceAtom } from "./state/uiAtoms"
 
 /** Mutations under these domains count as "the user saved a record". */
@@ -46,5 +46,5 @@ export function playSaveGlow(): void {
   const now = Date.now()
   if (now - lastPlayedAt < COALESCE_MS) return
   lastPlayedAt = now
-  getDefaultStore().set(saveGlowNonceAtom, (nonce) => nonce + 1)
+  appStore.set(saveGlowNonceAtom, (nonce) => nonce + 1)
 }
