@@ -33,7 +33,11 @@
 
 ## Save Glow
 
-`styles/primitives.css` owns the `bubo-save-glow*` classes. There are two mounts of the same light
+`styles/primitives.css` owns the `bubo-save-glow*` classes. The dialog variant prefers a WebGL
+canvas (`components/layout/GlowWaveCanvas.tsx`): a fragment shader renders a noise-warped
+wavefront with an iridescent palette and a chromatic rim, which is the only way to match the
+reference's flowing look — gradient stops read as a flat sheet. The CSS layers are the fallback
+when the webview has no WebGL, and the two are never drawn at the same time. There are two mounts of the same light
 (`components/layout/SaveGlow.tsx`): `SaveGlow` covers the page for saves that have no dialog of
 their own, and `DialogSaveGlow` sits inside the dialog that saved — clipped by its radius, so the
 form celebrates first and closes after `SAVE_GLOW_DIALOG_MS`. Both share one keyframe set; the
