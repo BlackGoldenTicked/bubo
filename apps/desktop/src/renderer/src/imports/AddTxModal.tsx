@@ -7,10 +7,12 @@
  *          saving still goes through the page's manual cashflow mutation.
  */
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button, Input, Label, Modal } from "@heroui/react"
 import { Controller, useForm } from "react-hook-form"
 import type { CategorySummary } from "@bubo/api"
+import { SAVE_GLOW_DIALOG_MS } from "@/lib/saveGlow"
+import { DialogSaveGlow } from "../components/layout/SaveGlow"
 import { todayKey } from "@/lib/dates"
 import { FormField } from "../components/ui/FormField"
 import { DateInput } from "../components/ui/DateInput"
@@ -45,7 +47,8 @@ interface Props {
   title?: string
   subtitle?: string
   onClose: () => void
-  onSave: (form: TxForm) => void
+  /** Returning a promise lets the dialog celebrate the save before it closes. */
+  onSave: (form: TxForm) => void | Promise<void>
 }
 
 function TypeButton({
@@ -138,6 +141,7 @@ export function AddTxModal({
     watch,
   } = useForm<TxForm>({ defaultValues: initial ?? emptyTxForm() })
   const form = watch()
+  const [celebrating, setCelebrating] = useState(false)
 
   const selectedCategory = useMemo(
     () => categories.find((category) => String(category.id) === String(form.categoryId)),
@@ -190,15 +194,35 @@ export function AddTxModal({
     onClose()
   }
 
+  /**
+   * Save, then celebrate inside the dialog and only afterwards close it. The light is
+   * clipped to this panel (the form owns the feedback); closing first would have swept
+   * the whole window instead, which reads as a page transition rather than a receipt.
+   */
+  async function submit(values: TxForm) {
+    if (celebrating) return
+    try {
+      await onSave(values)
+    } catch {
+      // The global mutation handler already toasted the failure; stay open to retry.
+      return
+    }
+    setCelebrating(true)
+    window.setTimeout(() => {
+      setCelebrating(false)
+      handleClose()
+    }, SAVE_GLOW_DIALOG_MS)
+  }
+
   return (
     <Modal.Backdrop
       isOpen={open}
       onOpenChange={(v) => {
-        if (!v) handleClose()
+        if (!v && !celebrating) handleClose()
       }}
     >
       <Modal.Container>
-        <Modal.Dialog style={{ maxWidth: 400 }}>
+        <Modal.Dialog style={{ maxWidth: 400, position: "relative" }}>
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Heading>{title}</Modal.Heading>
@@ -210,10 +234,7 @@ export function AddTxModal({
               id="tx-form"
               onSubmit={(event) => {
                 event.preventDefault()
-                void handleSubmit((values) => {
-                  onSave(values)
-                  handleClose()
-                })()
+                void handleSubmit((values) => submit(values))()
               }}
               style={{ display: "flex", flexDirection: "column", gap: 16 }}
             >
@@ -356,20 +377,16 @@ export function AddTxModal({
           <Modal.Footer>
             <Button
               variant="primary"
-              isDisabled={isSubmitting}
-              onPress={() =>
-                void handleSubmit((values) => {
-                  onSave(values)
-                  handleClose()
-                })()
-              }
+              isDisabled={isSubmitting || celebrating}
+              onPress={() => void handleSubmit((values) => submit(values))()}
             >
-              {isSubmitting ? "保存中…" : "保存"}
+              {celebrating ? "已保存" : isSubmitting ? "保存中…" : "保存"}
             </Button>
             <Button variant="outline" slot="close">
               取消
             </Button>
           </Modal.Footer>
+          {celebrating && <DialogSaveGlow />}
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

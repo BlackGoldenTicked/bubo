@@ -26,6 +26,8 @@ import {
   queueVoiceIntents,
 } from "@/lib/voice/intentHandoff"
 import { useVoiceIntentQueue } from "@/lib/voice/useVoiceIntent"
+import { SAVE_GLOW_DIALOG_MS } from "@/lib/saveGlow"
+import { DialogSaveGlow } from "../components/layout/SaveGlow"
 import { VoiceBatchReview } from "./VoiceBatchReview"
 
 type Phase = "idle" | "recording" | "working" | "review" | "done" | "error"
@@ -99,6 +101,7 @@ export function VoiceCaptureSheet() {
   const [elapsedMs, setElapsedMs] = useState(0)
   const [log, setLog] = useState<LogLine[]>([])
   const [text, setText] = useState("")
+  const [celebrating, setCelebrating] = useState(false)
   const supported = VoiceRecorder.isSupported()
 
   const append = useCallback((line: string, tone: LogLine["tone"] = "info") => {
@@ -334,12 +337,17 @@ export function VoiceCaptureSheet() {
     [append, navigate, setOpen],
   )
 
+  /** Celebrate inside this window, then close: the light belongs to the surface that saved. */
   const handleBatchSaved = useCallback(
     (saved: number, remaining: number) => {
       append(`已保存 ${saved} 笔流水`, "ok")
       if (remaining > 0) return
-      setPhase("done")
-      setOpen(false)
+      setCelebrating(true)
+      window.setTimeout(() => {
+        setCelebrating(false)
+        setPhase("done")
+        setOpen(false)
+      }, SAVE_GLOW_DIALOG_MS)
     },
     [append, setOpen],
   )
@@ -367,11 +375,11 @@ export function VoiceCaptureSheet() {
     <Modal.Backdrop
       isOpen={open}
       onOpenChange={(value) => {
-        if (!value) setOpen(false)
+        if (!value && !celebrating) setOpen(false)
       }}
     >
       <Modal.Container>
-        <Modal.Dialog style={{ maxWidth: reviewing ? 900 : 480 }}>
+        <Modal.Dialog style={{ maxWidth: reviewing ? 900 : 480, position: "relative" }}>
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Heading>
@@ -500,6 +508,7 @@ export function VoiceCaptureSheet() {
               关闭
             </Button>
           </Modal.Footer>
+          {celebrating && <DialogSaveGlow />}
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>

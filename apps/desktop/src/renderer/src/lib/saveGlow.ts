@@ -25,8 +25,16 @@ const SAVE_DOMAINS = new Set([
   "imports",
 ])
 
-/** Second path segment verbs that write a record; deletes and archives stay silent. */
+/**
+ * Second path segment verbs that write a record; deletes and archives stay silent.
+ * `cashflow` is handled per surface instead: the 记一笔 dialog and the batch window play the
+ * light inside themselves and close afterwards, so a page-wide sweep would double up.
+ */
 const SAVE_VERB = /^(create|update|upsert|add|record|convert)/
+const DIALOG_OWNED_PATHS = new Set(["cashflow.create", "cashflow.update"])
+
+/** How long a dialog keeps itself open after a save so the wave can finish. */
+export const SAVE_GLOW_DIALOG_MS = 1150
 
 const COALESCE_MS = 700
 /** Let the save dialog finish closing so the wave covers the page, not the dialog. */
@@ -43,6 +51,7 @@ export function mutationTriggersSaveGlow(mutationKey: unknown): boolean {
   const path = flattenKey(mutationKey)
   const [domain, verb] = path
   if (!domain || !verb) return false
+  if (DIALOG_OWNED_PATHS.has(`${domain}.${verb}`)) return false
   return SAVE_DOMAINS.has(domain) && SAVE_VERB.test(verb)
 }
 

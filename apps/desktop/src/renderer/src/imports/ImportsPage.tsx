@@ -31,7 +31,6 @@ import type { CashflowEventSummary } from "@bubo/api"
 import { AppIcon } from "@bubo/ui"
 import { trpc } from "@/lib/trpc"
 import { usePagePerf } from "@/lib/debug/perf"
-import { playSaveGlow } from "@/lib/saveGlow"
 import { continueVoiceQueue } from "@/lib/voice/voiceQueueControl"
 import { useVoiceIntent } from "@/lib/voice/useVoiceIntent"
 import { CATEGORY_COLORS, SOURCE_BADGES, sourceLabel } from "@/lib/domainDisplay"
@@ -581,9 +580,6 @@ export function ImportsPage() {
   const createCashflow = useMutation(
     trpc.cashflow.create.mutationOptions({
       onSuccess: async () => {
-        // Explicit replay on top of the global hook: a save made from this page must
-        // always show the light, even if the central mutation-key rule ever changes.
-        playSaveGlow()
         await queryClient.invalidateQueries(trpc.cashflow.list.queryFilter())
       },
     }),
@@ -837,8 +833,8 @@ export function ImportsPage() {
     }
   }
 
-  function handleAddTx(form: TxForm) {
-    createCashflow.mutate({
+  async function handleAddTx(form: TxForm) {
+    await createCashflow.mutateAsync({
       eventDate: form.date,
       title: form.counterparty,
       counterparty: form.counterparty,
@@ -852,7 +848,7 @@ export function ImportsPage() {
       includeInAnalytics: true,
       classificationSource: "manual",
     })
-    setShowAddTx(false)
+    // The dialog owns its own celebration and closes itself afterwards.
   }
 
   async function handleEditTx(form: TxForm) {
@@ -870,7 +866,6 @@ export function ImportsPage() {
     })
     await refreshCashflowViews()
     setSelectedTx(null)
-    setEditingTx(null)
   }
 
   return (

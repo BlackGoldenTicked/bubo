@@ -33,9 +33,13 @@
 
 ## Save Glow
 
-`styles/primitives.css` owns the `bubo-save-glow*` classes the renderer mounts after a successful
-save (`components/layout/SaveGlow.tsx`, triggered by `lib/saveGlow.ts`). Four layers carry a literal
-spectrum rather than semantic tokens, because this is decorative light, not a product colour:
+`styles/primitives.css` owns the `bubo-save-glow*` classes. There are two mounts of the same light
+(`components/layout/SaveGlow.tsx`): `SaveGlow` covers the page for saves that have no dialog of
+their own, and `DialogSaveGlow` sits inside the dialog that saved — clipped by its radius, so the
+form celebrates first and closes after `SAVE_GLOW_DIALOG_MS`. Both share one keyframe set; the
+dialog variant only overrides distances (`--glow-*`) and layer durations. Four layers carry a
+literal spectrum rather than semantic tokens, because this is decorative light, not a product
+colour:
 
 - `__wave` — a 220vw rounded sheet whose curved crest sweeps the entire window bottom-to-top and
   leaves colour behind; this is the layer that makes the effect read as a wave, not a scan;
@@ -44,8 +48,8 @@ spectrum rather than semantic tokens, because this is decorative light, not a pr
 
 Only `opacity` and `transform` animate and every blur is static, so the whole effect stays on the
 compositor; `prefers-reduced-motion` in the same file disables all four animation names.
-Playback is deferred ~260ms (`lib/saveGlow.ts`) so the dialog that triggered the save is already
-closing and the wave covers the page rather than the dialog.
+Page playback is deferred ~260ms (`lib/saveGlow.ts`); the dialog variant plays immediately on mount
+and the dialog closes when it finishes.
 Two constraints are load-bearing in WebKit: no `mix-blend-mode` (blend over `filter: blur()` can drop
 the layer) and no `contain: strict` on the full-viewport host (size containment collapses it).
 

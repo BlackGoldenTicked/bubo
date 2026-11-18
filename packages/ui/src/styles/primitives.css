@@ -1311,6 +1311,24 @@
    blur layers and size containment can collapse a full-viewport fixed box.
    --------------------------------------------------------------------- */
 .bubo-save-glow {
+  /* Page variant defaults; the dialog variant below overrides every distance so one
+     keyframe set drives both surfaces (percentages inside a dialog, viewport units
+     on the page). */
+  --glow-wave-w: 220vw;
+  --glow-wave-h: 170vh;
+  --glow-wave-bottom: -160vh;
+  --glow-wave-mid: -96vh;
+  --glow-wave-end: -172vh;
+  --glow-bloom-w: 150vw;
+  --glow-bloom-h: 92vh;
+  --glow-bloom-bottom: -46vh;
+  --glow-bloom-mid: -26vh;
+  --glow-bloom-end: -48vh;
+  --glow-flare-w: 150vw;
+  --glow-flare-h: 30vh;
+  --glow-flare-bottom: -10vh;
+  --glow-flare-end: -104vh;
+  --glow-blur: 30px;
   position: fixed;
   inset: 0;
   z-index: 200;
@@ -1318,14 +1336,54 @@
   pointer-events: none;
 }
 
+/* Same light, clipped to the dialog that owns the save: the form celebrates,
+   then closes. Radius is inherited so the wave never spills past the corners. */
+.bubo-save-glow--dialog {
+  --glow-wave-w: 240%;
+  --glow-wave-h: 180%;
+  --glow-wave-bottom: -170%;
+  --glow-wave-mid: -118%;
+  --glow-wave-end: -214%;
+  --glow-bloom-w: 180%;
+  --glow-bloom-h: 110%;
+  --glow-bloom-bottom: -62%;
+  --glow-bloom-mid: -36%;
+  --glow-bloom-end: -68%;
+  --glow-flare-w: 170%;
+  --glow-flare-h: 40%;
+  --glow-flare-bottom: -14%;
+  --glow-flare-end: -136%;
+  --glow-blur: 16px;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+}
+
+.bubo-save-glow--dialog .bubo-save-glow__wave {
+  animation-duration: 900ms;
+}
+
+.bubo-save-glow--dialog .bubo-save-glow__bloom {
+  animation-duration: 1000ms;
+}
+
+.bubo-save-glow--dialog .bubo-save-glow__flare {
+  animation-duration: 760ms;
+}
+
+.bubo-save-glow--dialog .bubo-save-glow__wash {
+  animation-duration: 1150ms;
+}
+
 /* The wavefront itself: an oversized rounded sheet whose crest crosses the
-   window diagonally. 220vw wide so the arcs still cover both side edges. */
+   surface diagonally, wide enough that the arcs still cover both side edges. */
 .bubo-save-glow__wave {
   position: absolute;
   left: 50%;
-  bottom: -160vh;
-  width: 220vw;
-  height: 170vh;
+  bottom: var(--glow-wave-bottom);
+  width: var(--glow-wave-w);
+  height: var(--glow-wave-h);
   border-radius: 50% 50% 0 0 / 30% 30% 0 0;
   background: linear-gradient(
     100deg,
@@ -1336,21 +1394,10 @@
     rgba(255, 218, 122, 0.6) 73%,
     rgba(255, 138, 104, 0.56) 100%
   );
-  filter: blur(30px) saturate(1.2);
+  filter: blur(var(--glow-blur)) saturate(1.2);
   opacity: 0;
   will-change: transform, opacity;
   animation: bubo-save-glow-wave 1250ms cubic-bezier(0.3, 0.66, 0.2, 1) forwards;
-}
-
-/* Dark surfaces need a touch more luminance for the same read; this stays a
-   filter override rather than a blend mode, which WebKit composites unreliably
-   over a blurred layer. */
-:root[data-theme="dark"] .bubo-save-glow__wave {
-  filter: blur(30px) saturate(1.35) brightness(1.22);
-}
-
-:root[data-theme="dark"] .bubo-save-glow__bloom {
-  filter: blur(26px) saturate(1.45) brightness(1.2);
 }
 
 @keyframes bubo-save-glow-wave {
@@ -1363,11 +1410,11 @@
   }
   58% {
     opacity: 0.9;
-    transform: translate3d(-50%, -96vh, 0) rotate(-2deg) scale(1.06);
+    transform: translate3d(-50%, var(--glow-wave-mid), 0) rotate(-2deg) scale(1.06);
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, -172vh, 0) rotate(0deg) scale(1.1);
+    transform: translate3d(-50%, var(--glow-wave-end), 0) rotate(0deg) scale(1.1);
   }
 }
 
@@ -1375,9 +1422,9 @@
 .bubo-save-glow__bloom {
   position: absolute;
   left: 50%;
-  bottom: -46vh;
-  width: 150vw;
-  height: 92vh;
+  bottom: var(--glow-bloom-bottom);
+  width: var(--glow-bloom-w);
+  height: var(--glow-bloom-h);
   transform-origin: 50% 100%;
   opacity: 0;
   background:
@@ -1385,7 +1432,7 @@
     radial-gradient(46% 56% at 26% 96%, rgba(142, 92, 255, 0.7), transparent 72%),
     radial-gradient(46% 56% at 74% 96%, rgba(255, 96, 190, 0.64), transparent 72%),
     radial-gradient(34% 40% at 50% 100%, rgba(255, 214, 128, 0.8), transparent 74%);
-  filter: blur(26px) saturate(1.32);
+  filter: blur(var(--glow-blur)) saturate(1.32);
   will-change: transform, opacity;
   animation: bubo-save-glow-bloom 1450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -1400,15 +1447,15 @@
   }
   46% {
     opacity: 0.86;
-    transform: translate3d(-50%, -26vh, 0) scale(1.08, 1.02);
+    transform: translate3d(-50%, var(--glow-bloom-mid), 0) scale(1.08, 1.02);
   }
   74% {
     opacity: 0.38;
-    transform: translate3d(-50%, -40vh, 0) scale(1.24, 1.28);
+    transform: translate3d(-50%, var(--glow-bloom-end), 0) scale(1.24, 1.28);
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, -48vh, 0) scale(1.36, 1.48);
+    transform: translate3d(-50%, var(--glow-bloom-end), 0) scale(1.36, 1.48);
   }
 }
 
@@ -1416,9 +1463,9 @@
 .bubo-save-glow__flare {
   position: absolute;
   left: 50%;
-  bottom: -10vh;
-  width: 150vw;
-  height: 30vh;
+  bottom: var(--glow-flare-bottom);
+  width: var(--glow-flare-w);
+  height: var(--glow-flare-h);
   opacity: 0;
   background: radial-gradient(
     50% 55% at 50% 50%,
@@ -1426,7 +1473,7 @@
     rgba(160, 230, 255, 0.6) 35%,
     transparent 72%
   );
-  filter: blur(12px);
+  filter: blur(calc(var(--glow-blur) * 0.4));
   will-change: transform, opacity;
   animation: bubo-save-glow-flare 1050ms cubic-bezier(0.3, 0.66, 0.2, 1) forwards;
 }
@@ -1441,7 +1488,7 @@
   }
   100% {
     opacity: 0;
-    transform: translate3d(-50%, -104vh, 0) scale(1.5, 0.5) rotate(0deg);
+    transform: translate3d(-50%, var(--glow-flare-end), 0) scale(1.5, 0.5) rotate(0deg);
   }
 }
 

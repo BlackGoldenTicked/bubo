@@ -18,7 +18,7 @@ function key(...path: string[]): unknown[] {
 
 describe("mutationTriggersSaveGlow", () => {
   it("fires for record-creating mutations across the finance domains", () => {
-    expect(mutationTriggersSaveGlow(key("cashflow", "create"))).toBe(true)
+    expect(mutationTriggersSaveGlow(key("subscriptions", "create"))).toBe(true)
     expect(mutationTriggersSaveGlow(key("subscriptions", "update"))).toBe(true)
     expect(mutationTriggersSaveGlow(key("assets", "addSnapshot"))).toBe(true)
     expect(mutationTriggersSaveGlow(key("investments", "recordQuote"))).toBe(true)
@@ -28,6 +28,9 @@ describe("mutationTriggersSaveGlow", () => {
 
   it("stays silent for deletes, archives, settings, and non-save mutations", () => {
     expect(mutationTriggersSaveGlow(key("cashflow", "delete"))).toBe(false)
+    // The 记一笔 dialog and the batch window own this save and celebrate inside themselves.
+    expect(mutationTriggersSaveGlow(key("cashflow", "create"))).toBe(false)
+    expect(mutationTriggersSaveGlow(key("cashflow", "update"))).toBe(false)
     expect(mutationTriggersSaveGlow(key("cards", "archive"))).toBe(false)
     expect(mutationTriggersSaveGlow(key("reference", "updateCategory"))).toBe(false)
     expect(mutationTriggersSaveGlow(key("voice", "parseIntent"))).toBe(false)
